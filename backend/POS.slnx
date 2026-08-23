@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/POS.API/POS.API.csproj" />
+    <Project Path="src/POS.Application/POS.Application.csproj" />
+    <Project Path="src/POS.Domain/POS.Domain.csproj" />
+    <Project Path="src/POS.Infrastructure/POS.Infrastructure.csproj" />
+  </Folder>
+</Solution>

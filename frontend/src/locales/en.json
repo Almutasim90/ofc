@@ -1,0 +1,52 @@
+{
+  "app": {
+    "title": "POS System"
+  },
+  "language": {
+    "switchTo": "العربية",
+    "current": "English"
+  },
+  "login": {
+    "title": "Sign in",
+    "username": "Username",
+    "password": "Password",
+    "submit": "Sign in",
+    "error": "Invalid username or password"
+  },
+  "nav": {
+    "users": "Users",
+    "logout": "Log out"
+  },
+  "users": {
+    "title": "User Management",
+    "fullName": "Full name",
+    "username": "Username",
+    "password": "Password",
+    "role": "Role",
+    "branchId": "Branch ID",
+    "branchIdHint": "Leave empty for General Manager",
+    "language": "Preferred language",
+    "active": "Active",
+    "inactive": "Inactive",
+    "createdAt": "Created",
+    "actions": "Actions",
+    "create": "Add user",
+    "edit": "Edit",
+    "permissions": "Permissions",
+    "save": "Save",
+    "cancel": "Cancel",
+    "createTitle": "New user",
+    "editTitle": "Edit user"
+  },
+  "permissions": {
+    "title": "User permissions",
+    "back": "Back",
+    "inherit": "Inherited from role",
+    "grant": "Grant",
+    "deny": "Deny"
+  },
+  "common": {
+    "loading": "Loading...",
+    "unauthorized": "You do not have access to this page"
+  }
+}

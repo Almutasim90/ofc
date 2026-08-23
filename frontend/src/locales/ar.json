@@ -1,0 +1,52 @@
+{
+  "app": {
+    "title": "نظام نقاط البيع"
+  },
+  "language": {
+    "switchTo": "English",
+    "current": "العربية"
+  },
+  "login": {
+    "title": "تسجيل الدخول",
+    "username": "اسم المستخدم",
+    "password": "كلمة المرور",
+    "submit": "دخول",
+    "error": "اسم المستخدم أو كلمة المرور غير صحيحة"
+  },
+  "nav": {
+    "users": "المستخدمون",
+    "logout": "تسجيل الخروج"
+  },
+  "users": {
+    "title": "إدارة المستخدمين",
+    "fullName": "الاسم الكامل",
+    "username": "اسم المستخدم",
+    "password": "كلمة المرور",
+    "role": "الدور",
+    "branchId": "معرّف الفرع",
+    "branchIdHint": "اتركه فارغاً للمدير العام",
+    "language": "اللغة المفضلة",
+    "active": "مُفعّل",
+    "inactive": "معطّل",
+    "createdAt": "تاريخ الإنشاء",
+    "actions": "إجراءات",
+    "create": "إضافة مستخدم",
+    "edit": "تعديل",
+    "permissions": "الصلاحيات",
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "createTitle": "مستخدم جديد",
+    "editTitle": "تعديل المستخدم"
+  },
+  "permissions": {
+    "title": "صلاحيات المستخدم",
+    "back": "رجوع",
+    "inherit": "موروثة من الدور",
+    "grant": "منح",
+    "deny": "سحب"
+  },
+  "common": {
+    "loading": "جارٍ التحميل...",
+    "unauthorized": "لا تملك صلاحية الوصول لهذه الصفحة"
+  }
+}
