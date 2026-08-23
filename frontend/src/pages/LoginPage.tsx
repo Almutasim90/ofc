@@ -19,7 +19,7 @@ export default function LoginPage() {
     setSubmitting(true)
     try {
       await login(username, password)
-      navigate('/users')
+      navigate('/')
     } catch (err) {
       setError(err instanceof ApiError ? err.message : t('login.error'))
     } finally {

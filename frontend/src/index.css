@@ -2,6 +2,41 @@
 @tailwind components;
 @tailwind utilities;
 
+@keyframes add-confirm-ring {
+  0% {
+    box-shadow: 0 0 0 0 rgb(var(--color-primary) / 0.6);
+  }
+  100% {
+    box-shadow: 0 0 0 8px rgb(var(--color-primary) / 0);
+  }
+}
+
+.add-confirm {
+  box-shadow: 0 0 0 3px rgb(var(--color-primary) / 0.7);
+}
+
+/* Sprint 3 cashier uses the shared design-system tokens regardless of the
+   user's admin theme preference. This keeps the high-contrast POS surface
+   stable on shop-floor tablets. */
+.cashier-theme {
+  --color-bg: 23 17 13; /* ink #17110D */
+  --color-surface: 33 24 18; /* surface #211812 */
+  --color-surface2: 43 32 25; /* surface2 #2B2019 */
+  --color-border: 69 53 43;
+  --color-text: 247 241 230; /* cream #F7F1E6 */
+  --color-muted: 180 163 146; /* muted #B4A392 */
+  --color-primary: 227 165 60; /* saffron #E3A53C */
+  --color-primary-dim: 169 118 42; /* saffronDim #A9762A */
+  --color-accent: 227 165 60;
+  --color-danger: 192 80 59; /* brick #C0503B */
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .add-confirm {
+    animation: add-confirm-ring 0.5s ease-out;
+  }
+}
+
 :root {
   --color-bg: 246 247 245;
   --color-surface: 255 255 255;

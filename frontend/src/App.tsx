@@ -1,9 +1,11 @@
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import { AuthProvider } from './auth/AuthContext'
 import { ThemeProvider } from './theme/ThemeContext'
 import ProtectedRoute from './auth/ProtectedRoute'
+import HomeRedirect from './auth/HomeRedirect'
 import Layout from './components/Layout'
 import LoginPage from './pages/LoginPage'
+import CashierPage from './pages/CashierPage'
 import UsersPage from './pages/UsersPage'
 import UserPermissionsPage from './pages/UserPermissionsPage'
 import BranchesPage from './pages/BranchesPage'
@@ -20,6 +22,14 @@ function App() {
           <Layout>
             <Routes>
               <Route path="/login" element={<LoginPage />} />
+              <Route
+                path="/cashier"
+                element={
+                  <ProtectedRoute permission="sales.create">
+                    <CashierPage />
+                  </ProtectedRoute>
+                }
+              />
               <Route
                 path="/users"
                 element={
@@ -76,7 +86,7 @@ function App() {
                   </ProtectedRoute>
                 }
               />
-              <Route path="*" element={<Navigate to="/users" replace />} />
+              <Route path="*" element={<HomeRedirect />} />
             </Routes>
           </Layout>
         </BrowserRouter>

@@ -17,12 +17,40 @@
     "error": "Invalid username or password"
   },
   "nav": {
+    "cashier": "Cashier",
     "users": "Users",
     "branches": "Branches",
     "products": "Products",
     "rawMaterials": "Raw Materials",
     "inventory": "Inventory",
     "logout": "Log out"
+  },
+  "cashier": {
+    "allCategories": "All",
+    "branch": "Branch",
+    "cart": "Cart",
+    "cartEmpty": "Cart is empty",
+    "items": "items",
+    "total": "Total",
+    "checkout": "Checkout",
+    "remove": "Remove",
+    "paymentMethod": "Payment method",
+    "cash": "Cash",
+    "card": "Card",
+    "confirm": "Complete sale",
+    "submitting": "Completing...",
+    "saleSuccess": "Sale completed",
+    "close": "Close",
+    "loadError": "Could not load cashier data. Please try again.",
+    "saleError": "Could not complete the sale. Please try again.",
+    "saleRejected": "The sale could not be completed. Check the items and try again.",
+    "insufficientStock": "There is not enough stock to complete this sale.",
+    "noProducts": "No products are available.",
+    "categories": {
+      "tea": "Tea",
+      "sweet": "Sweets",
+      "food": "Food"
+    }
   },
   "users": {
     "title": "User Management",

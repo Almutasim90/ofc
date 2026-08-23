@@ -16,6 +16,7 @@ public static class DependencyInjection
         services.AddSingleton<IPasswordHasher, PasswordHasherService>();
         services.AddSingleton(jwtOptions);
         services.AddSingleton<IJwtTokenService, JwtTokenService>();
+        services.AddScoped<IDomainEventPublisher, DomainEventPublisher>();
 
         services.AddDbContext<AppDbContext>((sp, options) =>
             options.UseNpgsql(connectionString));

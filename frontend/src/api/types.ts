@@ -139,3 +139,34 @@ export interface SetLowStockThresholdRequest {
   rawMaterialId: string
   threshold: number
 }
+
+export interface SaleLineRequest {
+  productId: string
+  quantity: number
+}
+
+export interface CreateSaleRequest {
+  branchId: string
+  paymentMethod: 'Cash' | 'Card'
+  lines: SaleLineRequest[]
+}
+
+export interface SaleItemDto {
+  productId: string
+  productNameSnapshot: string
+  unitPriceSnapshot: number
+  quantity: number
+  lineTotal: number
+}
+
+export interface SaleDto {
+  id: string
+  branchId: string
+  cashierUserId: string
+  businessDate: string
+  createdAt: string
+  totalAmount: number
+  paymentMethod: string
+  status: string
+  items: SaleItemDto[]
+}

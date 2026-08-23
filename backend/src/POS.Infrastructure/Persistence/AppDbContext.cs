@@ -27,6 +27,9 @@ public class AppDbContext : DbContext, IAppDbContext
     public DbSet<ProductRecipe> ProductRecipes => Set<ProductRecipe>();
     public DbSet<StockAdjustment> StockAdjustments => Set<StockAdjustment>();
 
+    public DbSet<Sale> Sales => Set<Sale>();
+    public DbSet<SaleItem> SaleItems => Set<SaleItem>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -148,6 +151,37 @@ public class AppDbContext : DbContext, IAppDbContext
                 _currentUser == null
                 || _currentUser.BypassBranchFilter
                 || a.BranchId == _currentUser.BranchId);
+        });
+
+        modelBuilder.Entity<Sale>(entity =>
+        {
+            entity.HasKey(s => s.Id);
+            entity.Property(s => s.TotalAmount).HasPrecision(18, 3);
+            entity.Property(s => s.PaymentMethod).IsRequired().HasMaxLength(20);
+            entity.Property(s => s.Status).IsRequired().HasMaxLength(20);
+            entity.HasIndex(s => new { s.BranchId, s.BusinessDate });
+
+            entity.HasQueryFilter(s =>
+                _currentUser == null
+                || _currentUser.BypassBranchFilter
+                || s.BranchId == _currentUser.BranchId);
+        });
+
+        modelBuilder.Entity<SaleItem>(entity =>
+        {
+            entity.HasKey(i => i.Id);
+            entity.HasOne(i => i.Sale).WithMany(s => s.Items).HasForeignKey(i => i.SaleId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(i => i.Product).WithMany().HasForeignKey(i => i.ProductId).OnDelete(DeleteBehavior.Restrict);
+            entity.Property(i => i.ProductNameSnapshot).IsRequired().HasMaxLength(200);
+            entity.Property(i => i.UnitPriceSnapshot).HasPrecision(18, 3);
+            entity.Property(i => i.Quantity).HasPrecision(18, 3);
+            entity.Property(i => i.LineTotal).HasPrecision(18, 3);
+
+            // Mirrors Sale's branch filter so Include(i => i.Sale) can't leak cross-branch items.
+            entity.HasQueryFilter(i =>
+                _currentUser == null
+                || _currentUser.BypassBranchFilter
+                || i.Sale.BranchId == _currentUser.BranchId);
         });
     }
 }

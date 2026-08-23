@@ -18,5 +18,8 @@ public interface IAppDbContext
     DbSet<ProductRecipe> ProductRecipes { get; }
     DbSet<StockAdjustment> StockAdjustments { get; }
 
+    DbSet<Sale> Sales { get; }
+    DbSet<SaleItem> SaleItems { get; }
+
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }
