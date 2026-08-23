@@ -6,6 +6,9 @@
     "switchTo": "English",
     "current": "العربية"
   },
+  "theme": {
+    "toggle": "تبديل الوضع الليلي/النهاري"
+  },
   "login": {
     "title": "تسجيل الدخول",
     "username": "اسم المستخدم",
@@ -15,6 +18,10 @@
   },
   "nav": {
     "users": "المستخدمون",
+    "branches": "الأفرع",
+    "products": "المنتجات",
+    "rawMaterials": "المواد الخام",
+    "inventory": "المخزون",
     "logout": "تسجيل الخروج"
   },
   "users": {
@@ -23,8 +30,9 @@
     "username": "اسم المستخدم",
     "password": "كلمة المرور",
     "role": "الدور",
-    "branchId": "معرّف الفرع",
+    "branchId": "الفرع",
     "branchIdHint": "اتركه فارغاً للمدير العام",
+    "noBranch": "بدون فرع (مدير عام)",
     "language": "اللغة المفضلة",
     "active": "مُفعّل",
     "inactive": "معطّل",
@@ -44,6 +52,80 @@
     "inherit": "موروثة من الدور",
     "grant": "منح",
     "deny": "سحب"
+  },
+  "branches": {
+    "title": "الأفرع",
+    "nameAr": "الاسم بالعربية",
+    "nameEn": "الاسم بالإنجليزية",
+    "code": "الرمز",
+    "active": "مُفعّل",
+    "inactive": "معطّل",
+    "actions": "إجراءات",
+    "create": "إضافة فرع",
+    "edit": "تعديل",
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "createTitle": "فرع جديد",
+    "editTitle": "تعديل الفرع"
+  },
+  "products": {
+    "title": "المنتجات",
+    "nameAr": "الاسم بالعربية",
+    "nameEn": "الاسم بالإنجليزية",
+    "category": "الفئة",
+    "price": "السعر",
+    "icon": "أيقونة / رابط صورة",
+    "active": "مُفعّل",
+    "inactive": "معطّل",
+    "actions": "إجراءات",
+    "create": "إضافة منتج",
+    "edit": "تعديل",
+    "recipe": "الوصفة",
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "createTitle": "منتج جديد",
+    "editTitle": "تعديل المنتج"
+  },
+  "rawMaterials": {
+    "title": "المواد الخام",
+    "nameAr": "الاسم بالعربية",
+    "nameEn": "الاسم بالإنجليزية",
+    "unit": "الوحدة",
+    "actions": "إجراءات",
+    "create": "إضافة مادة خام",
+    "edit": "تعديل",
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "createTitle": "مادة خام جديدة",
+    "editTitle": "تعديل المادة الخام"
+  },
+  "recipe": {
+    "title": "الوصفة",
+    "back": "رجوع",
+    "branch": "الفرع",
+    "optionalHint": "اختياري: المنتج بدون أي سطر وصفة يُباع عادي بدون أي خصم من المخزون (مثل المنتجات الطازجة التي تُحضّر لحظة الطلب).",
+    "rawMaterial": "المادة الخام",
+    "quantityRequired": "الكمية المطلوبة",
+    "addLine": "إضافة سطر",
+    "remove": "حذف",
+    "save": "حفظ الوصفة",
+    "empty": "لا توجد وصفة - هذا المنتج يُباع بدون أي خصم من المخزون."
+  },
+  "inventory": {
+    "title": "المخزون",
+    "branch": "الفرع",
+    "rawMaterial": "المادة الخام",
+    "currentQuantity": "الكمية الحالية",
+    "lowStockThreshold": "حد المخزون المنخفض",
+    "lowStock": "مخزون منخفض",
+    "adjust": "تعديل",
+    "adjustTitle": "تعديل المخزون",
+    "quantityChange": "التغيير في الكمية",
+    "quantityChangeHint": "موجب للإضافة، سالب للخصم",
+    "reason": "السبب",
+    "setThreshold": "ضبط الحد",
+    "save": "حفظ",
+    "cancel": "إلغاء"
   },
   "common": {
     "loading": "جارٍ التحميل...",

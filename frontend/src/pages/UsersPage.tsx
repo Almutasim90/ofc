@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { api } from '../api/client'
-import type { CreateUserRequest, RoleDto, UpdateUserRequest, UserDto } from '../api/types'
+import type { BranchDto, CreateUserRequest, RoleDto, UpdateUserRequest, UserDto } from '../api/types'
 
 type EditingState = { mode: 'create' } | { mode: 'edit'; user: UserDto } | null
 
@@ -10,17 +10,20 @@ export default function UsersPage() {
   const { t } = useTranslation()
   const [users, setUsers] = useState<UserDto[]>([])
   const [roles, setRoles] = useState<RoleDto[]>([])
+  const [branches, setBranches] = useState<BranchDto[]>([])
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState<EditingState>(null)
 
   const load = async () => {
     setLoading(true)
-    const [usersData, rolesData] = await Promise.all([
+    const [usersData, rolesData, branchesData] = await Promise.all([
       api.get<UserDto[]>('/api/users'),
       api.get<RoleDto[]>('/api/roles'),
+      api.get<BranchDto[]>('/api/branches'),
     ])
     setUsers(usersData)
     setRoles(rolesData)
+    setBranches(branchesData)
     setLoading(false)
   }
 
@@ -29,6 +32,8 @@ export default function UsersPage() {
   }, [])
 
   if (loading) return <p>{t('common.loading')}</p>
+
+  const branchName = (branchId: string | null) => branches.find((b) => b.id === branchId)?.nameEn ?? '-'
 
   return (
     <div>
@@ -54,7 +59,7 @@ export default function UsersPage() {
               <td>{user.fullName}</td>
               <td>{user.username}</td>
               <td>{user.roleName}</td>
-              <td>{user.branchId ?? '-'}</td>
+              <td>{branchName(user.branchId)}</td>
               <td>{user.isActive ? t('users.active') : t('users.inactive')}</td>
               <td>
                 <button type="button" onClick={() => setEditing({ mode: 'edit', user })}>
@@ -70,6 +75,7 @@ export default function UsersPage() {
       {editing && (
         <UserForm
           roles={roles}
+          branches={branches}
           editing={editing}
           onClose={() => setEditing(null)}
           onSaved={async () => {
@@ -84,11 +90,13 @@ export default function UsersPage() {
 
 function UserForm({
   roles,
+  branches,
   editing,
   onClose,
   onSaved,
 }: {
   roles: RoleDto[]
+  branches: BranchDto[]
   editing: Exclude<EditingState, null>
   onClose: () => void
   onSaved: () => void
@@ -171,7 +179,14 @@ function UserForm({
         </label>
         <label>
           {t('users.branchId')}
-          <input value={branchId ?? ''} onChange={(e) => setBranchId(e.target.value)} />
+          <select value={branchId ?? ''} onChange={(e) => setBranchId(e.target.value)}>
+            <option value="">{t('users.noBranch')}</option>
+            {branches.map((branch) => (
+              <option key={branch.id} value={branch.id}>
+                {branch.nameEn}
+              </option>
+            ))}
+          </select>
           <small>{t('users.branchIdHint')}</small>
         </label>
         <label>

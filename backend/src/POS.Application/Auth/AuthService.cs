@@ -27,6 +27,7 @@ public class AuthService(IAppDbContext db, IPasswordHasher passwordHasher, IJwtT
             user.BranchId,
             user.Role.Name,
             user.PreferredLanguage,
+            user.PreferredTheme,
             permissions);
     }
 }

@@ -4,6 +4,7 @@ export interface AuthUser {
   branchId: string | null
   roleName: string
   preferredLanguage: string
+  preferredTheme: string | null
   permissions: string[]
 }
 
@@ -14,5 +15,6 @@ export interface LoginResponse {
   branchId: string | null
   roleName: string
   preferredLanguage: string
+  preferredTheme: string | null
   permissions: string[]
 }

@@ -6,6 +6,9 @@
     "switchTo": "العربية",
     "current": "English"
   },
+  "theme": {
+    "toggle": "Toggle light/dark theme"
+  },
   "login": {
     "title": "Sign in",
     "username": "Username",
@@ -15,6 +18,10 @@
   },
   "nav": {
     "users": "Users",
+    "branches": "Branches",
+    "products": "Products",
+    "rawMaterials": "Raw Materials",
+    "inventory": "Inventory",
     "logout": "Log out"
   },
   "users": {
@@ -23,8 +30,9 @@
     "username": "Username",
     "password": "Password",
     "role": "Role",
-    "branchId": "Branch ID",
+    "branchId": "Branch",
     "branchIdHint": "Leave empty for General Manager",
+    "noBranch": "No branch (General Manager)",
     "language": "Preferred language",
     "active": "Active",
     "inactive": "Inactive",
@@ -44,6 +52,80 @@
     "inherit": "Inherited from role",
     "grant": "Grant",
     "deny": "Deny"
+  },
+  "branches": {
+    "title": "Branches",
+    "nameAr": "Name (Arabic)",
+    "nameEn": "Name (English)",
+    "code": "Code",
+    "active": "Active",
+    "inactive": "Inactive",
+    "actions": "Actions",
+    "create": "Add branch",
+    "edit": "Edit",
+    "save": "Save",
+    "cancel": "Cancel",
+    "createTitle": "New branch",
+    "editTitle": "Edit branch"
+  },
+  "products": {
+    "title": "Products",
+    "nameAr": "Name (Arabic)",
+    "nameEn": "Name (English)",
+    "category": "Category",
+    "price": "Price",
+    "icon": "Icon / image URL",
+    "active": "Active",
+    "inactive": "Inactive",
+    "actions": "Actions",
+    "create": "Add product",
+    "edit": "Edit",
+    "recipe": "Recipe",
+    "save": "Save",
+    "cancel": "Cancel",
+    "createTitle": "New product",
+    "editTitle": "Edit product"
+  },
+  "rawMaterials": {
+    "title": "Raw Materials",
+    "nameAr": "Name (Arabic)",
+    "nameEn": "Name (English)",
+    "unit": "Unit",
+    "actions": "Actions",
+    "create": "Add raw material",
+    "edit": "Edit",
+    "save": "Save",
+    "cancel": "Cancel",
+    "createTitle": "New raw material",
+    "editTitle": "Edit raw material"
+  },
+  "recipe": {
+    "title": "Recipe",
+    "back": "Back",
+    "branch": "Branch",
+    "optionalHint": "Optional: a product with no recipe lines sells normally with no stock deduction (e.g. fresh/prepared-to-order items).",
+    "rawMaterial": "Raw material",
+    "quantityRequired": "Quantity required",
+    "addLine": "Add line",
+    "remove": "Remove",
+    "save": "Save recipe",
+    "empty": "No recipe set - this product sells with no stock deduction."
+  },
+  "inventory": {
+    "title": "Inventory",
+    "branch": "Branch",
+    "rawMaterial": "Raw material",
+    "currentQuantity": "Current quantity",
+    "lowStockThreshold": "Low stock threshold",
+    "lowStock": "Low stock",
+    "adjust": "Adjust",
+    "adjustTitle": "Adjust stock",
+    "quantityChange": "Quantity change",
+    "quantityChangeHint": "Positive to add stock, negative to remove",
+    "reason": "Reason",
+    "setThreshold": "Set threshold",
+    "save": "Save",
+    "cancel": "Cancel"
   },
   "common": {
     "loading": "Loading...",

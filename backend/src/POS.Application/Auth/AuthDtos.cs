@@ -9,4 +9,5 @@ public record LoginResponse(
     Guid? BranchId,
     string RoleName,
     string PreferredLanguage,
+    string? PreferredTheme,
     IReadOnlyCollection<string> Permissions);

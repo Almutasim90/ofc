@@ -5,7 +5,7 @@ using POS.Domain.Entities;
 
 namespace POS.Application.Users;
 
-public class UserService(IAppDbContext db, IPasswordHasher passwordHasher)
+public class UserService(IAppDbContext db, IPasswordHasher passwordHasher, ICurrentUserService currentUser)
 {
     public async Task<List<UserDto>> GetAllAsync(CancellationToken cancellationToken = default)
     {
@@ -14,12 +14,14 @@ public class UserService(IAppDbContext db, IPasswordHasher passwordHasher)
             .OrderBy(u => u.FullName)
             .Select(u => new UserDto(
                 u.Id, u.FullName, u.Username, u.BranchId, u.RoleId, u.Role.Name,
-                u.PreferredLanguage, u.IsActive, u.CreatedAt))
+                u.PreferredLanguage, u.PreferredTheme, u.IsActive, u.CreatedAt))
             .ToListAsync(cancellationToken);
     }
 
     public async Task<UserDto> CreateAsync(CreateUserRequest request, CancellationToken cancellationToken = default)
     {
+        EnsureBranchScope(request.BranchId);
+
         var usernameTaken = await db.Users.AnyAsync(u => u.Username == request.Username, cancellationToken);
         if (usernameTaken)
         {
@@ -46,11 +48,13 @@ public class UserService(IAppDbContext db, IPasswordHasher passwordHasher)
         await db.SaveChangesAsync(cancellationToken);
 
         return new UserDto(user.Id, user.FullName, user.Username, user.BranchId, user.RoleId, role.Name,
-            user.PreferredLanguage, user.IsActive, user.CreatedAt);
+            user.PreferredLanguage, user.PreferredTheme, user.IsActive, user.CreatedAt);
     }
 
     public async Task<UserDto> UpdateAsync(Guid id, UpdateUserRequest request, CancellationToken cancellationToken = default)
     {
+        EnsureBranchScope(request.BranchId);
+
         var user = await db.Users.Include(u => u.Role).FirstOrDefaultAsync(u => u.Id == id, cancellationToken)
             ?? throw new NotFoundException($"User '{id}' not found.");
 
@@ -67,7 +71,23 @@ public class UserService(IAppDbContext db, IPasswordHasher passwordHasher)
         await db.SaveChangesAsync(cancellationToken);
 
         return new UserDto(user.Id, user.FullName, user.Username, user.BranchId, user.RoleId, role.Name,
-            user.PreferredLanguage, user.IsActive, user.CreatedAt);
+            user.PreferredLanguage, user.PreferredTheme, user.IsActive, user.CreatedAt);
+    }
+
+    public async Task<UserDto> UpdateMyPreferencesAsync(Guid userId, UpdateMyPreferencesRequest request, CancellationToken cancellationToken = default)
+    {
+        var user = await db.Users.Include(u => u.Role)
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken)
+            ?? throw new NotFoundException($"User '{userId}' not found.");
+
+        user.PreferredLanguage = request.PreferredLanguage;
+        user.PreferredTheme = request.PreferredTheme;
+
+        await db.SaveChangesAsync(cancellationToken);
+
+        return new UserDto(user.Id, user.FullName, user.Username, user.BranchId, user.RoleId, user.Role.Name,
+            user.PreferredLanguage, user.PreferredTheme, user.IsActive, user.CreatedAt);
     }
 
     public async Task<List<PermissionOverrideDto>> GetPermissionOverridesAsync(Guid userId, CancellationToken cancellationToken = default)
@@ -125,5 +145,13 @@ public class UserService(IAppDbContext db, IPasswordHasher passwordHasher)
         }
 
         await db.SaveChangesAsync(cancellationToken);
+    }
+
+    private void EnsureBranchScope(Guid? branchId)
+    {
+        if (!currentUser.BypassBranchFilter && branchId != currentUser.BranchId)
+        {
+            throw new ValidationException("You do not have access to manage users outside your branch.");
+        }
     }
 }

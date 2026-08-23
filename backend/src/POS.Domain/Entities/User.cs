@@ -15,6 +15,10 @@ public class User
     public Role Role { get; set; } = null!;
 
     public string PreferredLanguage { get; set; } = "ar";
+
+    /// <summary>Null means the user hasn't picked one explicitly - the client falls back to OS preference.</summary>
+    public string? PreferredTheme { get; set; }
+
     public bool IsActive { get; set; } = true;
     public DateTime CreatedAt { get; set; }
 

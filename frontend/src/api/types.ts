@@ -6,6 +6,7 @@ export interface UserDto {
   roleId: string
   roleName: string
   preferredLanguage: string
+  preferredTheme: string | null
   isActive: boolean
   createdAt: string
 }
@@ -43,4 +44,98 @@ export interface UpdateUserRequest {
   roleId: string
   preferredLanguage: string
   isActive: boolean
+}
+
+export interface BranchDto {
+  id: string
+  nameAr: string
+  nameEn: string
+  code: string
+  isActive: boolean
+}
+
+export interface CreateBranchRequest {
+  nameAr: string
+  nameEn: string
+  code: string
+}
+
+export interface UpdateBranchRequest {
+  nameAr: string
+  nameEn: string
+  code: string
+  isActive: boolean
+}
+
+export interface ProductDto {
+  id: string
+  nameAr: string
+  nameEn: string
+  category: string
+  price: number
+  iconOrImageUrl: string | null
+  isActive: boolean
+}
+
+export interface CreateProductRequest {
+  nameAr: string
+  nameEn: string
+  category: string
+  price: number
+  iconOrImageUrl: string | null
+}
+
+export interface UpdateProductRequest extends CreateProductRequest {
+  isActive: boolean
+}
+
+export interface RawMaterialDto {
+  id: string
+  nameAr: string
+  nameEn: string
+  unit: string
+}
+
+export interface CreateRawMaterialRequest {
+  nameAr: string
+  nameEn: string
+  unit: string
+}
+
+export type UpdateRawMaterialRequest = CreateRawMaterialRequest
+
+export interface RecipeLineDto {
+  rawMaterialId: string
+  rawMaterialNameAr: string
+  rawMaterialNameEn: string
+  unit: string
+  quantityRequired: number
+}
+
+export interface SetRecipeRequest {
+  branchId: string
+  lines: { rawMaterialId: string; quantityRequired: number }[]
+}
+
+export interface StockStatusDto {
+  rawMaterialId: string
+  nameAr: string
+  nameEn: string
+  unit: string
+  currentQuantity: number
+  lowStockThreshold: number
+  isLowStock: boolean
+}
+
+export interface AdjustStockRequest {
+  branchId: string
+  rawMaterialId: string
+  quantityChange: number
+  reason: string
+}
+
+export interface SetLowStockThresholdRequest {
+  branchId: string
+  rawMaterialId: string
+  threshold: number
 }

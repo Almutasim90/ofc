@@ -20,6 +20,13 @@ public class AppDbContext : DbContext, IAppDbContext
     public DbSet<RolePermission> RolePermissions => Set<RolePermission>();
     public DbSet<UserPermissionOverride> UserPermissionOverrides => Set<UserPermissionOverride>();
 
+    public DbSet<Branch> Branches => Set<Branch>();
+    public DbSet<Product> Products => Set<Product>();
+    public DbSet<RawMaterial> RawMaterials => Set<RawMaterial>();
+    public DbSet<BranchRawMaterialStock> BranchRawMaterialStocks => Set<BranchRawMaterialStock>();
+    public DbSet<ProductRecipe> ProductRecipes => Set<ProductRecipe>();
+    public DbSet<StockAdjustment> StockAdjustments => Set<StockAdjustment>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -52,7 +59,9 @@ public class AppDbContext : DbContext, IAppDbContext
             entity.Property(u => u.Username).IsRequired().HasMaxLength(100);
             entity.HasIndex(u => u.Username).IsUnique();
             entity.Property(u => u.PreferredLanguage).IsRequired().HasMaxLength(5);
+            entity.Property(u => u.PreferredTheme).HasMaxLength(5);
             entity.HasOne(u => u.Role).WithMany().HasForeignKey(u => u.RoleId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(u => u.Branch).WithMany().HasForeignKey(u => u.BranchId).OnDelete(DeleteBehavior.Restrict);
             entity.HasIndex(u => u.BranchId);
 
             // Branch isolation: non-global users only ever see users in their own branch.
@@ -73,6 +82,72 @@ public class AppDbContext : DbContext, IAppDbContext
                 _currentUser == null
                 || _currentUser.BypassBranchFilter
                 || o.User.BranchId == _currentUser.BranchId);
+        });
+
+        modelBuilder.Entity<Branch>(entity =>
+        {
+            entity.HasKey(b => b.Id);
+            entity.Property(b => b.NameAr).IsRequired().HasMaxLength(200);
+            entity.Property(b => b.NameEn).IsRequired().HasMaxLength(200);
+            entity.Property(b => b.Code).IsRequired().HasMaxLength(50);
+            entity.HasIndex(b => b.Code).IsUnique();
+        });
+
+        modelBuilder.Entity<Product>(entity =>
+        {
+            entity.HasKey(p => p.Id);
+            entity.Property(p => p.NameAr).IsRequired().HasMaxLength(200);
+            entity.Property(p => p.NameEn).IsRequired().HasMaxLength(200);
+            entity.Property(p => p.Category).IsRequired().HasMaxLength(100);
+            entity.Property(p => p.Price).HasPrecision(18, 3);
+        });
+
+        modelBuilder.Entity<RawMaterial>(entity =>
+        {
+            entity.HasKey(m => m.Id);
+            entity.Property(m => m.NameAr).IsRequired().HasMaxLength(200);
+            entity.Property(m => m.NameEn).IsRequired().HasMaxLength(200);
+            entity.Property(m => m.Unit).IsRequired().HasMaxLength(50);
+        });
+
+        modelBuilder.Entity<BranchRawMaterialStock>(entity =>
+        {
+            entity.HasKey(s => new { s.BranchId, s.RawMaterialId });
+            entity.HasOne(s => s.RawMaterial).WithMany().HasForeignKey(s => s.RawMaterialId).OnDelete(DeleteBehavior.Restrict);
+            entity.Property(s => s.CurrentQuantity).HasPrecision(18, 3);
+            entity.Property(s => s.LowStockThreshold).HasPrecision(18, 3);
+
+            entity.HasQueryFilter(s =>
+                _currentUser == null
+                || _currentUser.BypassBranchFilter
+                || s.BranchId == _currentUser.BranchId);
+        });
+
+        modelBuilder.Entity<ProductRecipe>(entity =>
+        {
+            entity.HasKey(r => new { r.ProductId, r.BranchId, r.RawMaterialId });
+            entity.HasOne(r => r.Product).WithMany().HasForeignKey(r => r.ProductId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(r => r.RawMaterial).WithMany().HasForeignKey(r => r.RawMaterialId).OnDelete(DeleteBehavior.Restrict);
+            entity.Property(r => r.QuantityRequired).HasPrecision(18, 3);
+
+            entity.HasQueryFilter(r =>
+                _currentUser == null
+                || _currentUser.BypassBranchFilter
+                || r.BranchId == _currentUser.BranchId);
+        });
+
+        modelBuilder.Entity<StockAdjustment>(entity =>
+        {
+            entity.HasKey(a => a.Id);
+            entity.HasOne(a => a.RawMaterial).WithMany().HasForeignKey(a => a.RawMaterialId).OnDelete(DeleteBehavior.Restrict);
+            entity.Property(a => a.QuantityChange).HasPrecision(18, 3);
+            entity.Property(a => a.Reason).IsRequired().HasMaxLength(500);
+            entity.HasIndex(a => new { a.BranchId, a.RawMaterialId });
+
+            entity.HasQueryFilter(a =>
+                _currentUser == null
+                || _currentUser.BypassBranchFilter
+                || a.BranchId == _currentUser.BranchId);
         });
     }
 }

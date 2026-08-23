@@ -1,11 +1,37 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-bg: 246 247 245;
+  --color-surface: 255 255 255;
+  --color-surface2: 238 241 236;
+  --color-border: 226 230 225;
+  --color-text: 28 35 33;
+  --color-muted: 107 117 111;
+  --color-primary: 31 122 92;
+  --color-primary-dim: 20 92 68;
+  --color-accent: 199 130 39;
+  --color-danger: 192 57 43;
+}
+
+html.dark {
+  --color-bg: 15 20 18;
+  --color-surface: 22 29 26;
+  --color-surface2: 30 39 35;
+  --color-border: 41 51 46;
+  --color-text: 236 242 238;
+  --color-muted: 145 158 150;
+  --color-primary: 52 194 140;
+  --color-primary-dim: 31 122 92;
+  --color-accent: 232 167 79;
+  --color-danger: 224 87 74;
+}
+
 :root {
   font-family: 'Tajawal', system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
-
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -13,13 +39,23 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+* {
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+html,
+body {
+  background-color: rgb(var(--color-bg));
+  color: rgb(var(--color-text));
+}
+
 a {
   font-weight: 500;
-  color: #646cff;
+  color: rgb(var(--color-primary));
   text-decoration: inherit;
 }
 a:hover {
-  color: #535bf2;
+  color: rgb(var(--color-primary-dim));
 }
 
 body {
@@ -34,12 +70,22 @@ body {
   justify-content: space-between;
   align-items: center;
   padding: 0.75em 1.5em;
-  border-bottom: 1px solid rgba(128, 128, 128, 0.3);
+  background-color: rgb(var(--color-surface));
+  border-bottom: 1px solid rgb(var(--color-border));
 }
 
 .top-bar-nav {
   display: flex;
   gap: 1.5em;
+}
+
+.top-bar-nav a {
+  color: rgb(var(--color-muted));
+  font-weight: 500;
+}
+.top-bar-nav a:hover,
+.top-bar-nav a.active {
+  color: rgb(var(--color-primary));
 }
 
 .top-bar-actions {
@@ -69,6 +115,13 @@ body {
   width: min(360px, 90vw);
 }
 
+.centered-form form {
+  background-color: rgb(var(--color-surface));
+  padding: 2em;
+  border-radius: 12px;
+  border: 1px solid rgb(var(--color-border));
+}
+
 .centered-form label,
 .modal label {
   display: flex;
@@ -76,38 +129,58 @@ body {
   gap: 0.25em;
   text-align: start;
   font-size: 0.9em;
+  color: rgb(var(--color-muted));
 }
 
 .error-text {
-  color: #e05555;
+  color: rgb(var(--color-danger));
 }
 
 table {
   width: 100%;
   border-collapse: collapse;
   margin-block: 1em;
+  background-color: rgb(var(--color-surface));
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgb(var(--color-border));
 }
 
-th,
-td {
+th {
   text-align: start;
   padding: 0.5em 0.75em;
-  border-bottom: 1px solid rgba(128, 128, 128, 0.25);
+  color: rgb(var(--color-muted));
+  font-weight: 500;
+  font-size: 0.85em;
+  border-bottom: 1px solid rgb(var(--color-border));
+}
+
+td {
+  text-align: start;
+  padding: 0.6em 0.75em;
+  border-bottom: 1px solid rgb(var(--color-border));
+  color: rgb(var(--color-text));
+}
+
+tbody tr:hover {
+  background-color: rgb(var(--color-surface2));
 }
 
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgb(0 0 0 / 0.6);
   display: flex;
   align-items: center;
   justify-content: center;
+  z-index: 50;
 }
 
 .modal {
-  background: canvas;
+  background: rgb(var(--color-surface));
   padding: 1.5em;
-  border-radius: 8px;
+  border-radius: 12px;
+  border: 1px solid rgb(var(--color-border));
 }
 
 .modal-actions {
@@ -116,8 +189,32 @@ td {
 }
 
 h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
+  font-size: 1.75em;
+  line-height: 1.2;
+  color: rgb(var(--color-text));
+  font-weight: 700;
+}
+
+h2 {
+  font-size: 1.25em;
+  color: rgb(var(--color-text));
+  font-weight: 700;
+}
+
+input,
+select {
+  background-color: rgb(var(--color-surface2));
+  border: 1px solid rgb(var(--color-border));
+  color: rgb(var(--color-text));
+  border-radius: 8px;
+  padding: 0.5em 0.75em;
+  font-family: inherit;
+  font-size: 1em;
+}
+input:focus,
+select:focus {
+  outline: none;
+  border-color: rgb(var(--color-primary));
 }
 
 button {
@@ -125,29 +222,37 @@ button {
   border: 1px solid transparent;
   padding: 0.6em 1.2em;
   font-size: 1em;
-  font-weight: 500;
+  font-weight: 600;
   font-family: inherit;
-  background-color: #1a1a1a;
+  background-color: rgb(var(--color-primary));
+  color: white;
   cursor: pointer;
-  transition: border-color 0.25s;
+  transition: background-color 0.2s;
 }
 button:hover {
-  border-color: #646cff;
+  background-color: rgb(var(--color-primary-dim));
 }
 button:focus,
 button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+  outline: 2px solid rgb(var(--color-primary));
+  outline-offset: 2px;
+}
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
+/* Secondary buttons (cancel, edit, small row actions) read as outline style */
+table button,
+.modal-actions button:last-child,
+.top-bar-actions button {
+  background-color: transparent;
+  color: rgb(var(--color-text));
+  border: 1px solid rgb(var(--color-border));
+}
+table button:hover,
+.modal-actions button:last-child:hover,
+.top-bar-actions button:hover {
+  background-color: rgb(var(--color-surface2));
+  color: rgb(var(--color-primary));
 }

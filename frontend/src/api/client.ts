@@ -1,5 +1,7 @@
 const API_URL = import.meta.env.VITE_API_URL
 
+export const AUTH_STORAGE_KEY = 'pos.auth'
+
 export class ApiError extends Error {
   constructor(
     message: string,
@@ -9,17 +11,26 @@ export class ApiError extends Error {
   }
 }
 
-let authToken: string | null = null
-
-export function setAuthToken(token: string | null) {
-  authToken = token
+// Read fresh from localStorage on every request rather than caching in a module
+// variable set via a React effect - on a full page load, a deeply-nested page's
+// data-fetching effect can fire before a top-level effect that sets a cached
+// token, since React fires effects bottom-up (children before parents).
+function getStoredToken(): string | null {
+  try {
+    const raw = localStorage.getItem(AUTH_STORAGE_KEY)
+    if (!raw) return null
+    return JSON.parse(raw)?.token ?? null
+  } catch {
+    return null
+  }
 }
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const headers = new Headers(options.headers)
   headers.set('Content-Type', 'application/json')
-  if (authToken) {
-    headers.set('Authorization', `Bearer ${authToken}`)
+  const token = getStoredToken()
+  if (token) {
+    headers.set('Authorization', `Bearer ${token}`)
   }
 
   const response = await fetch(`${API_URL}${path}`, { ...options, headers })
