@@ -13,6 +13,7 @@ import ProductsPage from './pages/ProductsPage'
 import ProductRecipePage from './pages/ProductRecipePage'
 import RawMaterialsPage from './pages/RawMaterialsPage'
 import InventoryPage from './pages/InventoryPage'
+import ShiftPage from './pages/ShiftPage'
 
 function App() {
   return (
@@ -29,6 +30,10 @@ function App() {
                     <CashierPage />
                   </ProtectedRoute>
                 }
+              />
+              <Route
+                path="/shift"
+                element={<ProtectedRoute permission="sales.create"><ShiftPage /></ProtectedRoute>}
               />
               <Route
                 path="/users"

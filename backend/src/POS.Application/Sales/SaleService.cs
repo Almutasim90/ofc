@@ -29,6 +29,9 @@ public class SaleService(IAppDbContext db, IDomainEventPublisher eventPublisher,
         }
 
         var userId = currentUser.UserId ?? throw new UnauthorizedException("Missing user context.");
+        var shift = await db.Shifts.FirstOrDefaultAsync(
+            s => s.CashierUserId == userId && s.BranchId == request.BranchId && s.Status == ShiftStatus.Open,
+            cancellationToken) ?? throw new ValidationException("An open shift is required before making a sale.");
 
         var productIds = request.Lines.Select(l => l.ProductId).Distinct().ToList();
         var products = await db.Products
@@ -88,7 +91,7 @@ public class SaleService(IAppDbContext db, IDomainEventPublisher eventPublisher,
         {
             Id = Guid.NewGuid(),
             BranchId = request.BranchId,
-            ShiftId = null,
+            ShiftId = shift.Id,
             CashierUserId = userId,
             BusinessDate = DateOnly.FromDateTime(DateTime.UtcNow),
             CreatedAt = DateTime.UtcNow,
@@ -137,7 +140,7 @@ public class SaleService(IAppDbContext db, IDomainEventPublisher eventPublisher,
             new SaleCompletedEvent(sale.Id, sale.BranchId, sale.CashierUserId, sale.CreatedAt), cancellationToken);
 
         return new SaleDto(
-            sale.Id, sale.BranchId, sale.CashierUserId, sale.BusinessDate, sale.CreatedAt, sale.TotalAmount,
+            sale.Id, sale.BranchId, sale.ShiftId, sale.CashierUserId, sale.BusinessDate, sale.CreatedAt, sale.TotalAmount,
             sale.PaymentMethod, sale.Status,
             sale.Items.Select(i => new SaleItemDto(i.ProductId, i.ProductNameSnapshot, i.UnitPriceSnapshot, i.Quantity, i.LineTotal)).ToList());
     }

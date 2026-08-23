@@ -3,6 +3,7 @@ using POS.Application.Auth;
 using POS.Application.Catalog;
 using POS.Application.Inventory;
 using POS.Application.Sales;
+using POS.Application.Shifts;
 using POS.Application.Users;
 
 namespace POS.Application;
@@ -19,6 +20,8 @@ public static class DependencyInjection
         services.AddScoped<RecipeService>();
         services.AddScoped<StockService>();
         services.AddScoped<SaleService>();
+        services.AddScoped<ShiftService>();
+        services.AddScoped<VoidService>();
         return services;
     }
 }

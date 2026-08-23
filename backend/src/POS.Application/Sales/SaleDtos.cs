@@ -10,6 +10,7 @@ public record SaleItemDto(
 public record SaleDto(
     Guid Id,
     Guid BranchId,
+    Guid ShiftId,
     Guid CashierUserId,
     DateOnly BusinessDate,
     DateTime CreatedAt,

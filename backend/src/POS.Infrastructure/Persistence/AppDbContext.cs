@@ -29,6 +29,8 @@ public class AppDbContext : DbContext, IAppDbContext
 
     public DbSet<Sale> Sales => Set<Sale>();
     public DbSet<SaleItem> SaleItems => Set<SaleItem>();
+    public DbSet<Shift> Shifts => Set<Shift>();
+    public DbSet<VoidRequest> VoidRequests => Set<VoidRequest>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -160,6 +162,7 @@ public class AppDbContext : DbContext, IAppDbContext
             entity.Property(s => s.PaymentMethod).IsRequired().HasMaxLength(20);
             entity.Property(s => s.Status).IsRequired().HasMaxLength(20);
             entity.HasIndex(s => new { s.BranchId, s.BusinessDate });
+            entity.HasOne(s => s.Shift).WithMany(s => s.Sales).HasForeignKey(s => s.ShiftId).OnDelete(DeleteBehavior.Restrict);
 
             entity.HasQueryFilter(s =>
                 _currentUser == null
@@ -182,6 +185,33 @@ public class AppDbContext : DbContext, IAppDbContext
                 _currentUser == null
                 || _currentUser.BypassBranchFilter
                 || i.Sale.BranchId == _currentUser.BranchId);
+        });
+
+        modelBuilder.Entity<Shift>(entity =>
+        {
+            entity.HasKey(s => s.Id);
+            entity.Property(s => s.OpeningCash).HasPrecision(18, 3);
+            entity.Property(s => s.ClosingCashExpected).HasPrecision(18, 3);
+            entity.Property(s => s.ClosingCashActual).HasPrecision(18, 3);
+            entity.Property(s => s.VarianceAmount).HasPrecision(18, 3);
+            entity.Property(s => s.Status).IsRequired().HasMaxLength(20);
+            entity.HasIndex(s => new { s.BranchId, s.OpenedAt });
+            entity.HasIndex(s => new { s.CashierUserId, s.Status });
+
+            entity.HasQueryFilter(s =>
+                _currentUser == null || _currentUser.BypassBranchFilter || s.BranchId == _currentUser.BranchId);
+        });
+
+        modelBuilder.Entity<VoidRequest>(entity =>
+        {
+            entity.HasKey(v => v.Id);
+            entity.Property(v => v.Reason).IsRequired().HasMaxLength(500);
+            entity.HasIndex(v => v.SaleId).IsUnique();
+            entity.HasOne(v => v.Sale).WithOne(s => s.VoidRequest).HasForeignKey<VoidRequest>(v => v.SaleId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasQueryFilter(v =>
+                _currentUser == null || _currentUser.BypassBranchFilter || v.Sale.BranchId == _currentUser.BranchId);
         });
     }
 }

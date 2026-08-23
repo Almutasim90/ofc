@@ -14,6 +14,7 @@ export default function Layout({ children }: { children: ReactNode }) {
       <header className="top-bar">
         <div className="top-bar-nav">
           {user && hasPermission('sales.create') && <Link to="/cashier">{t('nav.cashier')}</Link>}
+          {user && hasPermission('sales.create') && <Link to="/shift">{t('nav.shift')}</Link>}
           {user && hasPermission('users.manage') && <Link to="/users">{t('nav.users')}</Link>}
           {user && hasPermission('branches.manage') && <Link to="/branches">{t('nav.branches')}</Link>}
           {user && hasPermission('products.manage') && <Link to="/products">{t('nav.products')}</Link>}

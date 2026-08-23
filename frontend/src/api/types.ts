@@ -162,6 +162,7 @@ export interface SaleItemDto {
 export interface SaleDto {
   id: string
   branchId: string
+  shiftId: string
   cashierUserId: string
   businessDate: string
   createdAt: string
@@ -169,4 +170,28 @@ export interface SaleDto {
   paymentMethod: string
   status: string
   items: SaleItemDto[]
+}
+
+export interface ShiftDto {
+  id: string
+  branchId: string
+  cashierUserId: string
+  openingCash: number
+  closingCashExpected: number
+  closingCashActual: number | null
+  varianceAmount: number | null
+  openedAt: string
+  closedAt: string | null
+  status: 'Open' | 'Closed'
+  autoClosed: boolean
+  cashSalesTotal: number
+}
+
+export interface VoidRequestDto {
+  id: string
+  saleId: string
+  requestedByUserId: string
+  reason: string
+  approvedByUserId: string | null
+  createdAt: string
 }

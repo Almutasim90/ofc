@@ -20,6 +20,8 @@ public interface IAppDbContext
 
     DbSet<Sale> Sales { get; }
     DbSet<SaleItem> SaleItems { get; }
+    DbSet<Shift> Shifts { get; }
+    DbSet<VoidRequest> VoidRequests { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

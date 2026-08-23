@@ -23,6 +23,7 @@
     "products": "Products",
     "rawMaterials": "Raw Materials",
     "inventory": "Inventory",
+    "shift": "Shift",
     "logout": "Log out"
   },
   "cashier": {
@@ -46,11 +47,31 @@
     "saleRejected": "The sale could not be completed. Check the items and try again.",
     "insufficientStock": "There is not enough stock to complete this sale.",
     "noProducts": "No products are available.",
+    "shiftRequired": "Open a shift before making a sale.",
+    "openShift": "Open shift",
     "categories": {
       "tea": "Tea",
       "sweet": "Sweets",
       "food": "Food"
     }
+  },
+  "shifts": {
+    "title": "Shift",
+    "current": "Current shift",
+    "open": "Open shift",
+    "close": "Close shift",
+    "branch": "Branch",
+    "openingCash": "Opening cash",
+    "cashSales": "Cash sales",
+    "expected": "Expected closing cash",
+    "actual": "Actual closing cash",
+    "variance": "Variance",
+    "summary": "Shift summary",
+    "openSubmit": "Open shift",
+    "closeSubmit": "Close shift",
+    "loadError": "Could not load shift information.",
+    "openError": "Could not open the shift.",
+    "closeError": "Could not close the shift."
   },
   "users": {
     "title": "User Management",

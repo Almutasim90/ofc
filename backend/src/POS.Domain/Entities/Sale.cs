@@ -7,8 +7,8 @@ public class Sale
     public Guid Id { get; set; }
     public Guid BranchId { get; set; }
 
-    /// <summary>Null until Sprint 4 wires shifts; every sale will require an open shift then.</summary>
-    public Guid? ShiftId { get; set; }
+    public Guid ShiftId { get; set; }
+    public Shift Shift { get; set; } = null!;
 
     public Guid CashierUserId { get; set; }
 
@@ -22,4 +22,5 @@ public class Sale
     public string Status { get; set; } = SaleStatus.Completed;
 
     public ICollection<SaleItem> Items { get; set; } = new List<SaleItem>();
+    public VoidRequest? VoidRequest { get; set; }
 }
