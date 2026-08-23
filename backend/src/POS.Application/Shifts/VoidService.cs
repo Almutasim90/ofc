@@ -14,7 +14,8 @@ public class VoidService(IAppDbContext db, ICurrentUserService currentUser)
             throw new ValidationException("A reason is required to void a sale.");
 
         var userId = currentUser.UserId ?? throw new UnauthorizedException("Missing user context.");
-        var sale = await db.Sales.Include(s => s.Items).Include(s => s.Shift).Include(s => s.VoidRequest)
+        var sale = await db.Sales.Include(s => s.Items).Include(s => s.InventoryConsumptions)
+            .Include(s => s.Shift).Include(s => s.VoidRequest)
             .FirstOrDefaultAsync(s => s.Id == saleId, cancellationToken)
             ?? throw new NotFoundException("Sale not found.");
         if (sale.Status != SaleStatus.Completed || sale.VoidRequest is not null)
@@ -22,14 +23,23 @@ public class VoidService(IAppDbContext db, ICurrentUserService currentUser)
         if (sale.Shift.Status != ShiftStatus.Open)
             throw new ValidationException("Sales from a closed shift are immutable.");
 
-        var productIds = sale.Items.Select(i => i.ProductId).Distinct().ToList();
-        var recipes = await db.ProductRecipes
-            .Where(r => r.BranchId == sale.BranchId && productIds.Contains(r.ProductId)).ToListAsync(cancellationToken);
         var restoreByMaterial = new Dictionary<Guid, decimal>();
-        foreach (var item in sale.Items)
-        foreach (var recipe in recipes.Where(r => r.ProductId == item.ProductId))
-            restoreByMaterial[recipe.RawMaterialId] =
-                restoreByMaterial.GetValueOrDefault(recipe.RawMaterialId) + recipe.QuantityRequired * item.Quantity;
+        if (sale.InventoryConsumptions.Count > 0)
+        {
+            foreach (var consumption in sale.InventoryConsumptions)
+                restoreByMaterial[consumption.RawMaterialId] = consumption.QuantityConsumed;
+        }
+        else
+        {
+            // Compatibility fallback for sales made before consumption snapshots existed.
+            var productIds = sale.Items.Select(i => i.ProductId).Distinct().ToList();
+            var recipes = await db.ProductRecipes
+                .Where(r => r.BranchId == sale.BranchId && productIds.Contains(r.ProductId)).ToListAsync(cancellationToken);
+            foreach (var item in sale.Items)
+            foreach (var recipe in recipes.Where(r => r.ProductId == item.ProductId))
+                restoreByMaterial[recipe.RawMaterialId] =
+                    restoreByMaterial.GetValueOrDefault(recipe.RawMaterialId) + recipe.QuantityRequired * item.Quantity;
+        }
 
         if (restoreByMaterial.Count > 0)
         {

@@ -21,6 +21,7 @@ export default function Layout({ children }: { children: ReactNode }) {
           {user && hasPermission('products.manage') && <Link to="/raw-materials">{t('nav.rawMaterials')}</Link>}
           {user && hasPermission('inventory.adjust') && <Link to="/inventory">{t('nav.inventory')}</Link>}
           {user && hasPermission('closing.configure') && <Link to="/closing-schedule">{t('nav.closingSchedule')}</Link>}
+          {user && hasPermission('reports.branch.view') && <Link to="/reports">{t('nav.reports')}</Link>}
         </div>
         <div className="top-bar-actions">
           <ThemeToggle />

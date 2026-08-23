@@ -216,3 +216,43 @@ export interface UpcomingClosingDto {
   warning: boolean
   scheduleActive: boolean
 }
+
+export interface PaymentBreakdownDto {
+  paymentMethod: string
+  totalAmount: number
+  invoiceCount: number
+}
+export interface DailySalesReportDto {
+  branchId: string
+  branchNameAr: string
+  branchNameEn: string
+  businessDate: string
+  totalSales: number
+  invoiceCount: number
+  paymentBreakdown: PaymentBreakdownDto[]
+}
+export interface BranchSalesSummaryDto {
+  branchId: string
+  branchNameAr: string
+  branchNameEn: string
+  totalSales: number
+  invoiceCount: number
+}
+export interface GlobalSalesReportDto {
+  businessDate: string
+  totalSales: number
+  invoiceCount: number
+  branches: BranchSalesSummaryDto[]
+}
+export interface InventoryConsumptionDto {
+  rawMaterialId: string
+  nameAr: string
+  nameEn: string
+  unit: string
+  quantityConsumed: number
+}
+export interface ShiftInventoryReportDto {
+  shiftId: string
+  branchId: string
+  materials: InventoryConsumptionDto[]
+}

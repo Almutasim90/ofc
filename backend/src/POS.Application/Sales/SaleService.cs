@@ -119,6 +119,14 @@ public class SaleService(IAppDbContext db, IDomainEventPublisher eventPublisher,
         }
         sale.TotalAmount = total;
 
+        foreach (var (materialId, quantity) in requiredByMaterial)
+        {
+            sale.InventoryConsumptions.Add(new SaleInventoryConsumption
+            {
+                Id = Guid.NewGuid(), SaleId = sale.Id, RawMaterialId = materialId, QuantityConsumed = quantity,
+            });
+        }
+
         db.Sales.Add(sale);
 
         foreach (var (materialId, requiredQty) in requiredByMaterial)

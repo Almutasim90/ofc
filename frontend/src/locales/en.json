@@ -25,6 +25,7 @@
     "inventory": "Inventory",
     "shift": "Shift",
     "closingSchedule": "Closing schedule",
+    "reports": "Reports",
     "logout": "Log out"
   },
   "cashier": {
@@ -98,6 +99,26 @@
     "confirmDelete": "Delete this closing exception?",
     "loadError": "Could not load the closing schedule.",
     "saveError": "Could not save the closing schedule."
+  },
+  "reports": {
+    "title": "Reports",
+    "scope": "Report scope",
+    "global": "All branches",
+    "branch": "Branch",
+    "date": "Business date",
+    "totalSales": "Total sales",
+    "invoices": "Invoices",
+    "paymentMethod": "Payment method",
+    "exportCsv": "Export CSV",
+    "inventoryTitle": "Shift inventory consumption",
+    "shiftId": "Shift ID",
+    "load": "Load report",
+    "material": "Raw material",
+    "consumed": "Quantity consumed",
+    "unit": "Unit",
+    "loadError": "Could not load the sales report.",
+    "shiftError": "Could not load inventory consumption for this shift.",
+    "payment": { "cash": "Cash", "card": "Card" }
   },
   "users": {
     "title": "User Management",

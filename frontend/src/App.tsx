@@ -1,4 +1,5 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import { lazy, Suspense } from 'react'
 import { AuthProvider } from './auth/AuthContext'
 import { ThemeProvider } from './theme/ThemeContext'
 import ProtectedRoute from './auth/ProtectedRoute'
@@ -15,6 +16,8 @@ import RawMaterialsPage from './pages/RawMaterialsPage'
 import InventoryPage from './pages/InventoryPage'
 import ShiftPage from './pages/ShiftPage'
 import ClosingSchedulePage from './pages/ClosingSchedulePage'
+
+const ReportsPage = lazy(() => import('./pages/ReportsPage'))
 
 function App() {
   return (
@@ -38,6 +41,11 @@ function App() {
               />
               <Route path="/closing-schedule" element={
                 <ProtectedRoute permission="closing.configure"><ClosingSchedulePage /></ProtectedRoute>
+              } />
+              <Route path="/reports" element={
+                <ProtectedRoute permission="reports.branch.view">
+                  <Suspense fallback={null}><ReportsPage /></Suspense>
+                </ProtectedRoute>
               } />
               <Route
                 path="/users"

@@ -20,6 +20,7 @@ public interface IAppDbContext
 
     DbSet<Sale> Sales { get; }
     DbSet<SaleItem> SaleItems { get; }
+    DbSet<SaleInventoryConsumption> SaleInventoryConsumptions { get; }
     DbSet<Shift> Shifts { get; }
     DbSet<VoidRequest> VoidRequests { get; }
     DbSet<ClosingScheduleConfig> ClosingScheduleConfigs { get; }

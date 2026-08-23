@@ -29,6 +29,7 @@ public class AppDbContext : DbContext, IAppDbContext
 
     public DbSet<Sale> Sales => Set<Sale>();
     public DbSet<SaleItem> SaleItems => Set<SaleItem>();
+    public DbSet<SaleInventoryConsumption> SaleInventoryConsumptions => Set<SaleInventoryConsumption>();
     public DbSet<Shift> Shifts => Set<Shift>();
     public DbSet<VoidRequest> VoidRequests => Set<VoidRequest>();
     public DbSet<ClosingScheduleConfig> ClosingScheduleConfigs => Set<ClosingScheduleConfig>();
@@ -187,6 +188,19 @@ public class AppDbContext : DbContext, IAppDbContext
                 _currentUser == null
                 || _currentUser.BypassBranchFilter
                 || i.Sale.BranchId == _currentUser.BranchId);
+        });
+
+        modelBuilder.Entity<SaleInventoryConsumption>(entity =>
+        {
+            entity.HasKey(c => c.Id);
+            entity.HasOne(c => c.Sale).WithMany(s => s.InventoryConsumptions).HasForeignKey(c => c.SaleId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(c => c.RawMaterial).WithMany().HasForeignKey(c => c.RawMaterialId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.Property(c => c.QuantityConsumed).HasPrecision(18, 3);
+            entity.HasIndex(c => c.SaleId);
+            entity.HasQueryFilter(c =>
+                _currentUser == null || _currentUser.BypassBranchFilter || c.Sale.BranchId == _currentUser.BranchId);
         });
 
         modelBuilder.Entity<Shift>(entity =>

@@ -22,5 +22,6 @@ public class Sale
     public string Status { get; set; } = SaleStatus.Completed;
 
     public ICollection<SaleItem> Items { get; set; } = new List<SaleItem>();
+    public ICollection<SaleInventoryConsumption> InventoryConsumptions { get; set; } = new List<SaleInventoryConsumption>();
     public VoidRequest? VoidRequest { get; set; }
 }
