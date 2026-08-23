@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { api, ApiError } from '../api/client'
 import { useAuth } from '../auth/AuthContext'
-import type { BranchDto, CreateSaleRequest, ProductDto, SaleDto, ShiftDto } from '../api/types'
+import type { BranchDto, CreateSaleRequest, ProductDto, SaleDto, ShiftDto, UpcomingClosingDto } from '../api/types'
 
 interface CartLine {
   productId: string
@@ -30,6 +30,7 @@ export default function CashierPage() {
   const [error, setError] = useState<string | null>(null)
   const [successSale, setSuccessSale] = useState<SaleDto | null>(null)
   const [currentShift, setCurrentShift] = useState<ShiftDto | null>(null)
+  const [closingWarning, setClosingWarning] = useState<UpcomingClosingDto | null>(null)
 
   useEffect(() => {
     const init = async () => {
@@ -51,6 +52,28 @@ export default function CashierPage() {
     }
     init()
   }, [t, user])
+
+  useEffect(() => {
+    if (!currentShift) { setClosingWarning(null); return }
+    const poll = async () => {
+      try {
+        const [upcoming, shift] = await Promise.all([
+          api.get<UpcomingClosingDto>('/api/closing-schedule/upcoming'),
+          api.get<ShiftDto | undefined>('/api/shifts/current'),
+        ])
+        setClosingWarning(upcoming.warning ? upcoming : null)
+        if (!shift) {
+          setCurrentShift(null)
+          setCart([])
+          setCartOpen(false)
+          setError(t('cashier.autoClosed'))
+        }
+      } catch { /* the cashier remains usable if this non-critical poll fails */ }
+    }
+    poll()
+    const timer = window.setInterval(poll, 60_000)
+    return () => window.clearInterval(timer)
+  }, [currentShift, t])
 
   const categories = useMemo(() => Array.from(new Set(products.map((p) => p.category))), [products])
   const visibleProducts = selectedCategory ? products.filter((p) => p.category === selectedCategory) : products
@@ -260,6 +283,11 @@ export default function CashierPage() {
       </aside>
 
       <div className="flex-1 overflow-y-auto p-4 pb-24 lg:pb-4">
+        {closingWarning && (
+          <div className="mb-4 rounded-xl border border-primary bg-surface p-3 text-primary">
+            {t('cashier.closingWarning', { minutes: closingWarning.minutesRemaining })}
+          </div>
+        )}
         {!currentShift && (
           <div className="mb-4 flex items-center justify-between gap-3 rounded-xl border border-danger bg-surface p-3 text-danger">
             <span>{t('cashier.shiftRequired')}</span>

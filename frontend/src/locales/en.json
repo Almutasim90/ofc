@@ -24,6 +24,7 @@
     "rawMaterials": "Raw Materials",
     "inventory": "Inventory",
     "shift": "Shift",
+    "closingSchedule": "Closing schedule",
     "logout": "Log out"
   },
   "cashier": {
@@ -49,6 +50,8 @@
     "noProducts": "No products are available.",
     "shiftRequired": "Open a shift before making a sale.",
     "openShift": "Open shift",
+    "closingWarning": "This shift will close automatically in {{minutes}} minutes.",
+    "autoClosed": "The shift was closed automatically. Open a new shift to continue selling.",
     "categories": {
       "tea": "Tea",
       "sweet": "Sweets",
@@ -72,6 +75,29 @@
     "loadError": "Could not load shift information.",
     "openError": "Could not open the shift.",
     "closeError": "Could not close the shift."
+  },
+  "closing": {
+    "title": "Automatic closing schedule",
+    "timezoneHint": "All closing times use Muscat time (Asia/Muscat). Cashiers may open shifts at any time.",
+    "defaultSchedule": "Default schedule",
+    "defaultTime": "Default closing time",
+    "active": "Automatic closing enabled",
+    "saveConfig": "Save schedule",
+    "addException": "Add exception",
+    "editException": "Edit exception",
+    "date": "Date",
+    "overrideTime": "Closing time",
+    "branch": "Branch",
+    "allBranches": "All branches",
+    "reason": "Reason",
+    "saveException": "Save exception",
+    "cancel": "Cancel",
+    "actions": "Actions",
+    "edit": "Edit",
+    "delete": "Delete",
+    "confirmDelete": "Delete this closing exception?",
+    "loadError": "Could not load the closing schedule.",
+    "saveError": "Could not save the closing schedule."
   },
   "users": {
     "title": "User Management",

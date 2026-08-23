@@ -17,6 +17,7 @@ public static class DependencyInjection
         services.AddSingleton(jwtOptions);
         services.AddSingleton<IJwtTokenService, JwtTokenService>();
         services.AddScoped<IDomainEventPublisher, DomainEventPublisher>();
+        services.AddHostedService<AutomaticShiftClosingService>();
 
         services.AddDbContext<AppDbContext>((sp, options) =>
             options.UseNpgsql(connectionString));

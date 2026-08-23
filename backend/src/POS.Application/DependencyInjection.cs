@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using POS.Application.Auth;
 using POS.Application.Catalog;
+using POS.Application.Closing;
 using POS.Application.Inventory;
 using POS.Application.Sales;
 using POS.Application.Shifts;
@@ -22,6 +23,7 @@ public static class DependencyInjection
         services.AddScoped<SaleService>();
         services.AddScoped<ShiftService>();
         services.AddScoped<VoidService>();
+        services.AddScoped<ClosingScheduleService>();
         return services;
     }
 }

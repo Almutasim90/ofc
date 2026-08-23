@@ -14,6 +14,7 @@ import ProductRecipePage from './pages/ProductRecipePage'
 import RawMaterialsPage from './pages/RawMaterialsPage'
 import InventoryPage from './pages/InventoryPage'
 import ShiftPage from './pages/ShiftPage'
+import ClosingSchedulePage from './pages/ClosingSchedulePage'
 
 function App() {
   return (
@@ -35,6 +36,9 @@ function App() {
                 path="/shift"
                 element={<ProtectedRoute permission="sales.create"><ShiftPage /></ProtectedRoute>}
               />
+              <Route path="/closing-schedule" element={
+                <ProtectedRoute permission="closing.configure"><ClosingSchedulePage /></ProtectedRoute>
+              } />
               <Route
                 path="/users"
                 element={

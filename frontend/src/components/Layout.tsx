@@ -20,6 +20,7 @@ export default function Layout({ children }: { children: ReactNode }) {
           {user && hasPermission('products.manage') && <Link to="/products">{t('nav.products')}</Link>}
           {user && hasPermission('products.manage') && <Link to="/raw-materials">{t('nav.rawMaterials')}</Link>}
           {user && hasPermission('inventory.adjust') && <Link to="/inventory">{t('nav.inventory')}</Link>}
+          {user && hasPermission('closing.configure') && <Link to="/closing-schedule">{t('nav.closingSchedule')}</Link>}
         </div>
         <div className="top-bar-actions">
           <ThemeToggle />

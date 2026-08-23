@@ -31,6 +31,8 @@ public class AppDbContext : DbContext, IAppDbContext
     public DbSet<SaleItem> SaleItems => Set<SaleItem>();
     public DbSet<Shift> Shifts => Set<Shift>();
     public DbSet<VoidRequest> VoidRequests => Set<VoidRequest>();
+    public DbSet<ClosingScheduleConfig> ClosingScheduleConfigs => Set<ClosingScheduleConfig>();
+    public DbSet<ClosingScheduleException> ClosingScheduleExceptions => Set<ClosingScheduleException>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -212,6 +214,27 @@ public class AppDbContext : DbContext, IAppDbContext
 
             entity.HasQueryFilter(v =>
                 _currentUser == null || _currentUser.BypassBranchFilter || v.Sale.BranchId == _currentUser.BranchId);
+        });
+
+        modelBuilder.Entity<ClosingScheduleConfig>(entity =>
+        {
+            entity.HasKey(c => c.Id);
+            entity.HasData(new ClosingScheduleConfig
+            {
+                Id = Guid.Parse("b2b60295-51db-4ad0-aa5f-93a1c196a97f"),
+                DefaultCloseTime = new TimeOnly(23, 45),
+                IsActive = true,
+            });
+        });
+
+        modelBuilder.Entity<ClosingScheduleException>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Reason).IsRequired().HasMaxLength(500);
+            entity.HasIndex(e => new { e.Date, e.BranchId }).IsUnique().HasFilter("\"BranchId\" IS NOT NULL");
+            entity.HasIndex(e => e.Date).IsUnique().HasFilter("\"BranchId\" IS NULL");
+            entity.HasQueryFilter(e =>
+                _currentUser == null || _currentUser.BypassBranchFilter || e.BranchId == null || e.BranchId == _currentUser.BranchId);
         });
     }
 }

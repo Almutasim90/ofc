@@ -22,6 +22,8 @@ public interface IAppDbContext
     DbSet<SaleItem> SaleItems { get; }
     DbSet<Shift> Shifts { get; }
     DbSet<VoidRequest> VoidRequests { get; }
+    DbSet<ClosingScheduleConfig> ClosingScheduleConfigs { get; }
+    DbSet<ClosingScheduleException> ClosingScheduleExceptions { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

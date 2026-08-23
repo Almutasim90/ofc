@@ -195,3 +195,24 @@ export interface VoidRequestDto {
   approvedByUserId: string | null
   createdAt: string
 }
+
+export interface ClosingScheduleConfigDto {
+  id: string
+  defaultCloseTime: string
+  isActive: boolean
+}
+
+export interface ClosingScheduleExceptionDto {
+  id: string
+  date: string
+  overrideCloseTime: string
+  branchId: string | null
+  reason: string
+}
+
+export interface UpcomingClosingDto {
+  scheduledCloseAt: string
+  minutesRemaining: number
+  warning: boolean
+  scheduleActive: boolean
+}
