@@ -1,0 +1,64 @@
+services:
+  api:
+    build:
+      context: ./backend
+    container_name: lolat-api
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      SUPABASE_DB_CONNECTION: ${SUPABASE_DB_CONNECTION}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_ISSUER: ${JWT_ISSUER:-POS.API}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-POS.Client}
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USERNAME: ${SMTP_USERNAME}
+      SMTP_PASSWORD: ${SMTP_PASSWORD}
+      SMTP_FROM: ${SMTP_FROM}
+      SMTP_ALERT_RECIPIENTS: ${SMTP_ALERT_RECIPIENTS}
+      RUN_MIGRATIONS_ON_STARTUP: ${RUN_MIGRATIONS_ON_STARTUP:-false}
+      DATA_PROTECTION_KEYS_PATH: /keys
+    volumes:
+      - api_uploads:/app/wwwroot/uploads
+      - api_keys:/keys
+    networks: [lolat_net]
+    expose: ["8080"]
+
+  web:
+    build:
+      context: ./frontend
+    container_name: lolat-web
+    restart: unless-stopped
+    networks: [lolat_net]
+    expose: ["80"]
+
+  proxy:
+    image: nginx:1.27-alpine
+    container_name: lolat-proxy
+    restart: unless-stopped
+    depends_on: [api, web]
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/nginx:/etc/nginx/conf.d:ro
+      - certbot_www:/var/www/certbot
+      - certbot_certs:/etc/letsencrypt:ro
+    networks: [lolat_net]
+
+  certbot:
+    image: certbot/certbot
+    container_name: lolat-certbot
+    volumes:
+      - certbot_www:/var/www/certbot
+      - certbot_certs:/etc/letsencrypt
+    entrypoint: ["sh", "-c", "trap exit TERM; while :; do sleep 12h & wait $${!}; certbot renew --webroot -w /var/www/certbot --quiet; done"]
+
+networks:
+  lolat_net:
+
+volumes:
+  api_uploads:
+  api_keys:
+  certbot_www:
+  certbot_certs:

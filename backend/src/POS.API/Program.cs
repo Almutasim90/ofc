@@ -1,6 +1,8 @@
 using DotNetEnv;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
@@ -14,7 +16,17 @@ using POS.Infrastructure.Services;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
-builder.Services.AddDataProtection();
+
+var dataProtectionKeysPath = Environment.GetEnvironmentVariable("DATA_PROTECTION_KEYS_PATH");
+var dataProtectionBuilder = builder.Services.AddDataProtection();
+if (!string.IsNullOrWhiteSpace(dataProtectionKeysPath))
+{
+    // Without this, encrypted AI provider keys (Settings > AI) become unreadable
+    // after every container restart/redeploy, since the default key ring lives on
+    // the container's ephemeral filesystem. Point this at a mounted volume in prod.
+    Directory.CreateDirectory(dataProtectionKeysPath);
+    dataProtectionBuilder.PersistKeysToFileSystem(new DirectoryInfo(dataProtectionKeysPath));
+}
 
 const string FrontendCorsPolicy = "FrontendDev";
 
@@ -80,15 +92,26 @@ builder.Services.AddSwaggerGen();
 
 Directory.CreateDirectory(Path.Combine(builder.Environment.ContentRootPath, "wwwroot"));
 
+// Same-origin in production (nginx serves the frontend and proxies /api on one
+// domain), so this normally never applies there - it only matters if the
+// frontend is ever split onto its own origin. FRONTEND_ORIGIN adds one extra
+// allowed origin on top of the fixed local-dev list below.
+var extraFrontendOrigin = Environment.GetEnvironmentVariable("FRONTEND_ORIGIN");
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(FrontendCorsPolicy, policy =>
     {
-        policy.WithOrigins(
-                  "http://localhost:5173",
-                  "http://127.0.0.1:5173",
-                  "http://192.168.100.18:5173",
-                  "http://192.168.100.82:5173")
+        List<string> origins =
+        [
+            "http://localhost:5173",
+            "http://127.0.0.1:5173",
+            "http://192.168.100.18:5173",
+            "http://192.168.100.82:5173",
+        ];
+        if (!string.IsNullOrWhiteSpace(extraFrontendOrigin))
+            origins.Add(extraFrontendOrigin);
+
+        policy.WithOrigins(origins.ToArray())
               .AllowAnyHeader()
               .AllowAnyMethod();
     });
@@ -100,7 +123,14 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+}
 
+// Development always applies migrations/seed for a friction-free local setup.
+// Outside Development this only runs when explicitly opted into (RUN_MIGRATIONS_ON_STARTUP=true) -
+// required on first deploy to create the schema and bootstrap admin user; safe to
+// leave on afterwards since both migrate and seed are idempotent.
+if (app.Environment.IsDevelopment() || bool.TryParse(Environment.GetEnvironmentVariable("RUN_MIGRATIONS_ON_STARTUP"), out var runMigrations) && runMigrations)
+{
     using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     var passwordHasher = scope.ServiceProvider.GetRequiredService<POS.Application.Abstractions.IPasswordHasher>();
@@ -116,6 +146,17 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
+
+// Terminate TLS at the reverse proxy (nginx) in production; trust its
+// X-Forwarded-Proto so UseHttpsRedirection below doesn't redirect-loop on
+// what looks like a plain-HTTP request arriving over the internal Docker network.
+var forwardedHeadersOptions = new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto,
+};
+forwardedHeadersOptions.KnownIPNetworks.Clear();
+forwardedHeadersOptions.KnownProxies.Clear();
+app.UseForwardedHeaders(forwardedHeadersOptions);
 
 app.UseHttpsRedirection();
 
