@@ -3,12 +3,14 @@ import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router-dom'
 import { api } from '../api/client'
 import type { PermissionOverrideDto } from '../api/types'
+import { SearchBox } from '../components/TableTools'
 
 export default function UserPermissionsPage() {
   const { t } = useTranslation()
   const { id } = useParams<{ id: string }>()
   const [overrides, setOverrides] = useState<PermissionOverrideDto[]>([])
   const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState('')
 
   const load = async () => {
     if (!id) return
@@ -34,7 +36,7 @@ export default function UserPermissionsPage() {
     <div>
       <Link to="/users">{t('permissions.back')}</Link>
       <h1>{t('permissions.title')}</h1>
-      <table>
+      <div className="table-toolbar"><SearchBox value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('common.search')} /></div><div className="table-shell"><table>
         <thead>
           <tr>
             <th>Permission</th>
@@ -44,7 +46,7 @@ export default function UserPermissionsPage() {
           </tr>
         </thead>
         <tbody>
-          {overrides.map((o) => (
+          {overrides.filter((o) => o.permissionKey.toLowerCase().includes(search.trim().toLowerCase())).map((o) => (
             <tr key={o.permissionId}>
               <td>{o.permissionKey}</td>
               <td>
@@ -74,7 +76,7 @@ export default function UserPermissionsPage() {
             </tr>
           ))}
         </tbody>
-      </table>
+      </table></div>
     </div>
   )
 }

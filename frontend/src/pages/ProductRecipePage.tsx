@@ -3,7 +3,8 @@ import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router-dom'
 import { api } from '../api/client'
 import { useAuth } from '../auth/AuthContext'
-import type { BranchDto, RawMaterialDto, RecipeLineDto } from '../api/types'
+import type { BranchDto, ProductDto, RawMaterialDto, RecipeLineDto } from '../api/types'
+import { DeleteIcon, IconAction, SearchBox } from '../components/TableTools'
 
 interface EditableLine {
   rawMaterialId: string
@@ -17,24 +18,28 @@ export default function ProductRecipePage() {
 
   const [branches, setBranches] = useState<BranchDto[]>([])
   const [materials, setMaterials] = useState<RawMaterialDto[]>([])
+  const [product, setProduct] = useState<ProductDto | null>(null)
   const [branchId, setBranchId] = useState('')
   const [lines, setLines] = useState<EditableLine[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [search, setSearch] = useState('')
 
   useEffect(() => {
     const init = async () => {
-      const [branchesData, materialsData] = await Promise.all([
+      const [branchesData, materialsData, productsData] = await Promise.all([
         api.get<BranchDto[]>('/api/branches'),
         api.get<RawMaterialDto[]>('/api/raw-materials'),
+        api.get<ProductDto[]>('/api/products'),
       ])
       setBranches(branchesData)
       setMaterials(materialsData)
+      setProduct(productsData.find((item) => item.id === id) ?? null)
       const defaultBranch = user?.branchId ?? branchesData[0]?.id ?? ''
       setBranchId(defaultBranch)
     }
     init()
-  }, [user])
+  }, [user, id])
 
   useEffect(() => {
     if (!id || !branchId) return
@@ -74,28 +79,42 @@ export default function ProductRecipePage() {
   }
 
   return (
-    <div>
-      <Link to="/products">{t('recipe.back')}</Link>
-      <h1>{t('recipe.title')}</h1>
-      <p>{t('recipe.optionalHint')}</p>
+    <div className="recipe-page">
+      <header className="recipe-hero">
+        <div>
+          <Link className="recipe-back" to="/products">← {t('recipe.back')}</Link>
+          <span className="section-kicker">{t('recipe.kicker')}</span>
+          <h1>{product ? `${t('recipe.title')}: ${product.nameAr}` : t('recipe.title')}</h1>
+          <p>{t('recipe.optionalHint')}</p>
+        </div>
+        {product && <ProductRecipeImage product={product} />}
+      </header>
 
-      <label>
-        {t('recipe.branch')}
-        <select value={branchId} onChange={(e) => setBranchId(e.target.value)} disabled={!!user?.branchId}>
+      <section className="recipe-settings-card">
+        <label className="recipe-branch-field">
+          <span>{t('recipe.branch')}</span>
+          <select value={branchId} onChange={(e) => setBranchId(e.target.value)} disabled={!!user?.branchId}>
           {branches.map((b) => (
             <option key={b.id} value={b.id}>
-              {b.nameEn}
+              {b.nameAr} · {b.nameEn}
             </option>
           ))}
-        </select>
-      </label>
+          </select>
+        </label>
+        <div className="recipe-count"><strong>{lines.length}</strong><span>{t('recipe.ingredientsCount')}</span></div>
+      </section>
 
       {loading ? (
         <p>{t('common.loading')}</p>
       ) : (
         <>
-          {lines.length === 0 && <p>{t('recipe.empty')}</p>}
-          <table>
+          <section className="recipe-editor-card">
+          <div className="recipe-editor-heading">
+            <div><h2>{t('recipe.ingredients')}</h2><p>{t('recipe.editorHint')}</p></div>
+            <button type="button" onClick={addLine}>+ {t('recipe.addLine')}</button>
+          </div>
+          {lines.length === 0 && <div className="recipe-empty"><span>✦</span><p>{t('recipe.empty')}</p><button type="button" onClick={addLine}>{t('recipe.addLine')}</button></div>}
+          {lines.length > 0 && <><div className="table-toolbar"><SearchBox value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('common.search')} /></div><div className="table-shell recipe-table-shell"><table>
             <thead>
               <tr>
                 <th>{t('recipe.rawMaterial')}</th>
@@ -104,7 +123,7 @@ export default function ProductRecipePage() {
               </tr>
             </thead>
             <tbody>
-              {lines.map((line, index) => (
+              {lines.map((line, index) => ({ line, index })).filter(({ line }) => { const material = materials.find((m) => m.id === line.rawMaterialId); return `${material?.nameAr ?? ''} ${material?.nameEn ?? ''} ${material?.unit ?? ''}`.toLowerCase().includes(search.trim().toLowerCase()) }).map(({ line, index }) => (
                 <tr key={index}>
                   <td>
                     <select
@@ -128,22 +147,27 @@ export default function ProductRecipePage() {
                     />
                   </td>
                   <td>
-                    <button type="button" onClick={() => removeLine(index)}>
-                      {t('recipe.remove')}
-                    </button>
+                    <IconAction label={t('recipe.remove')} onClick={() => removeLine(index)}><DeleteIcon /></IconAction>
                   </td>
                 </tr>
               ))}
             </tbody>
-          </table>
-          <button type="button" onClick={addLine}>
-            {t('recipe.addLine')}
-          </button>
-          <button type="button" onClick={save} disabled={saving}>
+          </table></div></>}
+          <div className="recipe-actions">
+            <Link to="/products">{t('recipe.cancel')}</Link>
+            <button type="button" onClick={save} disabled={saving}>
             {t('recipe.save')}
-          </button>
+            </button>
+          </div>
+          </section>
         </>
       )}
     </div>
   )
+}
+
+function ProductRecipeImage({ product }: { product: ProductDto }) {
+  const source = product.iconOrImageUrl?.trim()
+  const isImage = source && (source.startsWith('/') || source.startsWith('http://') || source.startsWith('https://') || source.startsWith('data:image/'))
+  return <div className="recipe-product-image">{isImage ? <img src={source} alt={product.nameAr} /> : <span>{source || product.nameAr.charAt(0)}</span>}</div>
 }

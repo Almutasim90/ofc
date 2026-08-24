@@ -11,3 +11,15 @@ public record GlobalSalesReportDto(
 public record InventoryConsumptionDto(
     Guid RawMaterialId, string NameAr, string NameEn, string Unit, decimal QuantityConsumed);
 public record ShiftInventoryReportDto(Guid ShiftId, Guid BranchId, List<InventoryConsumptionDto> Materials);
+public record SalesTrendPointDto(DateOnly Date, decimal TotalSales, int InvoiceCount, decimal ItemsSold);
+public record ProductSalesSummaryDto(
+    Guid ProductId, string NameAr, string NameEn, decimal QuantitySold, decimal TotalSales, int InvoiceCount);
+public record ManagerDashboardDto(
+    DateOnly From, DateOnly To, decimal TotalSales, decimal TotalDiscounts, int InvoiceCount, decimal ItemsSold, decimal AverageTicket,
+    List<SalesTrendPointDto> DailyTrend, List<BranchSalesSummaryDto> Branches,
+    List<PaymentBreakdownDto> PaymentBreakdown, List<ProductSalesSummaryDto> Products, List<ShiftVariancePointDto> ShiftVariances);
+public record DiscountSaleDto(Guid SaleId, Guid BranchId, Guid CashierUserId, DateTime CreatedAt,
+    decimal DiscountAmount, decimal TotalAmount);
+public record DiscountReportDto(DateOnly From, DateOnly To, decimal TotalDiscounts, List<DiscountSaleDto> Sales);
+public record ChannelSalesDto(Guid ChannelId, string NameAr, string NameEn, decimal TotalSales, int InvoiceCount);
+public record ShiftVariancePointDto(Guid ShiftId, DateTime OpenedAt, decimal VarianceAmount);

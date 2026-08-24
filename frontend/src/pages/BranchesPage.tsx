@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { api } from '../api/client'
 import type { BranchDto, CreateBranchRequest, UpdateBranchRequest } from '../api/types'
+import { EditIcon, IconAction, SearchBox } from '../components/TableTools'
+import Money from '../components/Money'
 
 type EditingState = { mode: 'create' } | { mode: 'edit'; branch: BranchDto } | null
 
@@ -10,6 +12,7 @@ export default function BranchesPage() {
   const [branches, setBranches] = useState<BranchDto[]>([])
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState<EditingState>(null)
+  const [search, setSearch] = useState('')
 
   const load = async () => {
     setLoading(true)
@@ -26,36 +29,36 @@ export default function BranchesPage() {
   return (
     <div>
       <h1>{t('branches.title')}</h1>
-      <button type="button" onClick={() => setEditing({ mode: 'create' })}>
+      <div className="table-toolbar"><SearchBox value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('common.search')} /><button type="button" onClick={() => setEditing({ mode: 'create' })}>
         {t('branches.create')}
-      </button>
+      </button></div>
 
-      <table>
+      <div className="table-shell"><table>
         <thead>
           <tr>
             <th>{t('branches.nameAr')}</th>
             <th>{t('branches.nameEn')}</th>
-            <th>{t('branches.code')}</th>
+          <th>{t('branches.code')}</th>
+            <th>{t('branches.defaultOpeningFloat')}</th>
             <th>{t('branches.active')}</th>
             <th>{t('branches.actions')}</th>
           </tr>
         </thead>
         <tbody>
-          {branches.map((branch) => (
+          {branches.filter((branch) => `${branch.nameAr} ${branch.nameEn} ${branch.code}`.toLowerCase().includes(search.trim().toLowerCase())).map((branch) => (
             <tr key={branch.id}>
               <td>{branch.nameAr}</td>
               <td>{branch.nameEn}</td>
               <td>{branch.code}</td>
+              <td><Money value={branch.defaultOpeningFloat} /></td>
               <td>{branch.isActive ? t('branches.active') : t('branches.inactive')}</td>
               <td>
-                <button type="button" onClick={() => setEditing({ mode: 'edit', branch })}>
-                  {t('branches.edit')}
-                </button>
+                <IconAction label={t('branches.edit')} onClick={() => setEditing({ mode: 'edit', branch })}><EditIcon /></IconAction>
               </td>
             </tr>
           ))}
         </tbody>
-      </table>
+      </table></div>
 
       {editing && (
         <BranchForm
@@ -86,6 +89,7 @@ function BranchForm({
   const [nameAr, setNameAr] = useState(existing?.nameAr ?? '')
   const [nameEn, setNameEn] = useState(existing?.nameEn ?? '')
   const [code, setCode] = useState(existing?.code ?? '')
+  const [defaultOpeningFloat, setDefaultOpeningFloat] = useState(existing?.defaultOpeningFloat?.toString() ?? '0')
   const [isActive, setIsActive] = useState(existing?.isActive ?? true)
   const [submitting, setSubmitting] = useState(false)
 
@@ -93,10 +97,10 @@ function BranchForm({
     setSubmitting(true)
     try {
       if (editing.mode === 'create') {
-        const request: CreateBranchRequest = { nameAr, nameEn, code }
+        const request: CreateBranchRequest = { nameAr, nameEn, code, defaultOpeningFloat: Number(defaultOpeningFloat) }
         await api.post('/api/branches', request)
       } else {
-        const request: UpdateBranchRequest = { nameAr, nameEn, code, isActive }
+        const request: UpdateBranchRequest = { nameAr, nameEn, code, defaultOpeningFloat: Number(defaultOpeningFloat), isActive }
         await api.put(`/api/branches/${editing.branch.id}`, request)
       }
       onSaved()
@@ -120,6 +124,10 @@ function BranchForm({
         <label>
           {t('branches.code')}
           <input value={code} onChange={(e) => setCode(e.target.value)} required />
+        </label>
+        <label>
+          {t('branches.defaultOpeningFloat')}
+          <input type="number" min="0" step="0.001" value={defaultOpeningFloat} onChange={(e) => setDefaultOpeningFloat(e.target.value)} required />
         </label>
         {editing.mode === 'edit' && (
           <label>

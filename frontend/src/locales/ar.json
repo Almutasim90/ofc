@@ -14,7 +14,20 @@
     "username": "اسم المستخدم",
     "password": "كلمة المرور",
     "submit": "دخول",
-    "error": "اسم المستخدم أو كلمة المرور غير صحيحة"
+    "error": "اسم المستخدم أو كلمة المرور غير صحيحة",
+    "submitting": "جارٍ تسجيل الدخول...",
+    "welcome": "مرحبًا بعودتك",
+    "subtitle": "أدخل بيانات حسابك للوصول إلى نظام نقاط البيع.",
+    "usernamePlaceholder": "أدخل اسم المستخدم",
+    "passwordPlaceholder": "أدخل كلمة المرور",
+    "brandLabel": "هوية نظام بيت الشاي",
+    "brandName": "لولاة السويق",
+    "brandHeadline": "إدارة فروعك ومبيعاتك من مكان واحد.",
+    "brandDescription": "منصة متكاملة للمبيعات والمخزون والورديات، مصممة لتبقي عملياتك اليومية واضحة وسريعة.",
+    "featureSales": "مبيعات أسرع",
+    "featureInventory": "مخزون دقيق",
+    "featureReports": "تقارير واضحة",
+    "securityNote": "دخول آمن ومخصص لموظفي لولاة السويق"
   },
   "nav": {
     "cashier": "الكاشير",
@@ -26,6 +39,14 @@
     "shift": "الوردية",
     "closingSchedule": "جدول الإغلاق",
     "reports": "التقارير",
+    "settings": "الإعدادات",
+    "channels": "قنوات البيع",
+    "aiSettings": "الذكاء الاصطناعي",
+    "notifications": "التنبيهات",
+    "more": "المزيد",
+    "closeMenu": "إغلاق القائمة",
+    "expandMenu": "توسيع القائمة",
+    "collapseMenu": "تصغير القائمة",
     "logout": "تسجيل الخروج"
   },
   "cashier": {
@@ -41,6 +62,15 @@
     "cash": "نقدي",
     "card": "بطاقة",
     "confirm": "إتمام البيع",
+    "discount": "الخصم",
+    "discountType": "نوع الخصم",
+    "discountValue": "قيمة الخصم",
+    "noDiscount": "بدون خصم",
+    "percentageDiscount": "نسبة مئوية",
+    "fixedDiscount": "قيمة ثابتة",
+    "onlineOrders": "طلبات إلكترونية",
+    "currentOrder": "الطلب الحالي",
+    "backToStore": "رجوع للمحل",
     "submitting": "جارٍ إتمام البيع...",
     "saleSuccess": "تمت عملية البيع بنجاح",
     "close": "إغلاق",
@@ -56,7 +86,8 @@
     "categories": {
       "tea": "شاي",
       "sweet": "حلويات",
-      "food": "مأكولات"
+      "food": "مأكولات",
+      "drinks": "مشروبات"
     }
   },
   "shifts": {
@@ -70,13 +101,37 @@
     "expected": "الرصيد المتوقع عند الإغلاق",
     "actual": "الرصيد الفعلي عند الإغلاق",
     "variance": "الفرق",
+    "showTable": "عرض كجدول",
+    "hideTable": "إخفاء الجدول",
     "summary": "ملخص الوردية",
     "openSubmit": "فتح الوردية",
     "closeSubmit": "إغلاق الوردية",
     "loadError": "تعذر تحميل بيانات الوردية.",
     "openError": "تعذر فتح الوردية.",
     "closeError": "تعذر إغلاق الوردية."
+    ,"sessionExpired": "انتهت جلسة الدخول. سجّل الخروج ثم ادخل مرة أخرى."
+    ,"defaultOpening": "الرصيد الافتتاحي الافتراضي"
+    ,"editOpening": "تعديل المبلغ"
+    ,"useDefault": "استخدام المبلغ الافتراضي"
+    ,"cashCountHint": "عدّ النقد الفعلي حسب الفئات الموجودة في الدرج."
+    ,"countedTotal": "إجمالي النقد المعدود"
+    ,"denominationQuantity": "عدد فئة {{denomination}}"
+    ,"increaseQuantity": "زيادة العدد"
+    ,"decreaseQuantity": "تقليل العدد"
   },
+  "notifications": {
+    "title": "الإشعارات",
+    "empty": "لا توجد إشعارات جديدة",
+    "shiftOpen": "لديك وردية مفتوحة حاليًا",
+    "closingSoon": "سيتم إغلاق الوردية خلال {{minutes}} دقيقة",
+    "history": "سجل تنبيهات المخزون",
+    "resolved": "مغلق",
+    "active": "نشط"
+    ,"lowStock": "مخزون منخفض: {{material}}"
+    ,"viewAll": "عرض كل التنبيهات"
+  },
+  "channels": {"title":"قنوات البيع","description":"أضف شركات الطلبات الإلكترونية وتحكم في شعاراتها وأسعارها وحالتها.","nameAr":"الاسم بالعربية","nameEn":"الاسم بالإنجليزية","logoUrl":"رابط الشعار","uploadLogo":"رفع الشعار","uploading":"جارٍ الرفع...","logoHint":"PNG أو JPG أو WebP أو SVG — بحد أقصى 2 MB","pricing":"تسعير المنتجات","logo":"الشعار","channel":"الشركة","status":"الحالة","active":"مفعلة","inactive":"متوقفة","stop":"إيقاف","enable":"تفعيل"},
+  "ai": {"title":"إعدادات الذكاء الاصطناعي","provider":"المزوّد","model":"النموذج","apiKey":"مفتاح API","analyze":"تحليل ذكي","summary":"ملخص","anomaly":"اكتشاف الشذوذ","forecast":"توقع الطلب"},
   "closing": {
     "title": "جدول الإغلاق التلقائي",
     "timezoneHint": "جميع أوقات الإغلاق حسب توقيت مسقط. يمكن للكاشير فتح وردية في أي وقت.",
@@ -96,17 +151,46 @@
     "actions": "إجراءات",
     "edit": "تعديل",
     "delete": "حذف",
+    "update": "تحديث",
+    "cancel": "إلغاء",
+    "actions": "الإجراءات",
     "confirmDelete": "هل تريد حذف استثناء الإغلاق؟",
     "loadError": "تعذر تحميل جدول الإغلاق.",
     "saveError": "تعذر حفظ جدول الإغلاق."
   },
   "reports": {
     "title": "التقارير",
+    "dashboardTitle": "لوحة تحليل المبيعات",
+    "dashboardSubtitle": "رؤية شاملة تساعدك على فهم الأداء واتخاذ القرار",
+    "from": "من تاريخ",
+    "to": "إلى تاريخ",
+    "itemsSold": "الوحدات المباعة",
+    "averageTicket": "متوسط الفاتورة",
+    "salesTrend": "اتجاه المبيعات",
+    "invoiceTrend": "اتجاه عدد الفواتير",
+    "itemsTrend": "اتجاه الوحدات المباعة",
+    "averageTicketTrend": "اتجاه متوسط قيمة الفاتورة",
+    "paymentDistribution": "توزيع طرق الدفع",
+    "paymentComparison": "مقارنة طرق الدفع",
+    "branchComparison": "مقارنة الأفرع",
+    "topProducts": "المنتجات الأكثر مبيعاً",
+    "topProductsRevenue": "المنتجات الأعلى إيراداً",
+    "productDetails": "تفاصيل أداء المنتجات",
+    "product": "المنتج",
+    "quantitySold": "الكمية المباعة",
+    "share": "نسبة الإيراد",
+    "searchProducts": "البحث في المنتجات...",
     "scope": "نطاق التقرير",
     "global": "كل الأفرع",
     "branch": "الفرع",
     "date": "اليوم المحاسبي",
     "totalSales": "إجمالي المبيعات",
+    "totalDiscounts": "إجمالي الخصومات",
+    "lowStockAlerts": "تنبيهات المخزون المنخفض",
+    "channelDistribution": "توزيع قنوات البيع",
+    "other": "أخرى",
+    "shiftVariances": "فروقات الورديات",
+    "variance": "الفرق",
     "invoices": "عدد الفواتير",
     "paymentMethod": "طريقة الدفع",
     "exportCsv": "تصدير CSV",
@@ -117,9 +201,26 @@
     "consumed": "الكمية المستهلكة",
     "unit": "الوحدة",
     "loadError": "تعذر تحميل تقرير المبيعات.",
+    "aiError": "تعذر إنشاء التحليل الذكي. تحقق من إعدادات المزوّد.",
     "shiftError": "تعذر تحميل استهلاك المخزون لهذه الوردية.",
     "payment": { "cash": "نقدي", "card": "بطاقة" }
   },
+  "settings": {
+    "title": "الإعدادات الشخصية",
+    "preferences": "التفضيلات",
+    "language": "اللغة المفضلة",
+    "save": "حفظ التفضيلات",
+    "saved": "تم حفظ التفضيلات.",
+    "changePassword": "تغيير كلمة المرور",
+    "currentPassword": "كلمة المرور الحالية",
+    "newPassword": "كلمة المرور الجديدة",
+    "confirmPassword": "تأكيد كلمة المرور الجديدة",
+    "updatePassword": "تحديث كلمة المرور",
+    "passwordChanged": "تم تغيير كلمة المرور بنجاح.",
+    "passwordMismatch": "كلمتا المرور الجديدتان غير متطابقتين.",
+    "saveError": "تعذر حفظ الإعدادات."
+  },
+  "settingsHub": {"search":"بحث في الإعدادات...","closingSummary":"الإغلاق التلقائي والاستثناءات","usersSummary":"المستخدمون والصلاحيات","branchesSummary":"إدارة الأفرع وحالتها","channelsSummary":"قنوات الطلبات وأسعارها","aiSummary":"المزوّد والنموذج ومفتاح API","count":"{{count}} عناصر"},
   "users": {
     "title": "إدارة المستخدمين",
     "fullName": "الاسم الكامل",
@@ -140,7 +241,10 @@
     "save": "حفظ",
     "cancel": "إلغاء",
     "createTitle": "مستخدم جديد",
-    "editTitle": "تعديل المستخدم"
+    "editTitle": "تعديل المستخدم",
+    "newPassword": "كلمة المرور الجديدة",
+    "newPasswordHint": "8 أحرف على الأقل",
+    "passwordOptionalHint": "اختياري — اتركه فارغًا للإبقاء على كلمة المرور الحالية. لا يلزم إدخال كلمة المرور القديمة."
   },
   "permissions": {
     "title": "صلاحيات المستخدم",
@@ -163,6 +267,7 @@
     "cancel": "إلغاء",
     "createTitle": "فرع جديد",
     "editTitle": "تعديل الفرع"
+    ,"defaultOpeningFloat": "الرصيد الافتتاحي الافتراضي"
   },
   "products": {
     "title": "المنتجات",
@@ -180,7 +285,14 @@
     "save": "حفظ",
     "cancel": "إلغاء",
     "createTitle": "منتج جديد",
-    "editTitle": "تعديل المنتج"
+    "editTitle": "تعديل المنتج",
+    "image": "الصورة",
+    "catalog": "دليل المنتجات",
+    "pagination": "صفحات المنتجات",
+    "showing": "عرض {{from}}–{{to}} من {{total}}",
+    "previous": "السابق",
+    "next": "التالي",
+    "pageOf": "صفحة {{page}} من {{total}}"
   },
   "rawMaterials": {
     "title": "المواد الخام",
@@ -205,7 +317,12 @@
     "addLine": "إضافة سطر",
     "remove": "حذف",
     "save": "حفظ الوصفة",
-    "empty": "لا توجد وصفة - هذا المنتج يُباع بدون أي خصم من المخزون."
+    "empty": "لا توجد وصفة - هذا المنتج يُباع بدون أي خصم من المخزون.",
+    "kicker": "وصفة المخزون",
+    "ingredients": "مكونات الوصفة",
+    "ingredientsCount": "مكونات",
+    "editorHint": "اختر كل مادة خام والكمية التي تُخصم عند بيع المنتج.",
+    "cancel": "إلغاء"
   },
   "inventory": {
     "title": "المخزون",
@@ -224,7 +341,16 @@
     "cancel": "إلغاء"
   },
   "common": {
+    "save": "حفظ",
+    "saved": "تم الحفظ",
+    "active": "نشط",
+    "inactive": "غير نشط",
+    "edit": "تعديل",
+    "delete": "حذف",
+    "showPassword": "إظهار كلمة المرور",
+    "hidePassword": "إخفاء كلمة المرور",
     "loading": "جارٍ التحميل...",
+    "search": "بحث في الجدول...",
     "unauthorized": "لا تملك صلاحية الوصول لهذه الصفحة"
   }
 }

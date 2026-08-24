@@ -7,6 +7,9 @@ using POS.Application.Reports;
 using POS.Application.Sales;
 using POS.Application.Shifts;
 using POS.Application.Users;
+using POS.Application.Channels;
+using POS.Application.Notifications;
+using POS.Application.AI;
 
 namespace POS.Application;
 
@@ -16,6 +19,10 @@ public static class DependencyInjection
     {
         services.AddScoped<AuthService>();
         services.AddScoped<UserService>();
+        services.AddScoped<ChannelService>();
+        services.AddScoped<NotificationService>();
+        services.AddScoped<AiInsightService>();
+        services.AddHttpClient();
         services.AddScoped<BranchService>();
         services.AddScoped<ProductService>();
         services.AddScoped<RawMaterialService>();

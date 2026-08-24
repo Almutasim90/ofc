@@ -13,6 +13,8 @@ public interface IAppDbContext
 
     DbSet<Branch> Branches { get; }
     DbSet<Product> Products { get; }
+    DbSet<SalesChannel> SalesChannels { get; }
+    DbSet<ProductChannelPrice> ProductChannelPrices { get; }
     DbSet<RawMaterial> RawMaterials { get; }
     DbSet<BranchRawMaterialStock> BranchRawMaterialStocks { get; }
     DbSet<ProductRecipe> ProductRecipes { get; }
@@ -22,9 +24,13 @@ public interface IAppDbContext
     DbSet<SaleItem> SaleItems { get; }
     DbSet<SaleInventoryConsumption> SaleInventoryConsumptions { get; }
     DbSet<Shift> Shifts { get; }
+    DbSet<ShiftCashCount> ShiftCashCounts { get; }
     DbSet<VoidRequest> VoidRequests { get; }
     DbSet<ClosingScheduleConfig> ClosingScheduleConfigs { get; }
     DbSet<ClosingScheduleException> ClosingScheduleExceptions { get; }
+    DbSet<LowStockNotification> LowStockNotifications { get; }
+    DbSet<AiProviderSetting> AiProviderSettings { get; }
+    DbSet<AiInsightRequest> AiInsightRequests { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

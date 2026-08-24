@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using POS.Application.Abstractions;
 using POS.Application.Common;
+using POS.Domain.Constants;
 using POS.Domain.Entities;
 
 namespace POS.Application.Users;
@@ -68,6 +69,16 @@ public class UserService(IAppDbContext db, IPasswordHasher passwordHasher, ICurr
         user.PreferredLanguage = request.PreferredLanguage;
         user.IsActive = request.IsActive;
 
+        if (!string.IsNullOrWhiteSpace(request.NewPassword))
+        {
+            if (currentUser.RoleName != RoleNames.GeneralManager)
+                throw new ForbiddenException("Only the General Manager can reset another user's password.");
+            if (request.NewPassword.Length < 8)
+                throw new ValidationException("The new password must be at least 8 characters.");
+
+            user.PasswordHash = passwordHasher.Hash(request.NewPassword);
+        }
+
         await db.SaveChangesAsync(cancellationToken);
 
         return new UserDto(user.Id, user.FullName, user.Username, user.BranchId, user.RoleId, role.Name,
@@ -76,6 +87,10 @@ public class UserService(IAppDbContext db, IPasswordHasher passwordHasher, ICurr
 
     public async Task<UserDto> UpdateMyPreferencesAsync(Guid userId, UpdateMyPreferencesRequest request, CancellationToken cancellationToken = default)
     {
+        if (request.PreferredLanguage is not ("ar" or "en"))
+            throw new ValidationException("Preferred language must be 'ar' or 'en'.");
+        if (request.PreferredTheme is not (null or "light" or "dark"))
+            throw new ValidationException("Preferred theme must be 'light', 'dark', or null.");
         var user = await db.Users.Include(u => u.Role)
             .IgnoreQueryFilters()
             .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken)
@@ -88,6 +103,20 @@ public class UserService(IAppDbContext db, IPasswordHasher passwordHasher, ICurr
 
         return new UserDto(user.Id, user.FullName, user.Username, user.BranchId, user.RoleId, user.Role.Name,
             user.PreferredLanguage, user.PreferredTheme, user.IsActive, user.CreatedAt);
+    }
+
+    public async Task ChangeMyPasswordAsync(Guid userId, ChangeMyPasswordRequest request, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(request.NewPassword) || request.NewPassword.Length < 8)
+            throw new ValidationException("The new password must be at least 8 characters.");
+        var user = await db.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Id == userId, cancellationToken)
+            ?? throw new NotFoundException($"User '{userId}' not found.");
+        if (!passwordHasher.Verify(user.PasswordHash, request.CurrentPassword))
+            throw new ValidationException("The current password is incorrect.");
+        if (passwordHasher.Verify(user.PasswordHash, request.NewPassword))
+            throw new ValidationException("The new password must be different from the current password.");
+        user.PasswordHash = passwordHasher.Hash(request.NewPassword);
+        await db.SaveChangesAsync(cancellationToken);
     }
 
     public async Task<List<PermissionOverrideDto>> GetPermissionOverridesAsync(Guid userId, CancellationToken cancellationToken = default)

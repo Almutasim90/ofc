@@ -1,0 +1,42 @@
+using Microsoft.AspNetCore.Mvc;
+using POS.API.Authorization;
+using POS.Domain.Constants;
+
+namespace POS.API.Controllers;
+
+[ApiController, Route("api/uploads")]
+public class UploadsController(IWebHostEnvironment environment) : ControllerBase
+{
+    private static readonly HashSet<string> AllowedContentTypes =
+    [
+        "image/jpeg", "image/png", "image/webp", "image/svg+xml"
+    ];
+
+    [HttpPost("channel-logo"), RequirePermission(PermissionKeys.ChannelsManage)]
+    [RequestSizeLimit(2 * 1024 * 1024)]
+    public async Task<ActionResult<object>> UploadChannelLogo(IFormFile file, CancellationToken ct)
+    {
+        if (file.Length == 0 || file.Length > 2 * 1024 * 1024)
+            return BadRequest(new { error = "Logo must be between 1 byte and 2 MB." });
+
+        if (!AllowedContentTypes.Contains(file.ContentType.ToLowerInvariant()))
+            return BadRequest(new { error = "Only JPG, PNG, WebP, and SVG images are supported." });
+
+        var extension = file.ContentType.ToLowerInvariant() switch
+        {
+            "image/jpeg" => ".jpg",
+            "image/png" => ".png",
+            "image/webp" => ".webp",
+            "image/svg+xml" => ".svg",
+            _ => throw new InvalidOperationException()
+        };
+
+        var folder = Path.Combine(environment.ContentRootPath, "wwwroot", "uploads", "channels");
+        Directory.CreateDirectory(folder);
+        var fileName = $"{Guid.NewGuid():N}{extension}";
+        await using var stream = System.IO.File.Create(Path.Combine(folder, fileName));
+        await file.CopyToAsync(stream, ct);
+
+        return Ok(new { url = $"{Request.Scheme}://{Request.Host}/uploads/channels/{fileName}" });
+    }
+}

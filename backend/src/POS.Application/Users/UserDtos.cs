@@ -25,10 +25,12 @@ public record UpdateUserRequest(
     Guid? BranchId,
     Guid RoleId,
     string PreferredLanguage,
-    bool IsActive);
+    bool IsActive,
+    string? NewPassword);
 
 public record PermissionOverrideDto(Guid PermissionId, string PermissionKey, bool? IsGranted);
 
 public record SetPermissionOverrideRequest(Guid PermissionId, bool? IsGranted);
 
 public record UpdateMyPreferencesRequest(string PreferredLanguage, string? PreferredTheme);
+public record ChangeMyPasswordRequest(string CurrentPassword, string NewPassword);

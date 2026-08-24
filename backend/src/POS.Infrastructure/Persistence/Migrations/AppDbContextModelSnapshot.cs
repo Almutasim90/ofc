@@ -22,6 +22,66 @@ namespace POS.Infrastructure.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("POS.Domain.Entities.AiInsightRequest", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("BranchId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("RequestType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<Guid>("RequestedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ResultSummary")
+                        .IsRequired()
+                        .HasMaxLength(8000)
+                        .HasColumnType("character varying(8000)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedAt");
+
+                    b.ToTable("AiInsightRequests");
+                });
+
+            modelBuilder.Entity("POS.Domain.Entities.AiProviderSetting", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ApiKeyEncrypted")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Model")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Provider")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("AiProviderSettings");
+                });
+
             modelBuilder.Entity("POS.Domain.Entities.Branch", b =>
                 {
                     b.Property<Guid>("Id")
@@ -32,6 +92,10 @@ namespace POS.Infrastructure.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
+
+                    b.Property<decimal>("DefaultOpeningFloat")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("numeric(18,3)");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
@@ -135,6 +199,35 @@ namespace POS.Infrastructure.Persistence.Migrations
                     b.ToTable("ClosingScheduleExceptions");
                 });
 
+            modelBuilder.Entity("POS.Domain.Entities.LowStockNotification", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("BranchId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("RawMaterialId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("ResolvedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("TriggeredAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RawMaterialId");
+
+                    b.HasIndex("BranchId", "RawMaterialId")
+                        .IsUnique()
+                        .HasFilter("\"ResolvedAt\" IS NULL");
+
+                    b.ToTable("LowStockNotifications");
+                });
+
             modelBuilder.Entity("POS.Domain.Entities.Permission", b =>
                 {
                     b.Property<Guid>("Id")
@@ -191,6 +284,25 @@ namespace POS.Infrastructure.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Products");
+                });
+
+            modelBuilder.Entity("POS.Domain.Entities.ProductChannelPrice", b =>
+                {
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ChannelId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("Price")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("numeric(18,3)");
+
+                    b.HasKey("ProductId", "ChannelId");
+
+                    b.HasIndex("ChannelId");
+
+                    b.ToTable("ProductChannelPrices");
                 });
 
             modelBuilder.Entity("POS.Domain.Entities.ProductRecipe", b =>
@@ -293,8 +405,24 @@ namespace POS.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("CashierUserId")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid>("ChannelId")
+                        .HasColumnType("uuid");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal>("DiscountAmount")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("numeric(18,3)");
+
+                    b.Property<string>("DiscountType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<decimal>("DiscountValue")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("numeric(18,3)");
 
                     b.Property<string>("PaymentMethod")
                         .IsRequired()
@@ -314,6 +442,8 @@ namespace POS.Infrastructure.Persistence.Migrations
                         .HasColumnType("numeric(18,3)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ChannelId");
 
                     b.HasIndex("ShiftId");
 
@@ -353,6 +483,15 @@ namespace POS.Infrastructure.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<string>("DiscountType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<decimal>("DiscountValue")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("numeric(18,3)");
+
                     b.Property<decimal>("LineTotal")
                         .HasPrecision(18, 3)
                         .HasColumnType("numeric(18,3)");
@@ -383,6 +522,41 @@ namespace POS.Infrastructure.Persistence.Migrations
                     b.HasIndex("SaleId");
 
                     b.ToTable("SaleItems");
+                });
+
+            modelBuilder.Entity("POS.Domain.Entities.SalesChannel", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsInStore")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("LogoUrl")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<string>("NameAr")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("NameEn")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IsInStore")
+                        .IsUnique()
+                        .HasFilter("\"IsInStore\" = TRUE");
+
+                    b.ToTable("SalesChannels");
                 });
 
             modelBuilder.Entity("POS.Domain.Entities.Shift", b =>
@@ -434,6 +608,35 @@ namespace POS.Infrastructure.Persistence.Migrations
                     b.HasIndex("CashierUserId", "Status");
 
                     b.ToTable("Shifts");
+                });
+
+            modelBuilder.Entity("POS.Domain.Entities.ShiftCashCount", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CountType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<decimal>("Denomination")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("numeric(18,3)");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("ShiftId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ShiftId", "CountType", "Denomination")
+                        .IsUnique();
+
+                    b.ToTable("ShiftCashCounts");
                 });
 
             modelBuilder.Entity("POS.Domain.Entities.StockAdjustment", b =>
@@ -585,6 +788,44 @@ namespace POS.Infrastructure.Persistence.Migrations
                     b.Navigation("RawMaterial");
                 });
 
+            modelBuilder.Entity("POS.Domain.Entities.LowStockNotification", b =>
+                {
+                    b.HasOne("POS.Domain.Entities.Branch", "Branch")
+                        .WithMany()
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("POS.Domain.Entities.RawMaterial", "RawMaterial")
+                        .WithMany()
+                        .HasForeignKey("RawMaterialId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Branch");
+
+                    b.Navigation("RawMaterial");
+                });
+
+            modelBuilder.Entity("POS.Domain.Entities.ProductChannelPrice", b =>
+                {
+                    b.HasOne("POS.Domain.Entities.SalesChannel", "Channel")
+                        .WithMany("ProductPrices")
+                        .HasForeignKey("ChannelId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("POS.Domain.Entities.Product", "Product")
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Channel");
+
+                    b.Navigation("Product");
+                });
+
             modelBuilder.Entity("POS.Domain.Entities.ProductRecipe", b =>
                 {
                     b.HasOne("POS.Domain.Entities.Product", "Product")
@@ -625,11 +866,19 @@ namespace POS.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("POS.Domain.Entities.Sale", b =>
                 {
+                    b.HasOne("POS.Domain.Entities.SalesChannel", "Channel")
+                        .WithMany()
+                        .HasForeignKey("ChannelId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("POS.Domain.Entities.Shift", "Shift")
                         .WithMany("Sales")
                         .HasForeignKey("ShiftId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("Channel");
 
                     b.Navigation("Shift");
                 });
@@ -670,6 +919,17 @@ namespace POS.Infrastructure.Persistence.Migrations
                     b.Navigation("Product");
 
                     b.Navigation("Sale");
+                });
+
+            modelBuilder.Entity("POS.Domain.Entities.ShiftCashCount", b =>
+                {
+                    b.HasOne("POS.Domain.Entities.Shift", "Shift")
+                        .WithMany("CashCounts")
+                        .HasForeignKey("ShiftId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Shift");
                 });
 
             modelBuilder.Entity("POS.Domain.Entities.StockAdjustment", b =>
@@ -745,8 +1005,15 @@ namespace POS.Infrastructure.Persistence.Migrations
                     b.Navigation("VoidRequest");
                 });
 
+            modelBuilder.Entity("POS.Domain.Entities.SalesChannel", b =>
+                {
+                    b.Navigation("ProductPrices");
+                });
+
             modelBuilder.Entity("POS.Domain.Entities.Shift", b =>
                 {
+                    b.Navigation("CashCounts");
+
                     b.Navigation("Sales");
                 });
 

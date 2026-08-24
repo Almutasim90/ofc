@@ -15,6 +15,7 @@ interface AuthContextValue {
   login: (username: string, password: string) => Promise<void>
   logout: () => void
   hasPermission: (permission: string) => boolean
+  updatePreferences: (preferredLanguage: string, preferredTheme: string | null) => void
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
@@ -67,6 +68,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       login,
       logout,
       hasPermission: (permission: string) => stored?.user.permissions.includes(permission) ?? false,
+      updatePreferences: (preferredLanguage: string, preferredTheme: string | null) => {
+        setStored((current) => {
+          if (!current) return current
+          const next = { ...current, user: { ...current.user, preferredLanguage, preferredTheme } }
+          localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(next))
+          return next
+        })
+      },
     }),
     [stored],
   )

@@ -17,4 +17,6 @@ public class SaleItem
 
     public decimal Quantity { get; set; }
     public decimal LineTotal { get; set; }
+    public string DiscountType { get; set; } = "None";
+    public decimal DiscountValue { get; set; }
 }

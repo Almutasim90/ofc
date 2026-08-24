@@ -2,17 +2,22 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { api } from '../api/client'
+import { useAuth } from '../auth/AuthContext'
 import type { BranchDto, CreateUserRequest, RoleDto, UpdateUserRequest, UserDto } from '../api/types'
+import { DetailsIcon, EditIcon, IconAction, SearchBox } from '../components/TableTools'
+import PasswordField from '../components/PasswordField'
 
 type EditingState = { mode: 'create' } | { mode: 'edit'; user: UserDto } | null
 
 export default function UsersPage() {
   const { t } = useTranslation()
+  const { user: currentUser } = useAuth()
   const [users, setUsers] = useState<UserDto[]>([])
   const [roles, setRoles] = useState<RoleDto[]>([])
   const [branches, setBranches] = useState<BranchDto[]>([])
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState<EditingState>(null)
+  const [search, setSearch] = useState('')
 
   const load = async () => {
     setLoading(true)
@@ -38,11 +43,11 @@ export default function UsersPage() {
   return (
     <div>
       <h1>{t('users.title')}</h1>
-      <button type="button" onClick={() => setEditing({ mode: 'create' })}>
+      <div className="table-toolbar"><SearchBox value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('common.search')} /><button type="button" onClick={() => setEditing({ mode: 'create' })}>
         {t('users.create')}
-      </button>
+      </button></div>
 
-      <table>
+      <div className="table-shell"><table>
         <thead>
           <tr>
             <th>{t('users.fullName')}</th>
@@ -54,29 +59,29 @@ export default function UsersPage() {
           </tr>
         </thead>
         <tbody>
-          {users.map((user) => (
+          {users.filter((user) => `${user.fullName} ${user.username} ${user.roleName} ${branchName(user.branchId)}`.toLowerCase().includes(search.trim().toLowerCase())).map((user) => (
             <tr key={user.id}>
               <td>{user.fullName}</td>
               <td>{user.username}</td>
               <td>{user.roleName}</td>
               <td>{branchName(user.branchId)}</td>
               <td>{user.isActive ? t('users.active') : t('users.inactive')}</td>
-              <td>
-                <button type="button" onClick={() => setEditing({ mode: 'edit', user })}>
-                  {t('users.edit')}
-                </button>
-                <Link to={`/users/${user.id}/permissions`}>{t('users.permissions')}</Link>
+              <td><div className="row-actions">
+                <IconAction label={t('users.edit')} onClick={() => setEditing({ mode: 'edit', user })}><EditIcon /></IconAction>
+                <Link className="icon-action" aria-label={t('users.permissions')} title={t('users.permissions')} to={`/users/${user.id}/permissions`}><DetailsIcon /></Link>
+              </div>
               </td>
             </tr>
           ))}
         </tbody>
-      </table>
+      </table></div>
 
       {editing && (
         <UserForm
           roles={roles}
           branches={branches}
           editing={editing}
+          canResetPassword={currentUser?.roleName === 'GeneralManager'}
           onClose={() => setEditing(null)}
           onSaved={async () => {
             setEditing(null)
@@ -92,12 +97,14 @@ function UserForm({
   roles,
   branches,
   editing,
+  canResetPassword,
   onClose,
   onSaved,
 }: {
   roles: RoleDto[]
   branches: BranchDto[]
   editing: Exclude<EditingState, null>
+  canResetPassword: boolean
   onClose: () => void
   onSaved: () => void
 }) {
@@ -107,6 +114,7 @@ function UserForm({
   const [fullName, setFullName] = useState(existing?.fullName ?? '')
   const [username, setUsername] = useState(existing?.username ?? '')
   const [password, setPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
   const [branchId, setBranchId] = useState(existing?.branchId ?? '')
   const [roleId, setRoleId] = useState(existing?.roleId ?? roles[0]?.id ?? '')
   const [preferredLanguage, setPreferredLanguage] = useState(existing?.preferredLanguage ?? 'ar')
@@ -133,6 +141,7 @@ function UserForm({
           roleId,
           preferredLanguage,
           isActive,
+          newPassword: canResetPassword && newPassword ? newPassword : null,
         }
         await api.put(`/api/users/${editing.user.id}`, request)
       }
@@ -144,8 +153,9 @@ function UserForm({
 
   return (
     <div className="modal-backdrop">
-      <div className="modal">
+      <div className="modal user-modal" role="dialog" aria-modal="true">
         <h2>{editing.mode === 'create' ? t('users.createTitle') : t('users.editTitle')}</h2>
+        <div className="user-form-grid">
         <label>
           {t('users.fullName')}
           <input value={fullName} onChange={(e) => setFullName(e.target.value)} required />
@@ -154,17 +164,18 @@ function UserForm({
           <>
             <label>
               {t('users.username')}
-              <input value={username} onChange={(e) => setUsername(e.target.value)} required />
+              <input className="credential-input" value={username} onChange={(e) => setUsername(e.target.value)} required autoComplete="username" />
             </label>
-            <label>
-              {t('users.password')}
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </label>
+            <PasswordField
+              label={t('users.password')}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              showLabel={t('common.showPassword')}
+              hideLabel={t('common.hidePassword')}
+              required
+              minLength={8}
+              autoComplete="new-password"
+            />
           </>
         )}
         <label>
@@ -197,11 +208,27 @@ function UserForm({
           </select>
         </label>
         {editing.mode === 'edit' && (
-          <label>
-            {t('users.active')}
-            <input type="checkbox" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />
-          </label>
+          <>
+            {canResetPassword && (
+              <PasswordField
+                label={t('users.newPassword')}
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                showLabel={t('common.showPassword')}
+                hideLabel={t('common.hidePassword')}
+                minLength={8}
+                placeholder={t('users.newPasswordHint')}
+                hint={t('users.passwordOptionalHint')}
+                autoComplete="new-password"
+              />
+            )}
+            <label>
+              {t('users.active')}
+              <input type="checkbox" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />
+            </label>
+          </>
         )}
+        </div>
         <div className="modal-actions">
           <button type="button" onClick={onSubmit} disabled={submitting}>
             {t('users.save')}

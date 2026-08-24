@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { api } from '../api/client'
 import type { CreateRawMaterialRequest, RawMaterialDto, UpdateRawMaterialRequest } from '../api/types'
+import { EditIcon, IconAction, SearchBox } from '../components/TableTools'
 
 type EditingState = { mode: 'create' } | { mode: 'edit'; material: RawMaterialDto } | null
 
@@ -10,6 +11,7 @@ export default function RawMaterialsPage() {
   const [materials, setMaterials] = useState<RawMaterialDto[]>([])
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState<EditingState>(null)
+  const [search, setSearch] = useState('')
 
   const load = async () => {
     setLoading(true)
@@ -26,11 +28,11 @@ export default function RawMaterialsPage() {
   return (
     <div>
       <h1>{t('rawMaterials.title')}</h1>
-      <button type="button" onClick={() => setEditing({ mode: 'create' })}>
+      <div className="table-toolbar"><SearchBox value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('common.search')} /><button type="button" onClick={() => setEditing({ mode: 'create' })}>
         {t('rawMaterials.create')}
-      </button>
+      </button></div>
 
-      <table>
+      <div className="table-shell"><table>
         <thead>
           <tr>
             <th>{t('rawMaterials.nameAr')}</th>
@@ -40,20 +42,18 @@ export default function RawMaterialsPage() {
           </tr>
         </thead>
         <tbody>
-          {materials.map((material) => (
+          {materials.filter((material) => `${material.nameAr} ${material.nameEn} ${material.unit}`.toLowerCase().includes(search.trim().toLowerCase())).map((material) => (
             <tr key={material.id}>
               <td>{material.nameAr}</td>
               <td>{material.nameEn}</td>
               <td>{material.unit}</td>
               <td>
-                <button type="button" onClick={() => setEditing({ mode: 'edit', material })}>
-                  {t('rawMaterials.edit')}
-                </button>
+                <IconAction label={t('rawMaterials.edit')} onClick={() => setEditing({ mode: 'edit', material })}><EditIcon /></IconAction>
               </td>
             </tr>
           ))}
         </tbody>
-      </table>
+      </table></div>
 
       {editing && (
         <MaterialForm

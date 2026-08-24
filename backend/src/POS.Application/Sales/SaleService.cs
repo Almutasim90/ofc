@@ -28,6 +28,9 @@ public class SaleService(IAppDbContext db, IDomainEventPublisher eventPublisher,
             throw new ValidationException($"Unknown payment method '{request.PaymentMethod}'.");
         }
 
+        ValidateDiscount(request.DiscountType, request.DiscountValue);
+        foreach (var line in request.Lines) ValidateDiscount(line.DiscountType, line.DiscountValue);
+
         var userId = currentUser.UserId ?? throw new UnauthorizedException("Missing user context.");
         var shift = await db.Shifts.FirstOrDefaultAsync(
             s => s.CashierUserId == userId && s.BranchId == request.BranchId && s.Status == ShiftStatus.Open,
@@ -41,6 +44,12 @@ public class SaleService(IAppDbContext db, IDomainEventPublisher eventPublisher,
         {
             throw new ValidationException("One or more products are unavailable.");
         }
+
+        var channelId = request.ChannelId ?? SalesChannelIds.InStore;
+        var channel = await db.SalesChannels.FirstOrDefaultAsync(c => c.Id == channelId && c.IsActive, cancellationToken)
+            ?? throw new ValidationException("The selected sales channel is unavailable.");
+        var channelPrices = await db.ProductChannelPrices.Where(p => p.ChannelId == channelId && productIds.Contains(p.ProductId))
+            .ToDictionaryAsync(p => p.ProductId, p => p.Price, cancellationToken);
 
         var branchIsActive = await db.Branches
             .AnyAsync(branch => branch.Id == request.BranchId && branch.IsActive, cancellationToken);
@@ -91,19 +100,26 @@ public class SaleService(IAppDbContext db, IDomainEventPublisher eventPublisher,
         {
             Id = Guid.NewGuid(),
             BranchId = request.BranchId,
+            ChannelId = channel.Id,
             ShiftId = shift.Id,
             CashierUserId = userId,
             BusinessDate = DateOnly.FromDateTime(DateTime.UtcNow),
             CreatedAt = DateTime.UtcNow,
             PaymentMethod = request.PaymentMethod,
+            DiscountType = NormalizeDiscountType(request.DiscountType),
+            DiscountValue = request.DiscountValue,
             Status = SaleStatus.Completed,
         };
 
         decimal total = 0;
+        decimal rawTotal = 0;
         foreach (var line in request.Lines)
         {
             var product = products.First(p => p.Id == line.ProductId);
-            var lineTotal = product.Price * line.Quantity;
+            var unitPrice = channelPrices.GetValueOrDefault(product.Id, product.Price);
+            var lineSubtotal = unitPrice * line.Quantity;
+            rawTotal += lineSubtotal;
+            var lineTotal = ApplyDiscount(lineSubtotal, line.DiscountType, line.DiscountValue);
             total += lineTotal;
 
             sale.Items.Add(new SaleItem
@@ -112,12 +128,15 @@ public class SaleService(IAppDbContext db, IDomainEventPublisher eventPublisher,
                 SaleId = sale.Id,
                 ProductId = product.Id,
                 ProductNameSnapshot = product.NameAr,
-                UnitPriceSnapshot = product.Price,
+                UnitPriceSnapshot = unitPrice,
                 Quantity = line.Quantity,
                 LineTotal = lineTotal,
+                DiscountType = NormalizeDiscountType(line.DiscountType),
+                DiscountValue = line.DiscountValue,
             });
         }
-        sale.TotalAmount = total;
+        sale.TotalAmount = ApplyDiscount(total, request.DiscountType, request.DiscountValue);
+        sale.DiscountAmount = rawTotal - sale.TotalAmount;
 
         foreach (var (materialId, quantity) in requiredByMaterial)
         {
@@ -148,9 +167,33 @@ public class SaleService(IAppDbContext db, IDomainEventPublisher eventPublisher,
             new SaleCompletedEvent(sale.Id, sale.BranchId, sale.CashierUserId, sale.CreatedAt), cancellationToken);
 
         return new SaleDto(
-            sale.Id, sale.BranchId, sale.ShiftId, sale.CashierUserId, sale.BusinessDate, sale.CreatedAt, sale.TotalAmount,
+            sale.Id, sale.BranchId, sale.ChannelId, sale.ShiftId, sale.CashierUserId, sale.BusinessDate, sale.CreatedAt, sale.TotalAmount,
+            sale.DiscountType, sale.DiscountValue, sale.DiscountAmount,
             sale.PaymentMethod, sale.Status,
-            sale.Items.Select(i => new SaleItemDto(i.ProductId, i.ProductNameSnapshot, i.UnitPriceSnapshot, i.Quantity, i.LineTotal)).ToList());
+            sale.Items.Select(i => new SaleItemDto(i.ProductId, i.ProductNameSnapshot, i.UnitPriceSnapshot, i.Quantity,
+                i.LineTotal, i.DiscountType, i.DiscountValue)).ToList());
+    }
+
+    private static string NormalizeDiscountType(string? type) => string.IsNullOrWhiteSpace(type) ? "None" : type;
+
+    private static void ValidateDiscount(string? type, decimal value)
+    {
+        var normalized = NormalizeDiscountType(type);
+        if (normalized is not ("None" or "Percentage" or "FixedAmount"))
+            throw new ValidationException("Unknown discount type.");
+        if (value < 0 || (normalized == "Percentage" && value > 100))
+            throw new ValidationException("Discount value is invalid.");
+    }
+
+    private static decimal ApplyDiscount(decimal subtotal, string? type, decimal value)
+    {
+        var amount = NormalizeDiscountType(type) switch
+        {
+            "Percentage" => subtotal * value / 100m,
+            "FixedAmount" => value,
+            _ => 0m,
+        };
+        return Math.Max(0m, decimal.Round(subtotal - Math.Min(subtotal, amount), 3));
     }
 
     private void EnsureBranchScope(Guid branchId)

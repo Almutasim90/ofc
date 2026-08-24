@@ -17,4 +17,5 @@ public class Shift
     public bool AutoClosed { get; set; }
 
     public ICollection<Sale> Sales { get; set; } = new List<Sale>();
+    public ICollection<ShiftCashCount> CashCounts { get; set; } = new List<ShiftCashCount>();
 }

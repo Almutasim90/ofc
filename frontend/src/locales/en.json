@@ -14,7 +14,20 @@
     "username": "Username",
     "password": "Password",
     "submit": "Sign in",
-    "error": "Invalid username or password"
+    "error": "Invalid username or password",
+    "submitting": "Signing in...",
+    "welcome": "Welcome back",
+    "subtitle": "Enter your account details to access the point-of-sale system.",
+    "usernamePlaceholder": "Enter your username",
+    "passwordPlaceholder": "Enter your password",
+    "brandLabel": "Tea House system identity",
+    "brandName": "Lolat Al Suwaiq",
+    "brandHeadline": "Manage every branch and sale in one place.",
+    "brandDescription": "A complete platform for sales, inventory, and shifts, designed to keep daily operations clear and fast.",
+    "featureSales": "Faster sales",
+    "featureInventory": "Accurate inventory",
+    "featureReports": "Clear reporting",
+    "securityNote": "Secure access for Tea House staff"
   },
   "nav": {
     "cashier": "Cashier",
@@ -26,6 +39,14 @@
     "shift": "Shift",
     "closingSchedule": "Closing schedule",
     "reports": "Reports",
+    "settings": "Settings",
+    "channels": "Sales channels",
+    "aiSettings": "AI settings",
+    "notifications": "Notifications",
+    "more": "More",
+    "closeMenu": "Close navigation",
+    "expandMenu": "Expand navigation",
+    "collapseMenu": "Collapse navigation",
     "logout": "Log out"
   },
   "cashier": {
@@ -41,6 +62,15 @@
     "cash": "Cash",
     "card": "Card",
     "confirm": "Complete sale",
+    "discount": "Discount",
+    "discountType": "Discount type",
+    "discountValue": "Discount value",
+    "noDiscount": "No discount",
+    "percentageDiscount": "Percentage",
+    "fixedDiscount": "Fixed amount",
+    "onlineOrders": "Online orders",
+    "currentOrder": "Current order",
+    "backToStore": "Back to store",
     "submitting": "Completing...",
     "saleSuccess": "Sale completed",
     "close": "Close",
@@ -56,7 +86,8 @@
     "categories": {
       "tea": "Tea",
       "sweet": "Sweets",
-      "food": "Food"
+      "food": "Food",
+      "drinks": "Drinks"
     }
   },
   "shifts": {
@@ -70,13 +101,37 @@
     "expected": "Expected closing cash",
     "actual": "Actual closing cash",
     "variance": "Variance",
+    "showTable": "Show as table",
+    "hideTable": "Hide table",
     "summary": "Shift summary",
     "openSubmit": "Open shift",
     "closeSubmit": "Close shift",
     "loadError": "Could not load shift information.",
     "openError": "Could not open the shift.",
     "closeError": "Could not close the shift."
+    ,"sessionExpired": "Your session has expired. Sign out and sign in again."
+    ,"defaultOpening": "Default opening float"
+    ,"editOpening": "Edit amount"
+    ,"useDefault": "Use default amount"
+    ,"cashCountHint": "Count the actual cash by denomination."
+    ,"countedTotal": "Counted cash total"
+    ,"denominationQuantity": "Quantity of denomination {{denomination}}"
+    ,"increaseQuantity": "Increase quantity"
+    ,"decreaseQuantity": "Decrease quantity"
   },
+  "notifications": {
+    "title": "Notifications",
+    "empty": "No new notifications",
+    "shiftOpen": "You currently have an open shift",
+    "closingSoon": "The shift will close in {{minutes}} minutes",
+    "history": "Low-stock notification history",
+    "resolved": "Resolved",
+    "active": "Active"
+    ,"lowStock": "Low stock: {{material}}"
+    ,"viewAll": "View all notifications"
+  },
+  "channels": {"title":"Sales channels","description":"Add online ordering companies and manage their logos, prices, and availability.","nameAr":"Arabic name","nameEn":"English name","logoUrl":"Logo URL","uploadLogo":"Upload logo","uploading":"Uploading...","logoHint":"PNG, JPG, WebP, or SVG — up to 2 MB","pricing":"Product pricing","logo":"Logo","channel":"Company","status":"Status","active":"Active","inactive":"Stopped","stop":"Stop","enable":"Enable"},
+  "ai": {"title":"AI settings","provider":"Provider","model":"Model","apiKey":"API key","analyze":"AI insight","summary":"Summary","anomaly":"Anomaly detection","forecast":"Demand forecast"},
   "closing": {
     "title": "Automatic closing schedule",
     "timezoneHint": "All closing times use Muscat time (Asia/Muscat). Cashiers may open shifts at any time.",
@@ -96,17 +151,46 @@
     "actions": "Actions",
     "edit": "Edit",
     "delete": "Delete",
+    "update": "Update",
+    "cancel": "Cancel",
+    "actions": "Actions",
     "confirmDelete": "Delete this closing exception?",
     "loadError": "Could not load the closing schedule.",
     "saveError": "Could not save the closing schedule."
   },
   "reports": {
     "title": "Reports",
+    "dashboardTitle": "Sales analytics dashboard",
+    "dashboardSubtitle": "A clear view of performance for confident decisions",
+    "from": "From",
+    "to": "To",
+    "itemsSold": "Items sold",
+    "averageTicket": "Average ticket",
+    "salesTrend": "Sales trend",
+    "invoiceTrend": "Invoice count trend",
+    "itemsTrend": "Items sold trend",
+    "averageTicketTrend": "Average ticket trend",
+    "paymentDistribution": "Payment distribution",
+    "paymentComparison": "Payment method comparison",
+    "branchComparison": "Branch comparison",
+    "topProducts": "Top-selling products",
+    "topProductsRevenue": "Top products by revenue",
+    "productDetails": "Product performance details",
+    "product": "Product",
+    "quantitySold": "Quantity sold",
+    "share": "Revenue share",
+    "searchProducts": "Search products...",
     "scope": "Report scope",
     "global": "All branches",
     "branch": "Branch",
     "date": "Business date",
     "totalSales": "Total sales",
+    "totalDiscounts": "Total discounts",
+    "lowStockAlerts": "Low-stock alerts",
+    "channelDistribution": "Sales channel distribution",
+    "other": "Other",
+    "shiftVariances": "Shift variances",
+    "variance": "Variance",
     "invoices": "Invoices",
     "paymentMethod": "Payment method",
     "exportCsv": "Export CSV",
@@ -117,9 +201,26 @@
     "consumed": "Quantity consumed",
     "unit": "Unit",
     "loadError": "Could not load the sales report.",
+    "aiError": "Could not generate the AI insight. Check provider settings.",
     "shiftError": "Could not load inventory consumption for this shift.",
     "payment": { "cash": "Cash", "card": "Card" }
   },
+  "settings": {
+    "title": "Personal settings",
+    "preferences": "Preferences",
+    "language": "Preferred language",
+    "save": "Save preferences",
+    "saved": "Preferences saved.",
+    "changePassword": "Change password",
+    "currentPassword": "Current password",
+    "newPassword": "New password",
+    "confirmPassword": "Confirm new password",
+    "updatePassword": "Update password",
+    "passwordChanged": "Password changed successfully.",
+    "passwordMismatch": "The new passwords do not match.",
+    "saveError": "Could not save your settings."
+  },
+  "settingsHub": {"search":"Search settings...","closingSummary":"Automatic closing and exceptions","usersSummary":"Users and permissions","branchesSummary":"Manage branches and status","channelsSummary":"Order channels and pricing","aiSummary":"Provider, model, and API key","count":"{{count}} items"},
   "users": {
     "title": "User Management",
     "fullName": "Full name",
@@ -132,6 +233,8 @@
     "language": "Preferred language",
     "active": "Active",
     "inactive": "Inactive",
+    "edit": "Edit",
+    "delete": "Delete",
     "createdAt": "Created",
     "actions": "Actions",
     "create": "Add user",
@@ -140,7 +243,10 @@
     "save": "Save",
     "cancel": "Cancel",
     "createTitle": "New user",
-    "editTitle": "Edit user"
+    "editTitle": "Edit user",
+    "newPassword": "New password",
+    "newPasswordHint": "At least 8 characters",
+    "passwordOptionalHint": "Optional — leave blank to keep the current password. The old password is not required."
   },
   "permissions": {
     "title": "User permissions",
@@ -163,6 +269,7 @@
     "cancel": "Cancel",
     "createTitle": "New branch",
     "editTitle": "Edit branch"
+    ,"defaultOpeningFloat": "Default opening float"
   },
   "products": {
     "title": "Products",
@@ -180,7 +287,14 @@
     "save": "Save",
     "cancel": "Cancel",
     "createTitle": "New product",
-    "editTitle": "Edit product"
+    "editTitle": "Edit product",
+    "image": "Image",
+    "catalog": "Product catalog",
+    "pagination": "Products pagination",
+    "showing": "Showing {{from}}–{{to}} of {{total}}",
+    "previous": "Previous",
+    "next": "Next",
+    "pageOf": "Page {{page}} of {{total}}"
   },
   "rawMaterials": {
     "title": "Raw Materials",
@@ -205,7 +319,12 @@
     "addLine": "Add line",
     "remove": "Remove",
     "save": "Save recipe",
-    "empty": "No recipe set - this product sells with no stock deduction."
+    "empty": "No recipe set - this product sells with no stock deduction.",
+    "kicker": "Inventory recipe",
+    "ingredients": "Recipe ingredients",
+    "ingredientsCount": "ingredients",
+    "editorHint": "Choose each raw material and the amount deducted per item sold.",
+    "cancel": "Cancel"
   },
   "inventory": {
     "title": "Inventory",
@@ -224,7 +343,14 @@
     "cancel": "Cancel"
   },
   "common": {
+    "save": "Save",
+    "saved": "Saved",
+    "active": "Active",
+    "inactive": "Inactive",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
     "loading": "Loading...",
+    "search": "Search table...",
     "unauthorized": "You do not have access to this page"
   }
 }

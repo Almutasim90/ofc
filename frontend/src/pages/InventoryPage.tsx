@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { api } from '../api/client'
 import { useAuth } from '../auth/AuthContext'
 import type { BranchDto, StockStatusDto } from '../api/types'
+import { EditIcon, IconAction, SearchBox } from '../components/TableTools'
 
 export default function InventoryPage() {
   const { t } = useTranslation()
@@ -12,6 +13,7 @@ export default function InventoryPage() {
   const [stock, setStock] = useState<StockStatusDto[]>([])
   const [loading, setLoading] = useState(true)
   const [adjusting, setAdjusting] = useState<StockStatusDto | null>(null)
+  const [search, setSearch] = useState('')
 
   useEffect(() => {
     const init = async () => {
@@ -51,7 +53,7 @@ export default function InventoryPage() {
       {loading ? (
         <p>{t('common.loading')}</p>
       ) : (
-        <table>
+        <><div className="table-toolbar"><SearchBox value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('common.search')} /></div><div className="table-shell"><table>
           <thead>
             <tr>
               <th>{t('inventory.rawMaterial')}</th>
@@ -62,7 +64,7 @@ export default function InventoryPage() {
             </tr>
           </thead>
           <tbody>
-            {stock.map((item) => (
+            {stock.filter((item) => `${item.nameAr ?? ''} ${item.nameEn} ${item.unit}`.toLowerCase().includes(search.trim().toLowerCase())).map((item) => (
               <tr key={item.rawMaterialId}>
                 <td>
                   {item.nameEn} ({item.unit})
@@ -71,14 +73,12 @@ export default function InventoryPage() {
                 <td>{item.lowStockThreshold}</td>
                 <td>{item.isLowStock && <span className="error-text">{t('inventory.lowStock')}</span>}</td>
                 <td>
-                  <button type="button" onClick={() => setAdjusting(item)}>
-                    {t('inventory.adjust')}
-                  </button>
+                  <IconAction label={t('inventory.adjust')} onClick={() => setAdjusting(item)}><EditIcon /></IconAction>
                 </td>
               </tr>
             ))}
           </tbody>
-        </table>
+        </table></div></>
       )}
 
       {adjusting && (

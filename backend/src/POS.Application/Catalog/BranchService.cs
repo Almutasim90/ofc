@@ -11,7 +11,7 @@ public class BranchService(IAppDbContext db)
     {
         return await db.Branches
             .OrderBy(b => b.NameEn)
-            .Select(b => new BranchDto(b.Id, b.NameAr, b.NameEn, b.Code, b.IsActive))
+            .Select(b => new BranchDto(b.Id, b.NameAr, b.NameEn, b.Code, b.DefaultOpeningFloat, b.IsActive))
             .ToListAsync(cancellationToken);
     }
 
@@ -22,6 +22,8 @@ public class BranchService(IAppDbContext db)
         {
             throw new ValidationException($"Branch code '{request.Code}' is already taken.");
         }
+        if (request.DefaultOpeningFloat < 0)
+            throw new ValidationException("Default opening float cannot be negative.");
 
         var branch = new Branch
         {
@@ -29,27 +31,31 @@ public class BranchService(IAppDbContext db)
             NameAr = request.NameAr,
             NameEn = request.NameEn,
             Code = request.Code,
+            DefaultOpeningFloat = request.DefaultOpeningFloat,
             IsActive = true,
         };
 
         db.Branches.Add(branch);
         await db.SaveChangesAsync(cancellationToken);
 
-        return new BranchDto(branch.Id, branch.NameAr, branch.NameEn, branch.Code, branch.IsActive);
+        return new BranchDto(branch.Id, branch.NameAr, branch.NameEn, branch.Code, branch.DefaultOpeningFloat, branch.IsActive);
     }
 
     public async Task<BranchDto> UpdateAsync(Guid id, UpdateBranchRequest request, CancellationToken cancellationToken = default)
     {
         var branch = await db.Branches.FirstOrDefaultAsync(b => b.Id == id, cancellationToken)
             ?? throw new NotFoundException($"Branch '{id}' not found.");
+        if (request.DefaultOpeningFloat < 0)
+            throw new ValidationException("Default opening float cannot be negative.");
 
         branch.NameAr = request.NameAr;
         branch.NameEn = request.NameEn;
         branch.Code = request.Code;
+        branch.DefaultOpeningFloat = request.DefaultOpeningFloat;
         branch.IsActive = request.IsActive;
 
         await db.SaveChangesAsync(cancellationToken);
 
-        return new BranchDto(branch.Id, branch.NameAr, branch.NameEn, branch.Code, branch.IsActive);
+        return new BranchDto(branch.Id, branch.NameAr, branch.NameEn, branch.Code, branch.DefaultOpeningFloat, branch.IsActive);
     }
 }

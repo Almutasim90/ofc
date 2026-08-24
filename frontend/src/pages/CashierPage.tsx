@@ -3,7 +3,9 @@ import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { api, ApiError } from '../api/client'
 import { useAuth } from '../auth/AuthContext'
-import type { BranchDto, CreateSaleRequest, ProductDto, SaleDto, ShiftDto, UpcomingClosingDto } from '../api/types'
+import Money from '../components/Money'
+import BottomSheet from '../components/BottomSheet'
+import type { BranchDto, CreateSaleRequest, ProductChannelPriceDto, ProductDto, SaleDto, SalesChannelDto, ShiftDto, UpcomingClosingDto } from '../api/types'
 
 interface CartLine {
   productId: string
@@ -13,6 +15,48 @@ interface CartLine {
   quantity: number
 }
 
+function CategoryIcon({ category }: { category: string | null }) {
+  const iconClass = 'h-5 w-5'
+
+  if (category === null) {
+    return <svg className={iconClass} aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></svg>
+  }
+
+  switch (category.toLowerCase()) {
+    case 'food':
+      return <svg className={iconClass} aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M4 17h16M6 17a6 6 0 0 1 12 0M12 8V6"/><path d="M10 6h4"/><path d="M3 20h18"/></svg>
+    case 'sweet':
+    case 'sweets':
+    case 'dessert':
+      return <svg className={iconClass} aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M5 11h14l-1.2 9H6.2L5 11Z"/><path d="M7 11c0-2 1.4-3.5 3.2-3.5.6-2.3 4.6-2.1 4.8.5 1.5 0 2.7 1.3 2.7 3"/><path d="M9 15h.01M15 15h.01"/></svg>
+    case 'tea':
+      return <svg className={iconClass} aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M5 9h12v5a5 5 0 0 1-5 5h-2a5 5 0 0 1-5-5V9Z"/><path d="M17 11h1.5a2.5 2.5 0 0 1 0 5H17M8 5c0 1 1 1 1 2M12 4c0 1 1 1 1 2"/></svg>
+    case 'drink':
+    case 'drinks':
+    case 'beverage':
+    case 'beverages':
+      return <svg className={iconClass} aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M7 8h10l-1 12H8L7 8Z"/><path d="m9 4 2 4M11 4h5M9 13h6"/></svg>
+    default:
+      return <svg className={iconClass} aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M20.59 13.41 12 4.83A2 2 0 0 0 10.59 4.24L4 4a1 1 0 0 0-1 1l.24 6.59a2 2 0 0 0 .59 1.41l8.58 8.58a2 2 0 0 0 2.83 0l5.35-5.35a2 2 0 0 0 0-2.82Z"/><circle cx="7.5" cy="7.5" r="1.1" fill="currentColor" stroke="none"/></svg>
+  }
+}
+
+function CashIcon() {
+  return <svg className="h-5 w-5" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75"><rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M7 9H6v1M17 15h1v-1"/></svg>
+}
+
+function CardIcon() {
+  return <svg className="h-5 w-5" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18M7 15h4"/></svg>
+}
+
+function OnlineOrdersIcon() {
+  return <svg className="h-5 w-5" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M4 8h16l-1 12H5L4 8Z"/><path d="M8 8a4 4 0 0 1 8 0M8 13h.01M16 13h.01"/></svg>
+}
+
+function StoreIcon() {
+  return <svg className="h-5 w-5" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M4 10 5 4h14l1 6"/><path d="M4 10a2 2 0 0 0 4 0 2 2 0 0 0 4 0 2 2 0 0 0 4 0 2 2 0 0 0 4 0"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg>
+}
+
 export default function CashierPage() {
   const { t, i18n } = useTranslation()
   const { user } = useAuth()
@@ -20,12 +64,18 @@ export default function CashierPage() {
   const [branches, setBranches] = useState<BranchDto[]>([])
   const [branchId, setBranchId] = useState('')
   const [products, setProducts] = useState<ProductDto[]>([])
+  const [channels, setChannels] = useState<SalesChannelDto[]>([])
+  const [channelId, setChannelId] = useState('')
+  const [channelPrices, setChannelPrices] = useState<Record<string, number>>({})
+  const [sidebarView, setSidebarView] = useState<'store' | 'online'>('store')
   const [loading, setLoading] = useState(true)
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [cart, setCart] = useState<CartLine[]>([])
   const [cartOpen, setCartOpen] = useState(false)
   const [justAdded, setJustAdded] = useState<string | null>(null)
   const [paymentMethod, setPaymentMethod] = useState<'Cash' | 'Card'>('Cash')
+  const [discountType, setDiscountType] = useState<'None' | 'Percentage' | 'FixedAmount'>('None')
+  const [discountValue, setDiscountValue] = useState(0)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [successSale, setSuccessSale] = useState<SaleDto | null>(null)
@@ -35,15 +85,18 @@ export default function CashierPage() {
   useEffect(() => {
     const init = async () => {
       try {
-        const [branchesData, productsData, shiftData] = await Promise.all([
+        const [branchesData, productsData, shiftData, channelData] = await Promise.all([
           api.get<BranchDto[]>('/api/branches'),
           api.get<ProductDto[]>('/api/products'),
           api.get<ShiftDto | undefined>('/api/shifts/current'),
+          api.get<SalesChannelDto[]>('/api/channels?activeOnly=true'),
         ])
         setBranches(branchesData.filter((branch) => branch.isActive))
         setProducts(productsData.filter((product) => product.isActive))
         setBranchId(shiftData?.branchId ?? user?.branchId ?? branchesData.find((branch) => branch.isActive)?.id ?? '')
         setCurrentShift(shiftData ?? null)
+        setChannels(channelData)
+        setChannelId(channelData.find((channel) => channel.isInStore)?.id ?? '')
       } catch {
         setError(t('cashier.loadError'))
       } finally {
@@ -84,6 +137,24 @@ export default function CashierPage() {
     const key = `cashier.categories.${category.toLowerCase()}`
     return i18n.exists(key) ? t(key) : category
   }
+  const selectedChannel = channels.find((channel) => channel.id === channelId)
+  const onlineChannels = channels.filter((channel) => !channel.isInStore)
+  const storeChannel = channels.find((channel) => channel.isInStore)
+  const selectChannel = async (channel: SalesChannelDto) => {
+    const prices = channel.isInStore ? [] : await api.get<ProductChannelPriceDto[]>(`/api/channels/${channel.id}/catalog-prices`)
+    setChannelPrices(Object.fromEntries(prices.filter((price) => price.price != null).map((price) => [price.productId, price.price!])))
+    setChannelId(channel.id)
+    setSelectedCategory(null)
+    setCart([])
+    setSidebarView(channel.isInStore ? 'store' : 'online')
+  }
+  const goToStore = () => {
+    if (selectedChannel && !selectedChannel.isInStore && storeChannel) {
+      void selectChannel(storeChannel)
+    } else {
+      setSidebarView('store')
+    }
+  }
 
   const addToCart = (product: ProductDto) => {
     if (!currentShift) {
@@ -95,7 +166,7 @@ export default function CashierPage() {
       if (existing) {
         return prev.map((l) => (l.productId === product.id ? { ...l, quantity: l.quantity + 1 } : l))
       }
-      return [...prev, { productId: product.id, nameAr: product.nameAr, nameEn: product.nameEn, price: product.price, quantity: 1 }]
+      return [...prev, { productId: product.id, nameAr: product.nameAr, nameEn: product.nameEn, price: channelPrices[product.id] ?? product.price, quantity: 1 }]
     })
     setJustAdded(product.id)
     window.setTimeout(() => setJustAdded((current) => (current === product.id ? null : current)), 500)
@@ -113,7 +184,11 @@ export default function CashierPage() {
     setCart((prev) => prev.map((l) => (l.productId === productId ? { ...l, quantity } : l)))
   }
 
-  const total = cart.reduce((sum, l) => sum + l.price * l.quantity, 0)
+  const subtotal = cart.reduce((sum, l) => sum + l.price * l.quantity, 0)
+  const discountAmount = discountType === 'Percentage'
+    ? Math.min(subtotal, subtotal * discountValue / 100)
+    : discountType === 'FixedAmount' ? Math.min(subtotal, discountValue) : 0
+  const total = Math.max(0, subtotal - discountAmount)
   const itemCount = cart.reduce((sum, l) => sum + l.quantity, 0)
 
   const checkout = async () => {
@@ -124,11 +199,16 @@ export default function CashierPage() {
       const request: CreateSaleRequest = {
         branchId,
         paymentMethod,
+        discountType,
+        discountValue,
+        channelId,
         lines: cart.map((l) => ({ productId: l.productId, quantity: l.quantity })),
       }
       const sale = await api.post<SaleDto>('/api/sales', request)
       setSuccessSale(sale)
       setCart([])
+      setDiscountType('None')
+      setDiscountValue(0)
       setCartOpen(false)
     } catch (err) {
       if (err instanceof ApiError && err.message.startsWith('Insufficient stock')) {
@@ -146,12 +226,12 @@ export default function CashierPage() {
   if (loading) return <p className="p-6 text-muted">{t('common.loading')}</p>
 
   const cartContent: ReactNode = (
-    <div className="flex h-full flex-col">
-      <div className="flex items-center justify-between border-b border-border p-4">
+    <div className="cashier-cart flex h-full flex-col">
+      <div className="cashier-cart-header flex items-center justify-between border-b border-border p-4">
         <h2 className="font-cairo text-lg font-bold text-text">{t('cashier.cart')}</h2>
         <button
           type="button"
-          className="border-0 bg-transparent p-1 text-muted lg:hidden"
+          className="border-0 bg-transparent p-1 text-muted md:hidden"
           onClick={() => setCartOpen(false)}
         >
           ✕
@@ -161,15 +241,15 @@ export default function CashierPage() {
       <div className="flex-1 space-y-3 overflow-y-auto p-4">
         {cart.length === 0 && <p className="text-sm text-muted">{t('cashier.cartEmpty')}</p>}
         {cart.map((line) => (
-          <div key={line.productId} className="flex items-center gap-2 rounded-lg bg-surface2 p-2">
+          <div key={line.productId} className="cashier-cart-line flex items-center gap-2 rounded-xl bg-surface2 p-2.5">
             <div className="min-w-0 flex-1">
               <div className="truncate text-sm text-text">{i18n.language === 'ar' ? line.nameAr : line.nameEn}</div>
-              <div className="font-cairo text-sm text-accent">{line.price.toFixed(3)}</div>
+              <div className="text-sm text-accent"><Money value={line.price} /></div>
             </div>
             <div className="flex items-center gap-1">
               <button
                 type="button"
-                className="h-8 w-8 rounded-md border border-border bg-surface p-0 text-text"
+                className="cashier-quantity-button h-8 w-8 rounded-md border border-border bg-surface p-0 text-text"
                 onClick={() => updateQuantity(line.productId, line.quantity - 1)}
               >
                 −
@@ -177,7 +257,7 @@ export default function CashierPage() {
               <span className="w-6 text-center font-cairo text-text">{line.quantity}</span>
               <button
                 type="button"
-                className="h-8 w-8 rounded-md border border-border bg-surface p-0 text-text"
+                className="cashier-quantity-button h-8 w-8 rounded-md border border-border bg-surface p-0 text-text"
                 onClick={() => updateQuantity(line.productId, line.quantity + 1)}
               >
                 +
@@ -185,7 +265,7 @@ export default function CashierPage() {
             </div>
             <button
               type="button"
-              className="border-0 bg-transparent p-1 text-sm text-danger"
+              className="cashier-remove border-0 bg-transparent p-1 text-sm text-danger"
               onClick={() => removeFromCart(line.productId)}
             >
               {t('cashier.remove')}
@@ -195,6 +275,19 @@ export default function CashierPage() {
       </div>
 
       <div className="space-y-3 border-t border-border p-4">
+        <div className="cashier-discount-control">
+          <label>{t('cashier.discountType')}
+            <select value={discountType} onChange={(event) => { setDiscountType(event.target.value as typeof discountType); setDiscountValue(0) }}>
+              <option value="None">{t('cashier.noDiscount')}</option>
+              <option value="Percentage">{t('cashier.percentageDiscount')}</option>
+              <option value="FixedAmount">{t('cashier.fixedDiscount')}</option>
+            </select>
+          </label>
+          {discountType !== 'None' && <label>{t('cashier.discountValue')}
+            <input type="number" min="0" max={discountType === 'Percentage' ? 100 : subtotal} step="0.001" value={discountValue} onChange={(event) => setDiscountValue(Math.max(0, Number(event.target.value) || 0))} />
+          </label>}
+        </div>
+        {discountAmount > 0 && <div className="flex items-center justify-between text-sm text-muted"><span>{t('cashier.discount')}</span><Money value={discountAmount} /></div>}
         <div className="flex flex-col gap-1 text-sm text-muted">
           {t('cashier.paymentMethod')}
           <div className="flex gap-2">
@@ -202,30 +295,32 @@ export default function CashierPage() {
               type="button"
               className={
                 paymentMethod === 'Cash'
-                  ? 'flex-1 border-0 bg-primary text-white'
-                  : 'flex-1 border border-border bg-surface2 text-text'
+                  ? 'inline-flex flex-1 items-center justify-center gap-2 border-0 bg-primary text-white'
+                  : 'inline-flex flex-1 items-center justify-center gap-2 border border-border bg-surface2 text-text'
               }
               onClick={() => setPaymentMethod('Cash')}
             >
-              {t('cashier.cash')}
+              <CashIcon />
+              <span>{t('cashier.cash')}</span>
             </button>
             <button
               type="button"
               className={
                 paymentMethod === 'Card'
-                  ? 'flex-1 border-0 bg-primary text-white'
-                  : 'flex-1 border border-border bg-surface2 text-text'
+                  ? 'inline-flex flex-1 items-center justify-center gap-2 border-0 bg-primary text-white'
+                  : 'inline-flex flex-1 items-center justify-center gap-2 border border-border bg-surface2 text-text'
               }
               onClick={() => setPaymentMethod('Card')}
             >
-              {t('cashier.card')}
+              <CardIcon />
+              <span>{t('cashier.card')}</span>
             </button>
           </div>
         </div>
 
         <div className="flex items-center justify-between font-cairo text-lg font-bold text-text">
           <span>{t('cashier.total')}</span>
-          <span className="text-accent">{total.toFixed(3)}</span>
+          <Money className="text-accent" value={total} />
         </div>
 
         {error && <p className="text-sm text-danger">{error}</p>}
@@ -243,46 +338,81 @@ export default function CashierPage() {
   )
 
   return (
-    <div className="cashier-theme -m-6 flex h-[calc(100vh-65px)] overflow-hidden bg-bg text-text">
-      <aside className="flex w-20 flex-shrink-0 flex-col items-center gap-2 overflow-y-auto border-e border-border bg-surface py-3">
-        <button
-          type="button"
-          className="flex flex-col items-center gap-1 border-0 bg-transparent p-0"
-          onClick={() => setSelectedCategory(null)}
-        >
-          <span
-            className={`flex h-14 w-14 items-center justify-center rounded-full text-lg font-bold ${
-              selectedCategory === null ? 'bg-primary text-white' : 'bg-surface2 text-text'
-            }`}
-          >
-            ★
-          </span>
-          <span className={`text-xs ${selectedCategory === null ? 'text-primary' : 'text-muted'}`}>
-            {t('cashier.allCategories')}
-          </span>
-        </button>
-        {categories.map((cat) => (
-          <button
-            key={cat}
-            type="button"
-            className="flex flex-col items-center gap-1 border-0 bg-transparent p-0"
-            onClick={() => setSelectedCategory(cat)}
-          >
-            <span
-              className={`flex h-14 w-14 items-center justify-center rounded-full text-lg font-bold ${
-                selectedCategory === cat ? 'bg-primary text-white' : 'bg-surface2 text-text'
-              }`}
+    <div className="cashier-theme flex h-full min-h-0 w-full flex-col overflow-hidden text-text md:flex-row">
+      <aside className="cashier-categories flex flex-shrink-0 items-center gap-2 overflow-x-auto border-b border-border bg-surface px-3 py-2 md:w-24 md:flex-col md:overflow-x-hidden md:overflow-y-auto md:border-b-0 md:border-e md:px-2 md:py-4">
+        {sidebarView === 'store' ? (
+          <div key="store" className="cashier-sidebar-panel flex items-center gap-2 md:flex-col md:items-stretch">
+            <button
+              type="button"
+              className={`cashier-category-button flex min-w-[4.5rem] flex-col items-center gap-1 border-0 bg-transparent p-1 ${selectedCategory === null ? 'is-selected' : ''}`}
+              onClick={() => setSelectedCategory(null)}
             >
-              {cat.charAt(0)}
-            </span>
-            <span className={`text-xs ${selectedCategory === cat ? 'text-primary' : 'text-muted'}`}>
-              {categoryName(cat)}
-            </span>
-          </button>
-        ))}
+              <span
+                className={`cashier-category-icon flex h-9 w-9 items-center justify-center rounded-xl md:h-10 md:w-10 ${
+                  selectedCategory === null ? 'bg-primary text-white' : 'bg-surface2 text-text'
+                }`}
+              >
+                <CategoryIcon category={null} />
+              </span>
+              <span className={`text-xs ${selectedCategory === null ? 'text-primary' : 'text-muted'}`}>
+                {t('cashier.allCategories')}
+              </span>
+            </button>
+            {categories.map((cat) => (
+              <button
+                key={cat}
+                type="button"
+                className={`cashier-category-button flex min-w-[4.5rem] flex-col items-center gap-1 border-0 bg-transparent p-1 ${selectedCategory === cat ? 'is-selected' : ''}`}
+                onClick={() => setSelectedCategory(cat)}
+              >
+                <span
+                  className={`cashier-category-icon flex h-9 w-9 items-center justify-center rounded-xl md:h-10 md:w-10 ${
+                    selectedCategory === cat ? 'bg-primary text-white' : 'bg-surface2 text-text'
+                  }`}
+                >
+                  <CategoryIcon category={cat} />
+                </span>
+                <span className={`text-xs ${selectedCategory === cat ? 'text-primary' : 'text-muted'}`}>
+                  {categoryName(cat)}
+                </span>
+              </button>
+            ))}
+            {onlineChannels.length > 0 && (
+              <button
+                type="button"
+                className="cashier-category-button flex min-w-[4.5rem] flex-col items-center gap-1 border-0 bg-transparent p-1"
+                onClick={() => setSidebarView('online')}
+              >
+                <span className="cashier-category-icon flex h-9 w-9 items-center justify-center rounded-xl bg-surface2 text-text md:h-10 md:w-10"><OnlineOrdersIcon /></span>
+                <span className="text-xs text-muted">{t('cashier.onlineOrders')}</span>
+              </button>
+            )}
+          </div>
+        ) : (
+          <div key="online" className="cashier-sidebar-panel flex items-center gap-2 md:flex-col md:items-stretch">
+            <button type="button" className="cashier-channel-back flex min-w-[4.5rem] flex-col items-center gap-1 border-0 bg-transparent p-1" onClick={goToStore}>
+              <span className="cashier-category-icon flex h-9 w-9 items-center justify-center rounded-xl md:h-10 md:w-10"><StoreIcon /></span>
+              <span className="text-xs">{t('cashier.backToStore')}</span>
+            </button>
+            {onlineChannels.map((channel) => (
+              <button
+                key={channel.id}
+                type="button"
+                className={`cashier-category-button flex min-w-[4.5rem] flex-col items-center gap-1 border-0 bg-transparent p-1 ${channel.id === channelId ? 'is-selected' : ''}`}
+                onClick={() => void selectChannel(channel)}
+              >
+                <span className={`cashier-category-icon flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl md:h-10 md:w-10 ${channel.id === channelId ? 'bg-primary text-white' : 'bg-surface2 text-text'}`}>
+                  {channel.logoUrl ? <img src={channel.logoUrl} alt="" className="h-full w-full object-contain" /> : <OnlineOrdersIcon />}
+                </span>
+                <span className={`text-xs ${channel.id === channelId ? 'text-primary' : 'text-muted'}`}>{productName(channel)}</span>
+              </button>
+            ))}
+          </div>
+        )}
       </aside>
 
-      <div className="flex-1 overflow-y-auto p-4 pb-24 lg:pb-4">
+      <div className="cashier-catalog flex-1 overflow-y-auto p-3 pb-24 sm:p-4 xl:pb-4">
+        {selectedChannel && !selectedChannel.isInStore && <div className="cashier-channel-context"><span>{selectedChannel.logoUrl && <img src={selectedChannel.logoUrl} alt="" />}{t('cashier.currentOrder')}: <strong>{productName(selectedChannel)}</strong></span><button type="button" onClick={goToStore}>{t('cashier.backToStore')}</button></div>}
         {closingWarning && (
           <div className="mb-4 rounded-xl border border-primary bg-surface p-3 text-primary">
             {t('cashier.closingWarning', { minutes: closingWarning.minutesRemaining })}
@@ -294,10 +424,11 @@ export default function CashierPage() {
             <Link className="rounded-lg bg-primary px-3 py-2 font-bold text-bg" to="/shift">{t('cashier.openShift')}</Link>
           </div>
         )}
-        {!user?.branchId && branches.length > 0 && (
-          <label className="mb-4 flex max-w-xs flex-col gap-1 text-sm text-muted">
+        {branches.length > 0 && (
+          <div className="cashier-toolbar mb-4 flex flex-wrap items-end justify-between gap-3 rounded-2xl border border-border bg-surface p-3 sm:p-4">
+          <label className="flex w-full max-w-xs flex-col gap-1 text-sm font-semibold text-muted sm:w-auto sm:min-w-64">
             {t('cashier.branch')}
-            <select value={branchId} onChange={(e) => setBranchId(e.target.value)}>
+            <select value={branchId} disabled={Boolean(user?.branchId)} onChange={(e) => setBranchId(e.target.value)}>
               {branches.map((b) => (
                 <option key={b.id} value={b.id}>
                   {branchName(b)}
@@ -305,70 +436,64 @@ export default function CashierPage() {
               ))}
             </select>
           </label>
+          <div className="cashier-products-count"><strong>{visibleProducts.length}</strong><span>{t('nav.products')}</span></div>
+          </div>
         )}
 
         {error && products.length === 0 && <p className="p-4 text-danger">{error}</p>}
         {!error && visibleProducts.length === 0 && <p className="p-4 text-muted">{t('cashier.noProducts')}</p>}
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+        <div className="cashier-products-grid">
           {visibleProducts.map((product) => (
             <button
               key={product.id}
               type="button"
               onClick={() => addToCart(product)}
-              className={`flex flex-col items-start overflow-hidden rounded-xl border-0 bg-surface p-0 text-start transition-transform active:scale-95 ${
+              className={`product-card group relative flex min-w-0 flex-col items-start overflow-hidden rounded-2xl border border-border bg-surface p-0 text-start active:scale-[0.98] ${
                 justAdded === product.id ? 'add-confirm' : ''
               }`}
             >
-              <div className="aspect-square w-full bg-surface2">
+              <div className="product-card-image aspect-square w-full bg-surface2">
                 {product.iconOrImageUrl ? (
-                  <img src={product.iconOrImageUrl} alt={productName(product)} className="h-full w-full object-cover" />
+                  <img src={product.iconOrImageUrl} alt={productName(product)} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center text-3xl">🍵</div>
                 )}
               </div>
-              <div className="w-full p-2">
-                <div className="truncate text-sm font-medium text-text">{productName(product)}</div>
-                <div className="font-cairo font-bold text-accent">{product.price.toFixed(3)}</div>
+              <div className="w-full p-3">
+                <div className="truncate text-sm font-bold text-text">{productName(product)}</div>
+                <Money className="mt-1 font-bold text-primary" value={channelPrices[product.id] ?? product.price} />
               </div>
+              <span className="product-add-indicator absolute end-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-xl text-white shadow-lg" aria-hidden="true">+</span>
             </button>
           ))}
         </div>
       </div>
 
-      <aside className="hidden flex-shrink-0 border-s border-border bg-surface lg:flex lg:w-96">
+      <aside className="cashier-cart-panel hidden flex-shrink-0 border-s border-border bg-surface md:flex">
         {cartContent}
       </aside>
 
-      <div className="lg:hidden">
+      <div className="md:hidden">
         {cart.length > 0 && !cartOpen && (
           <button
             type="button"
-            className="fixed inset-x-4 bottom-4 z-40 flex items-center justify-between rounded-xl border-0 bg-primary px-4 py-3 text-white shadow-lg"
+            className="cashier-cart-fab fixed inset-x-4 bottom-4 z-40 flex items-center justify-between rounded-2xl border-0 bg-primary px-4 py-3 text-white shadow-lg md:start-auto md:w-80"
             onClick={() => setCartOpen(true)}
           >
             <span>
               {itemCount} {t('cashier.items')}
             </span>
-            <span className="font-cairo font-bold">{total.toFixed(3)}</span>
+            <Money className="font-bold" value={total} />
           </button>
         )}
-        {cartOpen && (
-          <div className="fixed inset-0 z-50 flex items-end bg-black/60" onClick={() => setCartOpen(false)}>
-            <div
-              className="max-h-[85vh] w-full overflow-hidden rounded-t-2xl bg-surface"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {cartContent}
-            </div>
-          </div>
-        )}
+        <BottomSheet open={cartOpen} onClose={() => setCartOpen(false)}>{cartContent}</BottomSheet>
       </div>
 
       {successSale && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={() => setSuccessSale(null)}>
           <div className="rounded-xl bg-surface p-6 text-center" onClick={(e) => e.stopPropagation()}>
             <p className="font-cairo text-xl font-bold text-primary">{t('cashier.saleSuccess')}</p>
-            <p className="mt-2 font-cairo text-2xl text-accent">{successSale.totalAmount.toFixed(3)}</p>
+            <p className="mt-2 text-2xl text-accent"><Money value={successSale.totalAmount} /></p>
             <button type="button" className="mt-4 border-0 bg-primary text-white" onClick={() => setSuccessSale(null)}>
               {t('cashier.close')}
             </button>

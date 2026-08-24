@@ -34,8 +34,8 @@ public class ShiftService(IAppDbContext db, ICurrentUserService currentUser)
         if (request.OpeningCash < 0)
             throw new ValidationException("Opening cash cannot be negative.");
 
-        var branchExists = await db.Branches.AnyAsync(b => b.Id == request.BranchId && b.IsActive, cancellationToken);
-        if (!branchExists)
+        var branch = await db.Branches.FirstOrDefaultAsync(b => b.Id == request.BranchId && b.IsActive, cancellationToken);
+        if (branch is null)
             throw new ValidationException("The selected branch is unavailable.");
 
         var alreadyOpen = await db.Shifts.AnyAsync(
@@ -48,7 +48,7 @@ public class ShiftService(IAppDbContext db, ICurrentUserService currentUser)
             Id = Guid.NewGuid(),
             BranchId = request.BranchId,
             CashierUserId = userId,
-            OpeningCash = request.OpeningCash,
+            OpeningCash = request.OpeningCash ?? branch.DefaultOpeningFloat,
             OpenedAt = DateTime.UtcNow,
         };
         db.Shifts.Add(shift);
@@ -59,8 +59,12 @@ public class ShiftService(IAppDbContext db, ICurrentUserService currentUser)
     public async Task<ShiftDto> CloseAsync(Guid shiftId, CloseShiftRequest request, CancellationToken cancellationToken = default)
     {
         var userId = RequireUserId();
-        if (request.ClosingCashActual < 0)
-            throw new ValidationException("Actual closing cash cannot be negative.");
+        if (request.Counts is null || request.Counts.Count == 0)
+            throw new ValidationException("At least one cash denomination count is required.");
+        if (request.Counts.Any(c => c.Denomination <= 0 || c.Quantity < 0))
+            throw new ValidationException("Cash denominations must be positive and quantities cannot be negative.");
+        if (request.Counts.GroupBy(c => c.Denomination).Any(g => g.Count() > 1))
+            throw new ValidationException("Each cash denomination may appear only once.");
 
         var shift = await db.Shifts.FirstOrDefaultAsync(s => s.Id == shiftId, cancellationToken)
             ?? throw new NotFoundException("Shift not found.");
@@ -71,31 +75,53 @@ public class ShiftService(IAppDbContext db, ICurrentUserService currentUser)
 
         var cashSales = await db.Sales
             .Where(s => s.ShiftId == shift.Id && s.Status == SaleStatus.Completed && s.PaymentMethod == PaymentMethods.Cash)
+            .Where(s => s.Channel.IsInStore)
             .SumAsync(s => s.TotalAmount, cancellationToken);
         shift.ClosingCashExpected = shift.OpeningCash + cashSales;
-        shift.ClosingCashActual = request.ClosingCashActual;
-        shift.VarianceAmount = request.ClosingCashActual - shift.ClosingCashExpected;
+        var closingCashActual = request.Counts.Sum(c => c.Denomination * c.Quantity);
+        shift.ClosingCashActual = closingCashActual;
+        shift.VarianceAmount = closingCashActual - shift.ClosingCashExpected;
         shift.ClosedAt = DateTime.UtcNow;
         shift.Status = ShiftStatus.Closed;
         shift.AutoClosed = false;
 
+        foreach (var count in request.Counts.Where(c => c.Quantity > 0))
+        {
+            db.ShiftCashCounts.Add(new ShiftCashCount
+            {
+                Id = Guid.NewGuid(), ShiftId = shift.Id, CountType = "Closing",
+                Denomination = count.Denomination, Quantity = count.Quantity,
+            });
+        }
+
         await db.SaveChangesAsync(cancellationToken);
-        return ToDto(shift, cashSales);
+        var countDtos = request.Counts.Where(c => c.Quantity > 0)
+            .OrderByDescending(c => c.Denomination)
+            .Select(c => new ShiftCashCountDto(c.Denomination, c.Quantity, c.Denomination * c.Quantity))
+            .ToList();
+        return ToDto(shift, cashSales, countDtos);
     }
 
     private async Task<ShiftDto> ToDtoAsync(Shift shift, CancellationToken cancellationToken)
     {
         var cashSales = await db.Sales
             .Where(s => s.ShiftId == shift.Id && s.Status == SaleStatus.Completed && s.PaymentMethod == PaymentMethods.Cash)
+            .Where(s => s.Channel.IsInStore)
             .SumAsync(s => s.TotalAmount, cancellationToken);
-        return ToDto(shift, cashSales);
+        return ToDto(shift, cashSales, await GetCashCountsAsync(shift.Id, cancellationToken));
     }
 
-    private static ShiftDto ToDto(Shift shift, decimal cashSales) => new(
+    private async Task<IReadOnlyList<ShiftCashCountDto>> GetCashCountsAsync(Guid shiftId, CancellationToken cancellationToken) =>
+        await db.ShiftCashCounts.AsNoTracking().Where(c => c.ShiftId == shiftId && c.CountType == "Closing")
+            .OrderByDescending(c => c.Denomination)
+            .Select(c => new ShiftCashCountDto(c.Denomination, c.Quantity, c.Denomination * c.Quantity))
+            .ToListAsync(cancellationToken);
+
+    private static ShiftDto ToDto(Shift shift, decimal cashSales, IReadOnlyList<ShiftCashCountDto>? counts = null) => new(
         shift.Id, shift.BranchId, shift.CashierUserId, shift.OpeningCash,
         shift.Status == ShiftStatus.Open ? shift.OpeningCash + cashSales : shift.ClosingCashExpected,
         shift.ClosingCashActual, shift.VarianceAmount, shift.OpenedAt, shift.ClosedAt,
-        shift.Status, shift.AutoClosed, cashSales);
+        shift.Status, shift.AutoClosed, cashSales, counts ?? []);
 
     private Guid RequireUserId() => currentUser.UserId ?? throw new UnauthorizedException("Missing user context.");
 

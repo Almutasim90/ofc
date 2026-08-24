@@ -22,6 +22,8 @@ public class AppDbContext : DbContext, IAppDbContext
 
     public DbSet<Branch> Branches => Set<Branch>();
     public DbSet<Product> Products => Set<Product>();
+    public DbSet<SalesChannel> SalesChannels => Set<SalesChannel>();
+    public DbSet<ProductChannelPrice> ProductChannelPrices => Set<ProductChannelPrice>();
     public DbSet<RawMaterial> RawMaterials => Set<RawMaterial>();
     public DbSet<BranchRawMaterialStock> BranchRawMaterialStocks => Set<BranchRawMaterialStock>();
     public DbSet<ProductRecipe> ProductRecipes => Set<ProductRecipe>();
@@ -31,9 +33,13 @@ public class AppDbContext : DbContext, IAppDbContext
     public DbSet<SaleItem> SaleItems => Set<SaleItem>();
     public DbSet<SaleInventoryConsumption> SaleInventoryConsumptions => Set<SaleInventoryConsumption>();
     public DbSet<Shift> Shifts => Set<Shift>();
+    public DbSet<ShiftCashCount> ShiftCashCounts => Set<ShiftCashCount>();
     public DbSet<VoidRequest> VoidRequests => Set<VoidRequest>();
     public DbSet<ClosingScheduleConfig> ClosingScheduleConfigs => Set<ClosingScheduleConfig>();
     public DbSet<ClosingScheduleException> ClosingScheduleExceptions => Set<ClosingScheduleException>();
+    public DbSet<LowStockNotification> LowStockNotifications => Set<LowStockNotification>();
+    public DbSet<AiProviderSetting> AiProviderSettings => Set<AiProviderSetting>();
+    public DbSet<AiInsightRequest> AiInsightRequests => Set<AiInsightRequest>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -99,6 +105,7 @@ public class AppDbContext : DbContext, IAppDbContext
             entity.Property(b => b.NameEn).IsRequired().HasMaxLength(200);
             entity.Property(b => b.Code).IsRequired().HasMaxLength(50);
             entity.HasIndex(b => b.Code).IsUnique();
+            entity.Property(b => b.DefaultOpeningFloat).HasPrecision(18, 3);
         });
 
         modelBuilder.Entity<Product>(entity =>
@@ -108,6 +115,22 @@ public class AppDbContext : DbContext, IAppDbContext
             entity.Property(p => p.NameEn).IsRequired().HasMaxLength(200);
             entity.Property(p => p.Category).IsRequired().HasMaxLength(100);
             entity.Property(p => p.Price).HasPrecision(18, 3);
+        });
+
+        modelBuilder.Entity<SalesChannel>(entity =>
+        {
+            entity.HasKey(c => c.Id);
+            entity.Property(c => c.NameAr).IsRequired().HasMaxLength(200);
+            entity.Property(c => c.NameEn).IsRequired().HasMaxLength(200);
+            entity.Property(c => c.LogoUrl).HasMaxLength(1000);
+            entity.HasIndex(c => c.IsInStore).IsUnique().HasFilter("\"IsInStore\" = TRUE");
+        });
+        modelBuilder.Entity<ProductChannelPrice>(entity =>
+        {
+            entity.HasKey(p => new { p.ProductId, p.ChannelId });
+            entity.Property(p => p.Price).HasPrecision(18, 3);
+            entity.HasOne(p => p.Product).WithMany().HasForeignKey(p => p.ProductId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(p => p.Channel).WithMany(c => c.ProductPrices).HasForeignKey(p => p.ChannelId).OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<RawMaterial>(entity =>
@@ -162,10 +185,14 @@ public class AppDbContext : DbContext, IAppDbContext
         {
             entity.HasKey(s => s.Id);
             entity.Property(s => s.TotalAmount).HasPrecision(18, 3);
+            entity.Property(s => s.DiscountValue).HasPrecision(18, 3);
+            entity.Property(s => s.DiscountAmount).HasPrecision(18, 3);
+            entity.Property(s => s.DiscountType).IsRequired().HasMaxLength(20);
             entity.Property(s => s.PaymentMethod).IsRequired().HasMaxLength(20);
             entity.Property(s => s.Status).IsRequired().HasMaxLength(20);
             entity.HasIndex(s => new { s.BranchId, s.BusinessDate });
             entity.HasOne(s => s.Shift).WithMany(s => s.Sales).HasForeignKey(s => s.ShiftId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(s => s.Channel).WithMany().HasForeignKey(s => s.ChannelId).OnDelete(DeleteBehavior.Restrict);
 
             entity.HasQueryFilter(s =>
                 _currentUser == null
@@ -182,6 +209,8 @@ public class AppDbContext : DbContext, IAppDbContext
             entity.Property(i => i.UnitPriceSnapshot).HasPrecision(18, 3);
             entity.Property(i => i.Quantity).HasPrecision(18, 3);
             entity.Property(i => i.LineTotal).HasPrecision(18, 3);
+            entity.Property(i => i.DiscountValue).HasPrecision(18, 3);
+            entity.Property(i => i.DiscountType).IsRequired().HasMaxLength(20);
 
             // Mirrors Sale's branch filter so Include(i => i.Sale) can't leak cross-branch items.
             entity.HasQueryFilter(i =>
@@ -218,6 +247,18 @@ public class AppDbContext : DbContext, IAppDbContext
                 _currentUser == null || _currentUser.BypassBranchFilter || s.BranchId == _currentUser.BranchId);
         });
 
+        modelBuilder.Entity<ShiftCashCount>(entity =>
+        {
+            entity.HasKey(c => c.Id);
+            entity.HasOne(c => c.Shift).WithMany(s => s.CashCounts).HasForeignKey(c => c.ShiftId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.Property(c => c.CountType).IsRequired().HasMaxLength(20);
+            entity.Property(c => c.Denomination).HasPrecision(18, 3);
+            entity.HasIndex(c => new { c.ShiftId, c.CountType, c.Denomination }).IsUnique();
+            entity.HasQueryFilter(c =>
+                _currentUser == null || _currentUser.BypassBranchFilter || c.Shift.BranchId == _currentUser.BranchId);
+        });
+
         modelBuilder.Entity<VoidRequest>(entity =>
         {
             entity.HasKey(v => v.Id);
@@ -250,5 +291,15 @@ public class AppDbContext : DbContext, IAppDbContext
             entity.HasQueryFilter(e =>
                 _currentUser == null || _currentUser.BypassBranchFilter || e.BranchId == null || e.BranchId == _currentUser.BranchId);
         });
+        modelBuilder.Entity<LowStockNotification>(entity =>
+        {
+            entity.HasKey(n => n.Id);
+            entity.HasOne(n => n.Branch).WithMany().HasForeignKey(n => n.BranchId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(n => n.RawMaterial).WithMany().HasForeignKey(n => n.RawMaterialId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasIndex(n => new { n.BranchId, n.RawMaterialId }).IsUnique().HasFilter("\"ResolvedAt\" IS NULL");
+            entity.HasQueryFilter(n => _currentUser == null || _currentUser.BypassBranchFilter || n.BranchId == _currentUser.BranchId);
+        });
+        modelBuilder.Entity<AiProviderSetting>(entity => { entity.HasKey(x => x.Id); entity.Property(x => x.Provider).HasMaxLength(50); entity.Property(x => x.Model).HasMaxLength(100); });
+        modelBuilder.Entity<AiInsightRequest>(entity => { entity.HasKey(x => x.Id); entity.Property(x => x.RequestType).HasMaxLength(50); entity.Property(x => x.ResultSummary).HasMaxLength(8000); entity.HasIndex(x => x.CreatedAt); });
     }
 }

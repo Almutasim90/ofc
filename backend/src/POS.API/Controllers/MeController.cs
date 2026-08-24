@@ -17,4 +17,12 @@ public class MeController(UserService userService, ICurrentUserService currentUs
         var userId = currentUser.UserId ?? throw new UnauthorizedException("Missing user context.");
         return Ok(await userService.UpdateMyPreferencesAsync(userId, request, cancellationToken));
     }
+
+    [HttpPut("password")]
+    public async Task<IActionResult> ChangePassword(ChangeMyPasswordRequest request, CancellationToken cancellationToken)
+    {
+        var userId = currentUser.UserId ?? throw new UnauthorizedException("Missing user context.");
+        await userService.ChangeMyPasswordAsync(userId, request, cancellationToken);
+        return NoContent();
+    }
 }

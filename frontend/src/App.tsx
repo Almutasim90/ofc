@@ -16,6 +16,10 @@ import RawMaterialsPage from './pages/RawMaterialsPage'
 import InventoryPage from './pages/InventoryPage'
 import ShiftPage from './pages/ShiftPage'
 import ClosingSchedulePage from './pages/ClosingSchedulePage'
+import SettingsPage from './pages/SettingsPage'
+import ChannelsPage from './pages/ChannelsPage'
+import AiSettingsPage from './pages/AiSettingsPage'
+import NotificationsPage from './pages/NotificationsPage'
 
 const ReportsPage = lazy(() => import('./pages/ReportsPage'))
 
@@ -47,6 +51,10 @@ function App() {
                   <Suspense fallback={null}><ReportsPage /></Suspense>
                 </ProtectedRoute>
               } />
+              <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+              <Route path="/channels" element={<ProtectedRoute permission="channels.manage"><ChannelsPage /></ProtectedRoute>} />
+              <Route path="/ai-settings" element={<ProtectedRoute permission="ai.manage"><AiSettingsPage /></ProtectedRoute>} />
+              <Route path="/notifications" element={<ProtectedRoute permission="inventory.adjust"><NotificationsPage /></ProtectedRoute>} />
               <Route
                 path="/users"
                 element={

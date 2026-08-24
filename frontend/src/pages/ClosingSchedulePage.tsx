@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { api, ApiError } from '../api/client'
 import type { BranchDto, ClosingScheduleConfigDto, ClosingScheduleExceptionDto } from '../api/types'
+import { DeleteIcon, EditIcon, IconAction, SearchBox } from '../components/TableTools'
 
 const emptyForm = { date: '', overrideCloseTime: '01:00', branchId: '', reason: '' }
 
@@ -16,6 +17,7 @@ export default function ClosingSchedulePage() {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  const [search, setSearch] = useState('')
 
   const load = async () => {
     const [configData, exceptionData, branchData] = await Promise.all([
@@ -117,11 +119,11 @@ export default function ClosingSchedulePage() {
         </div>
       </form>
 
-      <div className="mt-6 overflow-x-auto">
+      <div className="table-toolbar mt-6"><SearchBox value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('common.search')} /></div><div className="table-shell">
         <table><thead><tr><th>{t('closing.date')}</th><th>{t('closing.overrideTime')}</th><th>{t('closing.branch')}</th><th>{t('closing.reason')}</th><th>{t('closing.actions')}</th></tr></thead>
-          <tbody>{exceptions.map((item) => <tr key={item.id}>
+          <tbody>{exceptions.filter((item) => `${item.date} ${item.reason} ${branchName(item.branchId)}`.toLowerCase().includes(search.trim().toLowerCase())).map((item) => <tr key={item.id}>
             <td>{item.date}</td><td>{item.overrideCloseTime.slice(0, 5)}</td><td>{branchName(item.branchId)}</td><td>{item.reason}</td>
-            <td><div className="flex gap-2"><button onClick={() => editException(item)}>{t('closing.edit')}</button><button onClick={() => deleteException(item.id)}>{t('closing.delete')}</button></div></td>
+            <td><div className="row-actions"><IconAction label={t('closing.edit')} onClick={() => editException(item)}><EditIcon /></IconAction><IconAction label={t('closing.delete')} onClick={() => deleteException(item.id)}><DeleteIcon /></IconAction></div></td>
           </tr>)}</tbody>
         </table>
       </div>

@@ -44,6 +44,7 @@ export interface UpdateUserRequest {
   roleId: string
   preferredLanguage: string
   isActive: boolean
+  newPassword: string | null
 }
 
 export interface BranchDto {
@@ -51,19 +52,25 @@ export interface BranchDto {
   nameAr: string
   nameEn: string
   code: string
+  defaultOpeningFloat: number
   isActive: boolean
 }
+export interface SalesChannelDto { id: string; nameAr: string; nameEn: string; logoUrl: string | null; isActive: boolean; isInStore: boolean }
+export interface ProductChannelPriceDto { productId: string; price: number | null }
+export interface ChannelSalesDto { channelId:string; nameAr:string; nameEn:string; totalSales:number; invoiceCount:number }
 
 export interface CreateBranchRequest {
   nameAr: string
   nameEn: string
   code: string
+  defaultOpeningFloat: number
 }
 
 export interface UpdateBranchRequest {
   nameAr: string
   nameEn: string
   code: string
+  defaultOpeningFloat: number
   isActive: boolean
 }
 
@@ -143,12 +150,17 @@ export interface SetLowStockThresholdRequest {
 export interface SaleLineRequest {
   productId: string
   quantity: number
+  discountType?: 'None' | 'Percentage' | 'FixedAmount'
+  discountValue?: number
 }
 
 export interface CreateSaleRequest {
   branchId: string
   paymentMethod: 'Cash' | 'Card'
   lines: SaleLineRequest[]
+  discountType?: 'None' | 'Percentage' | 'FixedAmount'
+  discountValue?: number
+  channelId?: string
 }
 
 export interface SaleItemDto {
@@ -162,11 +174,15 @@ export interface SaleItemDto {
 export interface SaleDto {
   id: string
   branchId: string
+  channelId: string
   shiftId: string
   cashierUserId: string
   businessDate: string
   createdAt: string
   totalAmount: number
+  discountType: 'None' | 'Percentage' | 'FixedAmount'
+  discountValue: number
+  discountAmount: number
   paymentMethod: string
   status: string
   items: SaleItemDto[]
@@ -185,6 +201,7 @@ export interface ShiftDto {
   status: 'Open' | 'Closed'
   autoClosed: boolean
   cashSalesTotal: number
+  cashCounts: { denomination: number; quantity: number; lineTotal: number }[]
 }
 
 export interface VoidRequestDto {
@@ -255,4 +272,14 @@ export interface ShiftInventoryReportDto {
   shiftId: string
   branchId: string
   materials: InventoryConsumptionDto[]
+}
+export interface SalesTrendPointDto { date: string; totalSales: number; invoiceCount: number; itemsSold: number }
+export interface ProductSalesSummaryDto {
+  productId: string; nameAr: string; nameEn: string; quantitySold: number; totalSales: number; invoiceCount: number
+}
+export interface ManagerDashboardDto {
+  from: string; to: string; totalSales: number; totalDiscounts: number; invoiceCount: number; itemsSold: number; averageTicket: number
+  dailyTrend: SalesTrendPointDto[]; branches: BranchSalesSummaryDto[]
+  paymentBreakdown: PaymentBreakdownDto[]; products: ProductSalesSummaryDto[]
+  shiftVariances: {shiftId:string;openedAt:string;varianceAmount:number}[]
 }

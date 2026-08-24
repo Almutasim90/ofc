@@ -14,6 +14,7 @@ using POS.Infrastructure.Services;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddDataProtection();
 
 const string FrontendCorsPolicy = "FrontendDev";
 
@@ -77,6 +78,8 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+Directory.CreateDirectory(Path.Combine(builder.Environment.ContentRootPath, "wwwroot"));
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(FrontendCorsPolicy, policy =>
@@ -111,6 +114,8 @@ if (app.Environment.IsDevelopment())
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 app.UseHttpsRedirection();
+
+app.UseStaticFiles();
 
 app.UseCors(FrontendCorsPolicy);
 

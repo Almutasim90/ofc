@@ -43,7 +43,7 @@ public class AutomaticShiftClosingService(IServiceScopeFactory scopeFactory, ILo
             var due = ClosingScheduleCalculator.GetDueUtc(shift.OpenedAt, config, exceptions, shift.BranchId);
             if (due is null || now < due.Value) continue;
             var cashSales = await db.Sales.IgnoreQueryFilters()
-                .Where(s => s.ShiftId == shift.Id && s.Status == SaleStatus.Completed && s.PaymentMethod == PaymentMethods.Cash)
+                .Where(s => s.ShiftId == shift.Id && s.Status == SaleStatus.Completed && s.PaymentMethod == PaymentMethods.Cash && s.Channel.IsInStore)
                 .SumAsync(s => s.TotalAmount, cancellationToken);
             shift.ClosingCashExpected = shift.OpeningCash + cashSales;
             shift.ClosingCashActual = null;
