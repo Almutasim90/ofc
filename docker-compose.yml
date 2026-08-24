@@ -2,50 +2,40 @@ services:
   api:
     build:
       context: ./backend
-    container_name: lolat-api
+      dockerfile: Dockerfile
     restart: unless-stopped
     environment:
       ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
       SUPABASE_DB_CONNECTION: ${SUPABASE_DB_CONNECTION}
       JWT_SECRET: ${JWT_SECRET}
       JWT_ISSUER: ${JWT_ISSUER:-POS.API}
       JWT_AUDIENCE: ${JWT_AUDIENCE:-POS.Client}
-      # Your platform terminates TLS and proxies to this container over plain
-      # HTTP internally - same reasoning as a self-managed nginx, see
-      # UseForwardedHeaders in Program.cs.
-      FRONTEND_ORIGIN: ${FRONTEND_ORIGIN}
-      SMTP_HOST: ${SMTP_HOST}
+      SMTP_HOST: ${SMTP_HOST:-}
       SMTP_PORT: ${SMTP_PORT:-587}
-      SMTP_USERNAME: ${SMTP_USERNAME}
-      SMTP_PASSWORD: ${SMTP_PASSWORD}
-      SMTP_FROM: ${SMTP_FROM}
-      SMTP_ALERT_RECIPIENTS: ${SMTP_ALERT_RECIPIENTS}
-      RUN_MIGRATIONS_ON_STARTUP: ${RUN_MIGRATIONS_ON_STARTUP:-false}
+      SMTP_USERNAME: ${SMTP_USERNAME:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM: ${SMTP_FROM:-}
+      SMTP_ALERT_RECIPIENTS: ${SMTP_ALERT_RECIPIENTS:-}
+      RUN_MIGRATIONS_ON_STARTUP: ${RUN_MIGRATIONS_ON_STARTUP:-true}
       DATA_PROTECTION_KEYS_PATH: /keys
+    expose:
+      - "8080"
     volumes:
       - api_uploads:/app/wwwroot/uploads
       - api_keys:/keys
-    networks: [lolat_net]
-    # Give this service its own domain/subdomain (e.g. api.lolat.almutasim.site)
-    # in your platform's UI and point it at this container's port 8080 -
-    # TLS and routing are handled by the platform, not by this compose file.
-    expose: ["8080"]
 
   web:
     build:
       context: ./frontend
+      dockerfile: Dockerfile
       args:
-        # Build-time only (Vite bakes this into the JS bundle) - point it at
-        # whatever domain/URL your platform assigns the `api` service above.
-        VITE_API_URL: ${VITE_API_URL}
-    container_name: lolat-web
+        VITE_API_URL: ""
     restart: unless-stopped
-    networks: [lolat_net]
-    # Give this service the public domain: lolat.almutasim.site
-    expose: ["80"]
-
-networks:
-  lolat_net:
+    depends_on:
+      - api
+    expose:
+      - "80"
 
 volumes:
   api_uploads:
