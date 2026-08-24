@@ -10,6 +10,10 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       JWT_ISSUER: ${JWT_ISSUER:-POS.API}
       JWT_AUDIENCE: ${JWT_AUDIENCE:-POS.Client}
+      # Your platform terminates TLS and proxies to this container over plain
+      # HTTP internally - same reasoning as a self-managed nginx, see
+      # UseForwardedHeaders in Program.cs.
+      FRONTEND_ORIGIN: ${FRONTEND_ORIGIN}
       SMTP_HOST: ${SMTP_HOST}
       SMTP_PORT: ${SMTP_PORT:-587}
       SMTP_USERNAME: ${SMTP_USERNAME}
@@ -22,37 +26,23 @@ services:
       - api_uploads:/app/wwwroot/uploads
       - api_keys:/keys
     networks: [lolat_net]
+    # Give this service its own domain/subdomain (e.g. api.lolat.almutasim.site)
+    # in your platform's UI and point it at this container's port 8080 -
+    # TLS and routing are handled by the platform, not by this compose file.
     expose: ["8080"]
 
   web:
     build:
       context: ./frontend
+      args:
+        # Build-time only (Vite bakes this into the JS bundle) - point it at
+        # whatever domain/URL your platform assigns the `api` service above.
+        VITE_API_URL: ${VITE_API_URL}
     container_name: lolat-web
     restart: unless-stopped
     networks: [lolat_net]
+    # Give this service the public domain: lolat.almutasim.site
     expose: ["80"]
-
-  proxy:
-    image: nginx:1.27-alpine
-    container_name: lolat-proxy
-    restart: unless-stopped
-    depends_on: [api, web]
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./deploy/nginx:/etc/nginx/conf.d:ro
-      - certbot_www:/var/www/certbot
-      - certbot_certs:/etc/letsencrypt:ro
-    networks: [lolat_net]
-
-  certbot:
-    image: certbot/certbot
-    container_name: lolat-certbot
-    volumes:
-      - certbot_www:/var/www/certbot
-      - certbot_certs:/etc/letsencrypt
-    entrypoint: ["sh", "-c", "trap exit TERM; while :; do sleep 12h & wait $${!}; certbot renew --webroot -w /var/www/certbot --quiet; done"]
 
 networks:
   lolat_net:
@@ -60,5 +50,3 @@ networks:
 volumes:
   api_uploads:
   api_keys:
-  certbot_www:
-  certbot_certs:
