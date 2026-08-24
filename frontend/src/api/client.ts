@@ -1,4 +1,39 @@
-const API_URL = import.meta.env.VITE_API_URL
+const LOOPBACK_HOSTS = new Set(['localhost', '127.0.0.1', '::1'])
+
+function getApiUrl() {
+  const configuredUrl = import.meta.env.VITE_API_URL?.replace(/\/$/, '') ?? ''
+  if (!configuredUrl || typeof window === 'undefined') return configuredUrl
+
+  try {
+    const configured = new URL(configuredUrl)
+    if (LOOPBACK_HOSTS.has(configured.hostname) && !LOOPBACK_HOSTS.has(window.location.hostname)) {
+      configured.hostname = window.location.hostname
+      return configured.toString().replace(/\/$/, '')
+    }
+  } catch {
+    return configuredUrl
+  }
+
+  return configuredUrl
+}
+
+const API_URL = getApiUrl()
+
+export function resolveApiAssetUrl(url: string | null | undefined) {
+  if (!url) return ''
+
+  try {
+    const resolved = new URL(url, `${API_URL || window.location.origin}/`)
+    if (LOOPBACK_HOSTS.has(resolved.hostname) && API_URL) {
+      const apiOrigin = new URL(API_URL)
+      resolved.protocol = apiOrigin.protocol
+      resolved.host = apiOrigin.host
+    }
+    return resolved.toString()
+  } catch {
+    return url
+  }
+}
 
 export const AUTH_STORAGE_KEY = 'pos.auth'
 

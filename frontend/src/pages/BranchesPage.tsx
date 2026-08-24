@@ -27,7 +27,7 @@ export default function BranchesPage() {
   if (loading) return <p>{t('common.loading')}</p>
 
   return (
-    <div>
+    <section>
       <h1>{t('branches.title')}</h1>
       <div className="table-toolbar"><SearchBox value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('common.search')} /><button type="button" onClick={() => setEditing({ mode: 'create' })}>
         {t('branches.create')}
@@ -70,7 +70,7 @@ export default function BranchesPage() {
           }}
         />
       )}
-    </div>
+    </section>
   )
 }
 

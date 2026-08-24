@@ -22,7 +22,7 @@ export default function LoginPage() {
     setError(null)
     setSubmitting(true)
     try {
-      await login(username, password)
+      await login(username.trim(), password)
       navigate('/')
     } catch (err) {
       setError(err instanceof ApiError ? err.message : t('login.error'))
@@ -47,14 +47,14 @@ export default function LoginPage() {
             <div className="login-field-row">
               <label className="login-minimal-field login-minimal-password">
                 <span className="sr-only">{t('login.username')}</span>
-                <input name="login-user-entry" value={username} onChange={(e) => setUsername(e.target.value)} required autoFocus autoComplete="off" data-1p-ignore data-lpignore="true" data-form-type="other" placeholder={t('login.username')} />
+                <input name="login-user-entry" value={username} onChange={(e) => setUsername(e.target.value)} required autoFocus autoComplete="off" autoCapitalize="none" autoCorrect="off" spellCheck={false} inputMode="text" data-1p-ignore data-lpignore="true" data-form-type="other" placeholder={t('login.username')} />
               </label>
             </div>
 
             <div className="login-field-row">
               <label className="login-minimal-field">
                 <span className="sr-only">{t('login.password')}</span>
-                <input name="login-secret-entry" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete="new-password" data-1p-ignore data-lpignore="true" data-form-type="other" placeholder={t('login.password')} />
+                <input name="login-secret-entry" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete="new-password" autoCapitalize="none" autoCorrect="off" spellCheck={false} data-1p-ignore data-lpignore="true" data-form-type="other" placeholder={t('login.password')} />
               </label>
             </div>
           </div>

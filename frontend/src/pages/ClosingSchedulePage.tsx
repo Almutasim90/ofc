@@ -82,21 +82,21 @@ export default function ClosingSchedulePage() {
       <p className="text-muted">{t('closing.timezoneHint')}</p>
       {error && <p className="error-text">{error}</p>}
 
-      <form className="mt-4 max-w-lg rounded-xl border border-border bg-surface p-5" onSubmit={saveConfig}>
+      <form className="ui-card ui-stack max-w-lg" onSubmit={saveConfig}>
         <h2>{t('closing.defaultSchedule')}</h2>
-        <label className="mt-3 flex flex-col gap-1 text-muted">{t('closing.defaultTime')}
+        <label className="flex flex-col gap-1 text-muted">{t('closing.defaultTime')}
           <input type="time" required value={defaultTime} onChange={(e) => setDefaultTime(e.target.value)} />
         </label>
-        <label className="mt-3 flex items-center gap-2 text-muted">
+        <label className="flex min-h-11 items-center gap-2 text-muted">
           <input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} />
           {t('closing.active')}
         </label>
-        <button className="mt-4" disabled={saving || !config}>{t('closing.saveConfig')}</button>
+        <button disabled={saving || !config}>{t('closing.saveConfig')}</button>
       </form>
 
-      <form className="mt-6 rounded-xl border border-border bg-surface p-5" onSubmit={saveException}>
+      <form className="ui-card ui-stack" onSubmit={saveException}>
         <h2>{editingId ? t('closing.editException') : t('closing.addException')}</h2>
-        <div className="mt-3 grid gap-3 md:grid-cols-4">
+        <div className="grid gap-3 md:grid-cols-4">
           <label className="flex flex-col gap-1 text-muted">{t('closing.date')}
             <input type="date" required value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
           </label>
@@ -113,13 +113,13 @@ export default function ClosingSchedulePage() {
             <input required maxLength={500} value={form.reason} onChange={(e) => setForm({ ...form, reason: e.target.value })} />
           </label>
         </div>
-        <div className="mt-4 flex gap-2">
+        <div className="flex gap-2">
           <button disabled={saving}>{t('closing.saveException')}</button>
           {editingId && <button type="button" onClick={() => { setEditingId(null); setForm(emptyForm) }}>{t('closing.cancel')}</button>}
         </div>
       </form>
 
-      <div className="table-toolbar mt-6"><SearchBox value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('common.search')} /></div><div className="table-shell">
+      <div className="table-toolbar"><SearchBox value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('common.search')} /></div><div className="table-shell">
         <table><thead><tr><th>{t('closing.date')}</th><th>{t('closing.overrideTime')}</th><th>{t('closing.branch')}</th><th>{t('closing.reason')}</th><th>{t('closing.actions')}</th></tr></thead>
           <tbody>{exceptions.filter((item) => `${item.date} ${item.reason} ${branchName(item.branchId)}`.toLowerCase().includes(search.trim().toLowerCase())).map((item) => <tr key={item.id}>
             <td>{item.date}</td><td>{item.overrideCloseTime.slice(0, 5)}</td><td>{branchName(item.branchId)}</td><td>{item.reason}</td>

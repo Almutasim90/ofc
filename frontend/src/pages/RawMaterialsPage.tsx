@@ -26,7 +26,7 @@ export default function RawMaterialsPage() {
   if (loading) return <p>{t('common.loading')}</p>
 
   return (
-    <div>
+    <section>
       <h1>{t('rawMaterials.title')}</h1>
       <div className="table-toolbar"><SearchBox value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('common.search')} /><button type="button" onClick={() => setEditing({ mode: 'create' })}>
         {t('rawMaterials.create')}
@@ -65,7 +65,7 @@ export default function RawMaterialsPage() {
           }}
         />
       )}
-    </div>
+    </section>
   )
 }
 

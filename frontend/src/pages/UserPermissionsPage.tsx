@@ -33,13 +33,13 @@ export default function UserPermissionsPage() {
   if (loading) return <p>{t('common.loading')}</p>
 
   return (
-    <div>
+    <section>
       <Link to="/users">{t('permissions.back')}</Link>
       <h1>{t('permissions.title')}</h1>
       <div className="table-toolbar"><SearchBox value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('common.search')} /></div><div className="table-shell"><table>
         <thead>
           <tr>
-            <th>Permission</th>
+            <th>{t('permissions.permission')}</th>
             <th>{t('permissions.inherit')}</th>
             <th>{t('permissions.grant')}</th>
             <th>{t('permissions.deny')}</th>
@@ -48,35 +48,38 @@ export default function UserPermissionsPage() {
         <tbody>
           {overrides.filter((o) => o.permissionKey.toLowerCase().includes(search.trim().toLowerCase())).map((o) => (
             <tr key={o.permissionId}>
-              <td>{o.permissionKey}</td>
+              <td>{t(`permissionKeys.${o.permissionKey}`, { defaultValue: o.permissionKey })}</td>
               <td>
-                <input
+                <label className="permission-radio-target"><input
                   type="radio"
                   name={o.permissionId}
                   checked={o.isGranted === null}
                   onChange={() => setOverride(o.permissionId, null)}
-                />
+                  aria-label={t('permissions.inherit')}
+                /></label>
               </td>
               <td>
-                <input
+                <label className="permission-radio-target"><input
                   type="radio"
                   name={o.permissionId}
                   checked={o.isGranted === true}
                   onChange={() => setOverride(o.permissionId, true)}
-                />
+                  aria-label={t('permissions.grant')}
+                /></label>
               </td>
               <td>
-                <input
+                <label className="permission-radio-target"><input
                   type="radio"
                   name={o.permissionId}
                   checked={o.isGranted === false}
                   onChange={() => setOverride(o.permissionId, false)}
-                />
+                  aria-label={t('permissions.deny')}
+                /></label>
               </td>
             </tr>
           ))}
         </tbody>
       </table></div>
-    </div>
+    </section>
   )
 }

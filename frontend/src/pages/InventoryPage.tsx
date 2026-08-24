@@ -37,7 +37,7 @@ export default function InventoryPage() {
   }, [branchId])
 
   return (
-    <div>
+    <section>
       <h1>{t('inventory.title')}</h1>
       <label>
         {t('inventory.branch')}
@@ -92,7 +92,7 @@ export default function InventoryPage() {
           }}
         />
       )}
-    </div>
+    </section>
   )
 }
 

@@ -1,6 +1,6 @@
 {
   "app": {
-    "title": "نظام نقاط البيع"
+    "title": "لولاة السويق"
   },
   "language": {
     "switchTo": "English",
@@ -20,7 +20,7 @@
     "subtitle": "أدخل بيانات حسابك للوصول إلى نظام نقاط البيع.",
     "usernamePlaceholder": "أدخل اسم المستخدم",
     "passwordPlaceholder": "أدخل كلمة المرور",
-    "brandLabel": "هوية نظام بيت الشاي",
+    "brandLabel": "هوية نظام لولاة السويق",
     "brandName": "لولاة السويق",
     "brandHeadline": "إدارة فروعك ومبيعاتك من مكان واحد.",
     "brandDescription": "منصة متكاملة للمبيعات والمخزون والورديات، مصممة لتبقي عملياتك اليومية واضحة وسريعة.",
@@ -106,6 +106,7 @@
     "summary": "ملخص الوردية",
     "openSubmit": "فتح الوردية",
     "closeSubmit": "إغلاق الوردية",
+    "closingSubmit": "جارٍ إغلاق الوردية...",
     "loadError": "تعذر تحميل بيانات الوردية.",
     "openError": "تعذر فتح الوردية.",
     "closeError": "تعذر إغلاق الوردية."
@@ -180,6 +181,8 @@
     "quantitySold": "الكمية المباعة",
     "share": "نسبة الإيراد",
     "searchProducts": "البحث في المنتجات...",
+    "showTable": "عرض جدول التفاصيل",
+    "hideTable": "إخفاء جدول التفاصيل",
     "scope": "نطاق التقرير",
     "global": "كل الأفرع",
     "branch": "الفرع",
@@ -248,10 +251,29 @@
   },
   "permissions": {
     "title": "صلاحيات المستخدم",
+    "permission": "الصلاحية",
     "back": "رجوع",
     "inherit": "موروثة من الدور",
     "grant": "منح",
     "deny": "سحب"
+  },
+  "roles": {
+    "Cashier": "كاشير",
+    "BranchManager": "مدير الفرع",
+    "GeneralManager": "المدير العام"
+  },
+  "permissionKeys": {
+    "sales.create": "إنشاء المبيعات",
+    "sales.void": "إلغاء المبيعات",
+    "inventory.adjust": "تعديل المخزون",
+    "reports.branch.view": "عرض تقارير الفرع",
+    "reports.global.view": "عرض التقارير العامة",
+    "users.manage": "إدارة المستخدمين",
+    "branches.manage": "إدارة الأفرع",
+    "closing.configure": "إعداد جدول الإغلاق",
+    "products.manage": "إدارة المنتجات",
+    "channels.manage": "إدارة قنوات البيع",
+    "ai.manage": "إدارة الذكاء الاصطناعي"
   },
   "branches": {
     "title": "الأفرع",

@@ -73,6 +73,19 @@ export default function ShiftPage() {
       setCashCounts(Object.fromEntries(denominations.map((value) => [value.toString(), 0])))
     } catch (err) {
       setError(err instanceof ApiError && (err.status === 401 || err.status === 403) ? t('shifts.sessionExpired') : t('shifts.closeError'))
+      // The same shift may have been closed from another device. Refresh the
+      // state so a desktop left open does not keep showing a stale close form.
+      try {
+        const [current, latestClosed] = await Promise.all([
+          api.get<ShiftDto | undefined>('/api/shifts/current'),
+          api.get<ShiftDto | undefined>('/api/shifts/latest-closed'),
+        ])
+        setShift(current ?? null)
+        setLastClosed(latestClosed ?? null)
+        if (!current) setError(null)
+      } catch {
+        // Keep the original close error if refreshing also fails.
+      }
     } finally {
       setSubmitting(false)
     }
@@ -92,16 +105,16 @@ export default function ShiftPage() {
       {error && <p className="error-text">{error}</p>}
 
       {shift ? (
-        <div className="mt-4 grid gap-4 md:grid-cols-2">
-          <div className="rounded-xl border border-border bg-surface p-5">
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="ui-card ui-stack">
             <h2>{t('shifts.current')}</h2>
-            <dl className="mt-3 space-y-2">
+            <dl className="grid gap-2">
               <div className="flex justify-between"><dt>{t('shifts.openingCash')}</dt><dd><Money value={shift.openingCash} /></dd></div>
               <div className="flex justify-between"><dt>{t('shifts.cashSales')}</dt><dd><Money value={shift.cashSalesTotal} /></dd></div>
               <div className="flex justify-between font-bold"><dt>{t('shifts.expected')}</dt><dd><Money value={shift.closingCashExpected} /></dd></div>
             </dl>
           </div>
-          <form className="rounded-xl border border-border bg-surface p-5" onSubmit={closeShift}>
+          <form className="ui-card ui-stack" onSubmit={closeShift} aria-busy={submitting}>
             <h2>{t('shifts.close')}</h2>
             <p className="text-sm text-muted">{t('shifts.cashCountHint')}</p>
             <div className="cash-count-grid">
@@ -126,15 +139,20 @@ export default function ShiftPage() {
                 </div>
               </div>)}
             </div>
-            <div className="cash-count-total"><span>{t('shifts.countedTotal')}</span><Money value={countedTotal} /></div>
-            <button className="mt-4" disabled={submitting}>{t('shifts.closeSubmit')}</button>
+            <div className="shift-close-actions">
+              <div className="cash-count-total"><span>{t('shifts.countedTotal')}</span><Money value={countedTotal} /></div>
+              {error && <p className="error-text" role="alert">{error}</p>}
+              <button type="submit" disabled={submitting}>
+                {submitting ? t('shifts.closingSubmit') : t('shifts.closeSubmit')}
+              </button>
+            </div>
           </form>
         </div>
       ) : (
-        <form className="mt-4 max-w-md rounded-xl border border-border bg-surface p-5" onSubmit={openShift}>
+        <form className="ui-card ui-stack max-w-md" onSubmit={openShift}>
           <h2>{t('shifts.open')}</h2>
           {!user?.branchId && (
-            <label className="mt-3 flex flex-col gap-1 text-muted">
+            <label className="flex flex-col gap-1 text-muted">
               {t('shifts.branch')}
               <select required value={branchId} onChange={(event) => setBranchId(event.target.value)}>
                 {branches.map((branch) => <option key={branch.id} value={branch.id}>{branchName(branch)}</option>)}
@@ -146,18 +164,18 @@ export default function ShiftPage() {
             <strong><Money value={customizeOpening ? Number(openingCash) : selectedBranch?.defaultOpeningFloat ?? 0} /></strong>
           </div>
           <button type="button" className="shift-edit-opening" onClick={() => setCustomizeOpening((value) => !value)}>{customizeOpening ? t('shifts.useDefault') : t('shifts.editOpening')}</button>
-          {customizeOpening && <label className="mt-3 flex flex-col gap-1 text-muted">
+          {customizeOpening && <label className="flex flex-col gap-1 text-muted">
               {t('shifts.openingCash')}
               <input type="number" min="0" step="0.001" required value={openingCash} onChange={(event) => setOpeningCash(event.target.value)} />
           </label>}
-          <button className="mt-4" disabled={submitting || !branchId}>{t('shifts.openSubmit')}</button>
+          <button disabled={submitting || !branchId}>{t('shifts.openSubmit')}</button>
         </form>
       )}
 
       {lastClosed && (
-        <div className="mt-6 rounded-xl border border-border bg-surface p-5">
+        <div className="ui-card ui-stack">
           <h2>{t('shifts.summary')}</h2>
-          <div className="mt-3 grid gap-3 sm:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-3">
             <div><span className="text-muted">{t('shifts.expected')}</span><strong className="block"><Money value={lastClosed.closingCashExpected} /></strong></div>
             <div><span className="text-muted">{t('shifts.actual')}</span><strong className="block"><Money value={lastClosed.closingCashActual ?? 0} /></strong></div>
             <div><span className="text-muted">{t('shifts.variance')}</span><strong className={`block ${(lastClosed.varianceAmount ?? 0) < 0 ? 'text-danger' : 'text-primary'}`}><Money value={lastClosed.varianceAmount ?? 0} /></strong></div>
@@ -169,9 +187,9 @@ export default function ShiftPage() {
 }
 
 function MinusIcon() {
-  return <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M5 10h10" /></svg>
+  return <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round"><path d="M5 10h10" /></svg>
 }
 
 function PlusIcon() {
-  return <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M5 10h10M10 5v10" /></svg>
+  return <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round"><path d="M5 10h10M10 5v10" /></svg>
 }

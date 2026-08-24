@@ -17,4 +17,12 @@ i18n.use(initReactI18next).init({
   },
 })
 
+const applyDocumentLanguage = (language: string) => {
+  document.documentElement.dir = RTL_LANGUAGES.includes(language) ? 'rtl' : 'ltr'
+  document.documentElement.lang = language
+}
+
+applyDocumentLanguage(i18n.language)
+i18n.on('languageChanged', applyDocumentLanguage)
+
 export default i18n

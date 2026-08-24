@@ -8,12 +8,13 @@ public class AuthService(IAppDbContext db, IPasswordHasher passwordHasher, IJwtT
 {
     public async Task<LoginResponse> LoginAsync(LoginRequest request, CancellationToken cancellationToken = default)
     {
+        var normalizedUsername = request.Username.Trim().ToLower();
         var user = await db.Users
             // Login happens before a user/branch context exists. Applying the
             // branch query filter here would hide every branch-bound account.
             .IgnoreQueryFilters()
             .Include(u => u.Role)
-            .FirstOrDefaultAsync(u => u.Username == request.Username, cancellationToken);
+            .FirstOrDefaultAsync(u => u.Username.ToLower() == normalizedUsername, cancellationToken);
 
         if (user is null || !user.IsActive || !passwordHasher.Verify(user.PasswordHash, request.Password))
         {

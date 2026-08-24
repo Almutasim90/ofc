@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode, type SVGProps } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Area, Bar, BarChart, CartesianGrid, Cell, ComposedChart, LabelList, Line, Pie, PieChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import { Area, Bar, BarChart, CartesianGrid, Cell, ComposedChart, LabelList, Line, Pie, PieChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis, type PieLabelRenderProps } from 'recharts'
 import { api } from '../api/client'
 import type { BranchDto, ChannelSalesDto, ManagerDashboardDto } from '../api/types'
 import { useAuth } from '../auth/AuthContext'
@@ -15,6 +15,10 @@ const formatLocalDate = (date: Date) => {
 }
 
 const isoToday = formatLocalDate(new Date())
+const isoMonthStart = (() => {
+  const today = new Date()
+  return formatLocalDate(new Date(today.getFullYear(), today.getMonth(), 1))
+})()
 const CHART_1 = 'rgb(var(--chart-1))'
 const CHART_2 = 'rgb(var(--chart-2))'
 const CHART_3 = 'rgb(var(--chart-3))'
@@ -26,9 +30,11 @@ const MUTED = 'rgb(var(--color-muted))'
 const BORDER = 'rgb(var(--color-border))'
 const PRIMARY = 'rgb(var(--color-primary))'
 const DANGER = 'rgb(var(--color-danger))'
+type ProductSortKey = 'product' | 'quantitySold' | 'totalSales' | 'invoiceCount' | 'share'
+type SortDirection = 'asc' | 'desc'
 
 const tooltipBase = {
-  contentStyle: { borderRadius: 12, border: `1px solid ${BORDER}`, background: 'rgb(var(--color-surface))', color: 'rgb(var(--color-text))', fontSize: 13, padding: '0.6rem 0.8rem', boxShadow: '0 12px 28px rgb(15 23 42 / 0.14)' },
+  contentStyle: { borderRadius: 12, border: `1px solid ${BORDER}`, background: 'rgb(var(--color-surface))', color: 'rgb(var(--color-text))', fontSize: 14, padding: '0.5rem 0.75rem', boxShadow: 'var(--shadow-card-hover)' },
   labelStyle: { color: MUTED, marginBottom: 4, fontWeight: 600 },
   itemStyle: { color: 'rgb(var(--color-text))' },
 }
@@ -36,7 +42,7 @@ const tooltipBase = {
 export default function ReportsPage() {
   const { t, i18n } = useTranslation()
   const { user, hasPermission } = useAuth()
-  const [from, setFrom] = useState(isoToday)
+  const [from, setFrom] = useState(isoMonthStart)
   const [to, setTo] = useState(isoToday)
   const [branchId, setBranchId] = useState(user?.branchId ?? '')
   const [branches, setBranches] = useState<BranchDto[]>([])
@@ -47,6 +53,7 @@ export default function ReportsPage() {
   const [channelSales, setChannelSales] = useState<ChannelSalesDto[]>([])
   const [lowStockCount, setLowStockCount] = useState(0)
   const [showTable, setShowTable] = useState(false)
+  const [productSort, setProductSort] = useState<{ key: ProductSortKey; direction: SortDirection }>({ key: 'totalSales', direction: 'desc' })
 
   useEffect(() => { api.get<BranchDto[]>('/api/branches').then((rows) => setBranches(rows.filter((b) => b.isActive))).catch(() => {}) }, [])
   useEffect(() => {
@@ -61,6 +68,17 @@ export default function ReportsPage() {
   const trend = useMemo(() => data?.dailyTrend.map((x) => ({ ...x, averageTicket: x.invoiceCount ? x.totalSales / x.invoiceCount : 0, label: new Intl.DateTimeFormat(i18n.language, { day: 'numeric', month: 'short' }).format(new Date(`${x.date}T12:00:00`)) })) ?? [], [data, i18n.language])
   const products = data?.products ?? []
   const filteredProducts = products.filter((x) => `${x.nameAr} ${x.nameEn}`.toLocaleLowerCase().includes(productSearch.trim().toLocaleLowerCase()))
+  const sortedProducts = useMemo(() => [...filteredProducts].sort((a, b) => {
+    const multiplier = productSort.direction === 'asc' ? 1 : -1
+    if (productSort.key === 'product') return multiplier * name(a.nameAr, a.nameEn).localeCompare(name(b.nameAr, b.nameEn), i18n.language)
+    const aValue = productSort.key === 'share' ? a.totalSales : a[productSort.key]
+    const bValue = productSort.key === 'share' ? b.totalSales : b[productSort.key]
+    return multiplier * (aValue - bValue)
+  }), [filteredProducts, productSort, i18n.language])
+  const toggleProductSort = (key: ProductSortKey) => setProductSort((current) => ({
+    key,
+    direction: current.key === key && current.direction === 'desc' ? 'asc' : 'desc',
+  }))
   const isAr = i18n.language === 'ar'
   const topProducts = useMemo(() => (data?.products ?? []).map((x) => ({ ...x, name: isAr ? x.nameAr : x.nameEn })).sort((a, b) => b.quantitySold - a.quantitySold).slice(0, 6), [data, isAr])
   const topRevenueProducts = useMemo(() => (data?.products ?? []).map((x) => ({ ...x, name: isAr ? x.nameAr : x.nameEn })).sort((a, b) => b.totalSales - a.totalSales).slice(0, 6), [data, isAr])
@@ -87,9 +105,9 @@ export default function ReportsPage() {
     label: new Intl.DateTimeFormat(i18n.language, { day: 'numeric', month: 'short' }).format(new Date(x.openedAt)),
   })), [data, i18n.language])
 
-  return <section className="space-y-6">
+  return <section>
     <div className="flex flex-wrap items-end justify-between gap-4">
-      <div><h1>{t('reports.dashboardTitle')}</h1><p className="mt-1 text-sm text-muted">{t('reports.dashboardSubtitle')}</p></div>
+      <div className="grid gap-1"><h1>{t('reports.dashboardTitle')}</h1><p className="text-sm text-muted">{t('reports.dashboardSubtitle')}</p></div>
       <div className="flex flex-wrap gap-2 rounded-xl border border-border bg-surface p-3">
         {hasPermission('reports.global.view') && !user?.branchId && <label className="report-filter">{t('reports.branch')}<select value={branchId} onChange={(e) => setBranchId(e.target.value)}><option value="">{t('reports.global')}</option>{branches.map((b) => <option key={b.id} value={b.id}>{name(b.nameAr, b.nameEn)}</option>)}</select></label>}
         <label className="report-filter">{t('reports.from')}<input type="date" value={from} max={to} onChange={(e) => setFrom(e.target.value)} /></label>
@@ -99,7 +117,7 @@ export default function ReportsPage() {
     {error && <p className="error-text">{error}</p>}
     {loading && <ReportsSkeleton />}
     {data && !loading && <>
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+      <div className="report-stat-grid grid gap-4 md:grid-cols-3">
         <StatCard tone="primary" label={t('reports.totalSales')} value={<Money value={data.totalSales} />} icon={<SalesIcon className="h-5 w-5" />} />
         <StatCard tone="accent" label={t('reports.invoices')} value={data.invoiceCount.toLocaleString()} icon={<InvoiceIcon className="h-5 w-5" />} />
         <StatCard tone="primary" label={t('reports.itemsSold')} value={data.itemsSold.toLocaleString()} icon={<ItemsIcon className="h-5 w-5" />} />
@@ -110,39 +128,22 @@ export default function ReportsPage() {
 
       <div className="grid gap-4 lg:grid-cols-2">
       <ChartCard title={t('reports.channelDistribution')}>
-        <div className="flex h-full flex-col">
-          <div className="relative min-h-0 flex-[3]">
+          <div className="relative h-full min-h-0">
             <ChartCanvas>
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
-                  <Pie data={channelChart} dataKey="totalSales" nameKey="name" innerRadius={62} outerRadius={88} paddingAngle={channelChart.length > 1 ? 3 : 0} strokeWidth={2} stroke="rgb(var(--color-surface))">
+                  <Pie data={channelChart} dataKey="totalSales" nameKey="name" innerRadius="32%" outerRadius="92%" paddingAngle={channelChart.length > 1 ? 2 : 0} strokeWidth={2} stroke="rgb(var(--color-surface))" label={renderPieSliceLabel} labelLine={false}>
                     {channelChart.map((c, i) => <Cell key={i} fill={c.color} />)}
                   </Pie>
                   <Tooltip {...tooltipBase} formatter={(value) => Number(value).toFixed(3)} />
                 </PieChart>
               </ResponsiveContainer>
             </ChartCanvas>
-            <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+            <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-1">
               <span className="text-xs text-muted">{t('reports.totalSales')}</span>
-              <strong className="mt-0.5 text-xl text-text"><Money value={channelTotal} /></strong>
+              <strong className="text-xl text-text"><Money value={channelTotal} /></strong>
             </div>
           </div>
-          <div className="min-h-24 flex-[2] border-t border-border pt-2">
-            <ChartCanvas>
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={channelChart} layout="vertical" margin={{ top: 2, right: 38, bottom: 2, left: 4 }}>
-                  <XAxis type="number" domain={[0, 100]} hide />
-                  <YAxis type="category" dataKey="name" width={68} axisLine={false} tickLine={false} tick={{ fill: 'rgb(var(--color-text))', fontSize: 12, fontWeight: 600 }} />
-                  <Tooltip {...tooltipBase} formatter={(value) => [`${Number(value).toFixed(1)}%`, t('reports.share')]} cursor={{ fill: 'rgb(var(--color-surface2))' }} />
-                  <Bar dataKey="percentage" radius={[0, 5, 5, 0]} maxBarSize={16}>
-                    {channelChart.map((c, i) => <Cell key={i} fill={c.color} />)}
-                    <LabelList dataKey="percentage" position="right" formatter={(v) => `${Number(v).toFixed(0)}%`} fill={MUTED} fontSize={12} fontWeight={700} />
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </ChartCanvas>
-          </div>
-        </div>
       </ChartCard>
       <ChartCard title={t('reports.shiftVariances')}>
         <ChartCanvas>
@@ -194,39 +195,22 @@ export default function ReportsPage() {
       </ChartCard>
 
         <ChartCard title={t('reports.paymentDistribution')}>
-          <div className="flex h-full flex-col">
-            <div className="relative min-h-0 flex-[3]">
+            <div className="relative h-full min-h-0">
               <ChartCanvas>
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
-                    <Pie data={payment} dataKey="totalAmount" nameKey="name" innerRadius={62} outerRadius={88} paddingAngle={payment.length > 1 ? 3 : 0} strokeWidth={2} stroke="rgb(var(--color-surface))">
+                    <Pie data={payment} dataKey="totalAmount" nameKey="name" innerRadius="32%" outerRadius="92%" paddingAngle={payment.length > 1 ? 2 : 0} strokeWidth={2} stroke="rgb(var(--color-surface))" label={renderPieSliceLabel} labelLine={false}>
                       {payment.map((p, i) => <Cell key={i} fill={p.color} />)}
                     </Pie>
                     <Tooltip {...tooltipBase} formatter={(value) => Number(value).toFixed(3)} />
                   </PieChart>
                 </ResponsiveContainer>
               </ChartCanvas>
-              <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+              <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-1">
                 <span className="text-xs text-muted">{t('reports.totalSales')}</span>
-                <strong className="mt-0.5 text-xl text-text"><Money value={paymentTotal} /></strong>
+                <strong className="text-xl text-text"><Money value={paymentTotal} /></strong>
               </div>
             </div>
-            <div className="min-h-24 flex-[2] border-t border-border pt-2">
-              <ChartCanvas>
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={payment} layout="vertical" margin={{ top: 2, right: 38, bottom: 2, left: 4 }}>
-                    <XAxis type="number" domain={[0, 100]} hide />
-                    <YAxis type="category" dataKey="name" width={58} axisLine={false} tickLine={false} tick={{ fill: 'rgb(var(--color-text))', fontSize: 12, fontWeight: 600 }} />
-                    <Tooltip {...tooltipBase} formatter={(value) => [`${Number(value).toFixed(1)}%`, t('reports.share')]} cursor={{ fill: 'rgb(var(--color-surface2))' }} />
-                    <Bar dataKey="percentage" radius={[0, 5, 5, 0]} maxBarSize={16}>
-                      {payment.map((p, i) => <Cell key={i} fill={p.color} />)}
-                      <LabelList dataKey="percentage" position="right" formatter={(v) => `${Number(v).toFixed(0)}%`} fill={MUTED} fontSize={12} fontWeight={700} />
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </ChartCanvas>
-            </div>
-          </div>
         </ChartCard>
 
         <ChartCard title={t('reports.branchComparison')}>
@@ -269,32 +253,62 @@ export default function ReportsPage() {
       <button type="button" onClick={()=>setShowTable(value=>!value)}>{showTable?t('reports.hideTable'):t('reports.showTable')}</button>
       {showTable && <div className="rounded-xl border border-border bg-surface p-4">
         <div className="table-toolbar"><h2>{t('reports.productDetails')}</h2><SearchBox value={productSearch} onChange={(e) => setProductSearch(e.target.value)} placeholder={t('reports.searchProducts')} /></div>
-        <div className="table-shell"><table><thead><tr><th>{t('reports.product')}</th><th>{t('reports.quantitySold')}</th><th>{t('reports.totalSales')}</th><th>{t('reports.invoices')}</th><th>{t('reports.share')}</th></tr></thead><tbody>{filteredProducts.map((x) => <tr key={x.productId}><td className="font-bold">{name(x.nameAr, x.nameEn)}</td><td>{x.quantitySold.toLocaleString()}</td><td><Money value={x.totalSales} /></td><td>{x.invoiceCount}</td><td>{data.totalSales ? `${((x.totalSales / data.totalSales) * 100).toFixed(1)}%` : '0%'}</td></tr>)}</tbody></table></div>
+        <div className="table-shell"><table><thead><tr>
+          <SortableHeader label={t('reports.product')} sortKey="product" sort={productSort} onSort={toggleProductSort} />
+          <SortableHeader label={t('reports.quantitySold')} sortKey="quantitySold" sort={productSort} onSort={toggleProductSort} />
+          <SortableHeader label={t('reports.totalSales')} sortKey="totalSales" sort={productSort} onSort={toggleProductSort} />
+          <SortableHeader label={t('reports.invoices')} sortKey="invoiceCount" sort={productSort} onSort={toggleProductSort} />
+          <SortableHeader label={t('reports.share')} sortKey="share" sort={productSort} onSort={toggleProductSort} />
+        </tr></thead><tbody>{sortedProducts.map((x) => <tr key={x.productId}><td className="font-bold">{name(x.nameAr, x.nameEn)}</td><td>{x.quantitySold.toLocaleString()}</td><td><Money value={x.totalSales} /></td><td>{x.invoiceCount}</td><td>{data.totalSales ? `${((x.totalSales / data.totalSales) * 100).toFixed(1)}%` : '0%'}</td></tr>)}</tbody></table></div>
       </div>}
     </>}
   </section>
 }
 
+function SortableHeader({ label, sortKey, sort, onSort }: { label: string; sortKey: ProductSortKey; sort: { key: ProductSortKey; direction: SortDirection }; onSort: (key: ProductSortKey) => void }) {
+  const active = sort.key === sortKey
+  return <th aria-sort={active ? (sort.direction === 'asc' ? 'ascending' : 'descending') : 'none'}>
+    <button type="button" className="report-sort-button" onClick={() => onSort(sortKey)}>
+      <span>{label}</span><span aria-hidden="true" className={active ? 'is-active' : ''}>{active && sort.direction === 'asc' ? '↑' : '↓'}</span>
+    </button>
+  </th>
+}
+
 function StatCard({ label, value, icon, tone }: { label: string; value: ReactNode; icon: ReactNode; tone: 'primary' | 'accent' | 'danger' }) {
   const toneClass = tone === 'accent' ? 'text-accent bg-accent/10' : tone === 'danger' ? 'text-danger bg-danger/10' : 'text-primary bg-primary/10'
   const valueClass = tone === 'accent' ? 'text-accent' : tone === 'danger' ? 'text-danger' : 'text-primary'
-  return <div className="group rounded-xl border border-border bg-surface p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+  return <div className="ui-card ui-card-interactive group grid gap-3">
     <div className="flex items-start justify-between">
       <span className="text-sm font-medium text-muted">{label}</span>
       <span className={`flex h-10 w-10 items-center justify-center rounded-lg transition-colors ${toneClass}`}>{icon}</span>
     </div>
-    <strong className={`mt-3 block text-3xl ${valueClass}`}>{value}</strong>
+    <strong className={`block truncate font-cairo text-3xl ${valueClass}`}>{value}</strong>
   </div>
 }
 function ChartCard({ title, children, className = 'h-96' }: { title: string; children: ReactNode; className?: string }) {
-  return <div className={`rounded-xl border border-border bg-surface p-4 shadow-sm ${className}`}>
-    <h2 className="mb-4 text-base font-bold">{title}</h2>
-    <div className="h-[calc(100%-2.5rem)]">{children}</div>
+  return <div className={`report-chart-card ui-card grid gap-4 p-4 ${className}`}>
+    <h2 className="truncate text-base font-bold">{title}</h2>
+    <div className="min-h-0">{children}</div>
   </div>
 }
+
+function renderPieSliceLabel({ cx, cy, midAngle, innerRadius, outerRadius, name, percent }: PieLabelRenderProps) {
+  const share = Number(percent ?? 0)
+  if (share < 0.055) return null
+  const radius = Number(innerRadius) + (Number(outerRadius) - Number(innerRadius)) * 0.58
+  const angle = -Number(midAngle) * Math.PI / 180
+  const x = Number(cx) + radius * Math.cos(angle)
+  const y = Number(cy) + radius * Math.sin(angle)
+  const label = String(name ?? '')
+  const shortLabel = label.length > 13 ? `${label.slice(0, 12)}…` : label
+  return <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central" className="report-pie-label">
+    <tspan x={x} dy="-0.45em">{shortLabel}</tspan>
+    <tspan x={x} dy="1.25em">{(share * 100).toFixed(0)}%</tspan>
+  </text>
+}
 function ReportsSkeleton() {
-  return <div className="reports-skeleton space-y-6">
-    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+  return <div className="reports-skeleton grid gap-6">
+    <div className="grid gap-4 md:grid-cols-3">
       {Array.from({ length: 6 }).map((_, i) => <div key={i} className="reports-skeleton-block h-[6.5rem] rounded-xl" />)}
     </div>
     <div className="grid gap-4 lg:grid-cols-2">
@@ -311,14 +325,14 @@ function ChartCanvas({ children }: { children: ReactNode }) {
 }
 
 function SalesIcon(props: SVGProps<SVGSVGElement>) {
-  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...props}><path d="M3 17l6-6 4 4 7-8" /><path d="M14 7h6v6" /></svg>
+  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...props}><path d="M3 17l6-6 4 4 7-8" /><path d="M14 7h6v6" /></svg>
 }
 function InvoiceIcon(props: SVGProps<SVGSVGElement>) {
-  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...props}><path d="M6 3h12v17l-3-2-3 2-3-2-3 2V3Z" /><path d="M9 8h6M9 12h4" /></svg>
+  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...props}><path d="M6 3h12v17l-3-2-3 2-3-2-3 2V3Z" /><path d="M9 8h6M9 12h4" /></svg>
 }
 function ItemsIcon(props: SVGProps<SVGSVGElement>) {
-  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...props}><path d="M12 3 3 8l9 5 9-5-9-5Z" /><path d="M3 13l9 5 9-5" /></svg>
+  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...props}><path d="M12 3 3 8l9 5 9-5-9-5Z" /><path d="M3 13l9 5 9-5" /></svg>
 }
 function TicketIcon(props: SVGProps<SVGSVGElement>) {
-  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...props}><path d="M12.6 3.4 20 10.8a2 2 0 0 1 0 2.8l-6.4 6.4a2 2 0 0 1-2.8 0L3.4 12.6a2 2 0 0 1-.6-1.4V5a1.6 1.6 0 0 1 1.6-1.6h6.2c.5 0 1 .2 1.4.6Z" /><circle cx="8" cy="8" r="1.2" fill="currentColor" stroke="none" /></svg>
+  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...props}><path d="M12.6 3.4 20 10.8a2 2 0 0 1 0 2.8l-6.4 6.4a2 2 0 0 1-2.8 0L3.4 12.6a2 2 0 0 1-.6-1.4V5a1.6 1.6 0 0 1 1.6-1.6h6.2c.5 0 1 .2 1.4.6Z" /><circle cx="8" cy="8" r="1.2" /></svg>
 }

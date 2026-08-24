@@ -1,6 +1,4 @@
-import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { RTL_LANGUAGES } from '../i18n'
 import { api } from '../api/client'
 import { useAuth } from '../auth/AuthContext'
 
@@ -15,12 +13,6 @@ export default function LanguageSwitcher() {
   const { i18n, t } = useTranslation()
   const { user, updatePreferences } = useAuth()
 
-  useEffect(() => {
-    const isRtl = RTL_LANGUAGES.includes(i18n.language)
-    document.documentElement.dir = isRtl ? 'rtl' : 'ltr'
-    document.documentElement.lang = i18n.language
-  }, [i18n.language])
-
   const toggleLanguage = async () => {
     const next = i18n.language === 'ar' ? 'en' : 'ar'
     await i18n.changeLanguage(next)
@@ -31,7 +23,7 @@ export default function LanguageSwitcher() {
   }
 
   return (
-    <button className="language-switcher" type="button" onClick={toggleLanguage} aria-label={t('language.switchTo')} title={t('language.switchTo')}>
+    <button className="language-switcher utility-icon-button" type="button" onClick={toggleLanguage} aria-label={t('language.switchTo')} title={t('language.switchTo')}>
       <span className="flag-circle"><FlagIcon language={i18n.language === 'ar' ? 'en' : 'ar'} /></span>
     </button>
   )

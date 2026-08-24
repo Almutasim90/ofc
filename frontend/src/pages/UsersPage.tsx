@@ -41,7 +41,7 @@ export default function UsersPage() {
   const branchName = (branchId: string | null) => branches.find((b) => b.id === branchId)?.nameEn ?? '-'
 
   return (
-    <div>
+    <section>
       <h1>{t('users.title')}</h1>
       <div className="table-toolbar"><SearchBox value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('common.search')} /><button type="button" onClick={() => setEditing({ mode: 'create' })}>
         {t('users.create')}
@@ -63,7 +63,7 @@ export default function UsersPage() {
             <tr key={user.id}>
               <td>{user.fullName}</td>
               <td>{user.username}</td>
-              <td>{user.roleName}</td>
+              <td>{t(`roles.${user.roleName}`, { defaultValue: user.roleName })}</td>
               <td>{branchName(user.branchId)}</td>
               <td>{user.isActive ? t('users.active') : t('users.inactive')}</td>
               <td><div className="row-actions">
@@ -89,7 +89,7 @@ export default function UsersPage() {
           }}
         />
       )}
-    </div>
+    </section>
   )
 }
 
@@ -183,7 +183,7 @@ function UserForm({
           <select value={roleId} onChange={(e) => setRoleId(e.target.value)}>
             {roles.map((role) => (
               <option key={role.id} value={role.id}>
-                {role.name}
+                {t(`roles.${role.name}`, { defaultValue: role.name })}
               </option>
             ))}
           </select>

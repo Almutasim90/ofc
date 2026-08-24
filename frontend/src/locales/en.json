@@ -1,6 +1,6 @@
 {
   "app": {
-    "title": "POS System"
+    "title": "Lolat Al Suwaiq"
   },
   "language": {
     "switchTo": "العربية",
@@ -20,14 +20,14 @@
     "subtitle": "Enter your account details to access the point-of-sale system.",
     "usernamePlaceholder": "Enter your username",
     "passwordPlaceholder": "Enter your password",
-    "brandLabel": "Tea House system identity",
+    "brandLabel": "Lolat Al Suwaiq system identity",
     "brandName": "Lolat Al Suwaiq",
     "brandHeadline": "Manage every branch and sale in one place.",
     "brandDescription": "A complete platform for sales, inventory, and shifts, designed to keep daily operations clear and fast.",
     "featureSales": "Faster sales",
     "featureInventory": "Accurate inventory",
     "featureReports": "Clear reporting",
-    "securityNote": "Secure access for Tea House staff"
+    "securityNote": "Secure access for Lolat Al Suwaiq staff"
   },
   "nav": {
     "cashier": "Cashier",
@@ -106,6 +106,7 @@
     "summary": "Shift summary",
     "openSubmit": "Open shift",
     "closeSubmit": "Close shift",
+    "closingSubmit": "Closing shift...",
     "loadError": "Could not load shift information.",
     "openError": "Could not open the shift.",
     "closeError": "Could not close the shift."
@@ -180,6 +181,8 @@
     "quantitySold": "Quantity sold",
     "share": "Revenue share",
     "searchProducts": "Search products...",
+    "showTable": "Show details table",
+    "hideTable": "Hide details table",
     "scope": "Report scope",
     "global": "All branches",
     "branch": "Branch",
@@ -250,10 +253,29 @@
   },
   "permissions": {
     "title": "User permissions",
+    "permission": "Permission",
     "back": "Back",
     "inherit": "Inherited from role",
     "grant": "Grant",
     "deny": "Deny"
+  },
+  "roles": {
+    "Cashier": "Cashier",
+    "BranchManager": "Branch manager",
+    "GeneralManager": "General manager"
+  },
+  "permissionKeys": {
+    "sales.create": "Create sales",
+    "sales.void": "Void sales",
+    "inventory.adjust": "Adjust inventory",
+    "reports.branch.view": "View branch reports",
+    "reports.global.view": "View global reports",
+    "users.manage": "Manage users",
+    "branches.manage": "Manage branches",
+    "closing.configure": "Configure closing schedule",
+    "products.manage": "Manage products",
+    "channels.manage": "Manage sales channels",
+    "ai.manage": "Manage AI"
   },
   "branches": {
     "title": "Branches",

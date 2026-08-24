@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
-import { api, ApiError } from '../api/client'
+import { api, ApiError, resolveApiAssetUrl } from '../api/client'
 import { useAuth } from '../auth/AuthContext'
 import Money from '../components/Money'
 import BottomSheet from '../components/BottomSheet'
+import AppIcon from '../components/AppIcon'
 import type { BranchDto, CreateSaleRequest, ProductChannelPriceDto, ProductDto, SaleDto, SalesChannelDto, ShiftDto, UpcomingClosingDto } from '../api/types'
 
 interface CartLine {
@@ -19,25 +20,25 @@ function CategoryIcon({ category }: { category: string | null }) {
   const iconClass = 'h-5 w-5'
 
   if (category === null) {
-    return <svg className={iconClass} aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></svg>
+    return <svg className={iconClass} aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></svg>
   }
 
   switch (category.toLowerCase()) {
     case 'food':
-      return <svg className={iconClass} aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M4 17h16M6 17a6 6 0 0 1 12 0M12 8V6"/><path d="M10 6h4"/><path d="M3 20h18"/></svg>
+      return <svg className={iconClass} aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75"><path d="M4 17h16M6 17a6 6 0 0 1 12 0M12 8V6"/><path d="M10 6h4"/><path d="M3 20h18"/></svg>
     case 'sweet':
     case 'sweets':
     case 'dessert':
-      return <svg className={iconClass} aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M5 11h14l-1.2 9H6.2L5 11Z"/><path d="M7 11c0-2 1.4-3.5 3.2-3.5.6-2.3 4.6-2.1 4.8.5 1.5 0 2.7 1.3 2.7 3"/><path d="M9 15h.01M15 15h.01"/></svg>
+      return <svg className={iconClass} aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75"><path d="M5 11h14l-1.2 9H6.2L5 11Z"/><path d="M7 11c0-2 1.4-3.5 3.2-3.5.6-2.3 4.6-2.1 4.8.5 1.5 0 2.7 1.3 2.7 3"/><path d="M9 15h.01M15 15h.01"/></svg>
     case 'tea':
-      return <svg className={iconClass} aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M5 9h12v5a5 5 0 0 1-5 5h-2a5 5 0 0 1-5-5V9Z"/><path d="M17 11h1.5a2.5 2.5 0 0 1 0 5H17M8 5c0 1 1 1 1 2M12 4c0 1 1 1 1 2"/></svg>
+      return <svg className={iconClass} aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75"><path d="M5 9h12v5a5 5 0 0 1-5 5h-2a5 5 0 0 1-5-5V9Z"/><path d="M17 11h1.5a2.5 2.5 0 0 1 0 5H17M8 5c0 1 1 1 1 2M12 4c0 1 1 1 1 2"/></svg>
     case 'drink':
     case 'drinks':
     case 'beverage':
     case 'beverages':
-      return <svg className={iconClass} aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M7 8h10l-1 12H8L7 8Z"/><path d="m9 4 2 4M11 4h5M9 13h6"/></svg>
+      return <svg className={iconClass} aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75"><path d="M7 8h10l-1 12H8L7 8Z"/><path d="m9 4 2 4M11 4h5M9 13h6"/></svg>
     default:
-      return <svg className={iconClass} aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M20.59 13.41 12 4.83A2 2 0 0 0 10.59 4.24L4 4a1 1 0 0 0-1 1l.24 6.59a2 2 0 0 0 .59 1.41l8.58 8.58a2 2 0 0 0 2.83 0l5.35-5.35a2 2 0 0 0 0-2.82Z"/><circle cx="7.5" cy="7.5" r="1.1" fill="currentColor" stroke="none"/></svg>
+      return <svg className={iconClass} aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75"><path d="M20.59 13.41 12 4.83A2 2 0 0 0 10.59 4.24L4 4a1 1 0 0 0-1 1l.24 6.59a2 2 0 0 0 .59 1.41l8.58 8.58a2 2 0 0 0 2.83 0l5.35-5.35a2 2 0 0 0 0-2.82Z"/><circle cx="7.5" cy="7.5" r="1.1"/></svg>
   }
 }
 
@@ -50,11 +51,11 @@ function CardIcon() {
 }
 
 function OnlineOrdersIcon() {
-  return <svg className="h-5 w-5" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M4 8h16l-1 12H5L4 8Z"/><path d="M8 8a4 4 0 0 1 8 0M8 13h.01M16 13h.01"/></svg>
+  return <svg className="h-5 w-5" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75"><path d="M4 8h16l-1 12H5L4 8Z"/><path d="M8 8a4 4 0 0 1 8 0M8 13h.01M16 13h.01"/></svg>
 }
 
 function StoreIcon() {
-  return <svg className="h-5 w-5" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M4 10 5 4h14l1 6"/><path d="M4 10a2 2 0 0 0 4 0 2 2 0 0 0 4 0 2 2 0 0 0 4 0 2 2 0 0 0 4 0"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg>
+  return <svg className="h-5 w-5" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75"><path d="M4 10 5 4h14l1 6"/><path d="M4 10a2 2 0 0 0 4 0 2 2 0 0 0 4 0 2 2 0 0 0 4 0 2 2 0 0 0 4 0"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg>
 }
 
 export default function CashierPage() {
@@ -231,50 +232,53 @@ export default function CashierPage() {
         <h2 className="font-cairo text-lg font-bold text-text">{t('cashier.cart')}</h2>
         <button
           type="button"
-          className="border-0 bg-transparent p-1 text-muted md:hidden"
+          className="flex min-h-14 min-w-11 items-center justify-center border-0 bg-transparent p-0 text-muted md:hidden"
           onClick={() => setCartOpen(false)}
+          aria-label={t('cashier.close')}
         >
-          ✕
+          <AppIcon className="h-5 w-5" name="close" />
         </button>
       </div>
 
-      <div className="flex-1 space-y-3 overflow-y-auto p-4">
+      <div className="flex flex-1 flex-col gap-2 overflow-y-auto p-3">
         {cart.length === 0 && <p className="text-sm text-muted">{t('cashier.cartEmpty')}</p>}
         {cart.map((line) => (
-          <div key={line.productId} className="cashier-cart-line flex items-center gap-2 rounded-xl bg-surface2 p-2.5">
-            <div className="min-w-0 flex-1">
-              <div className="truncate text-sm text-text">{i18n.language === 'ar' ? line.nameAr : line.nameEn}</div>
-              <div className="text-sm text-accent"><Money value={line.price} /></div>
+          <div key={line.productId} className="cashier-cart-line rounded-xl bg-surface2 p-2.5">
+            <div className="cashier-cart-line-heading">
+              <div className="truncate text-sm font-medium text-text">{i18n.language === 'ar' ? line.nameAr : line.nameEn}</div>
+              <Money className="cashier-cart-line-price text-sm font-bold text-accent" value={line.price} />
             </div>
-            <div className="flex items-center gap-1">
+            <div className="cashier-cart-line-actions">
+              <div className="cashier-cart-quantity">
+                <button
+                  type="button"
+                  className="cashier-quantity-button flex items-center justify-center rounded-lg border border-border bg-surface p-0 text-text"
+                  onClick={() => updateQuantity(line.productId, line.quantity - 1)}
+                >
+                  <AppIcon className="h-4 w-4" name="minus" />
+                </button>
+                <span className="w-7 text-center font-cairo text-sm font-bold text-text">{line.quantity}</span>
+                <button
+                  type="button"
+                  className="cashier-quantity-button flex items-center justify-center rounded-lg border border-border bg-surface p-0 text-text"
+                  onClick={() => updateQuantity(line.productId, line.quantity + 1)}
+                >
+                  <AppIcon className="h-4 w-4" name="plus" />
+                </button>
+              </div>
               <button
                 type="button"
-                className="cashier-quantity-button h-8 w-8 rounded-md border border-border bg-surface p-0 text-text"
-                onClick={() => updateQuantity(line.productId, line.quantity - 1)}
+                className="cashier-remove flex items-center justify-center border-0 bg-transparent p-0 text-danger"
+                onClick={() => removeFromCart(line.productId)}
               >
-                −
-              </button>
-              <span className="w-6 text-center font-cairo text-text">{line.quantity}</span>
-              <button
-                type="button"
-                className="cashier-quantity-button h-8 w-8 rounded-md border border-border bg-surface p-0 text-text"
-                onClick={() => updateQuantity(line.productId, line.quantity + 1)}
-              >
-                +
+                <AppIcon className="h-4 w-4" name="trash" />
               </button>
             </div>
-            <button
-              type="button"
-              className="cashier-remove border-0 bg-transparent p-1 text-sm text-danger"
-              onClick={() => removeFromCart(line.productId)}
-            >
-              {t('cashier.remove')}
-            </button>
           </div>
         ))}
       </div>
 
-      <div className="space-y-3 border-t border-border p-4">
+      <div className="flex flex-col gap-2.5 border-t border-border p-3">
         <div className="cashier-discount-control">
           <label>{t('cashier.discountType')}
             <select value={discountType} onChange={(event) => { setDiscountType(event.target.value as typeof discountType); setDiscountValue(0) }}>
@@ -288,15 +292,15 @@ export default function CashierPage() {
           </label>}
         </div>
         {discountAmount > 0 && <div className="flex items-center justify-between text-sm text-muted"><span>{t('cashier.discount')}</span><Money value={discountAmount} /></div>}
-        <div className="flex flex-col gap-1 text-sm text-muted">
+        <div className="flex flex-col gap-2 text-sm text-muted">
           {t('cashier.paymentMethod')}
           <div className="flex gap-2">
             <button
               type="button"
               className={
                 paymentMethod === 'Cash'
-                  ? 'inline-flex flex-1 items-center justify-center gap-2 border-0 bg-primary text-white'
-                  : 'inline-flex flex-1 items-center justify-center gap-2 border border-border bg-surface2 text-text'
+                  ? 'text-on-primary inline-flex min-h-14 flex-1 items-center justify-center gap-2 border-0 bg-primary active:scale-[0.98]'
+                  : 'inline-flex min-h-14 flex-1 items-center justify-center gap-2 border border-border bg-surface2 text-text active:scale-[0.98]'
               }
               onClick={() => setPaymentMethod('Cash')}
             >
@@ -307,8 +311,8 @@ export default function CashierPage() {
               type="button"
               className={
                 paymentMethod === 'Card'
-                  ? 'inline-flex flex-1 items-center justify-center gap-2 border-0 bg-primary text-white'
-                  : 'inline-flex flex-1 items-center justify-center gap-2 border border-border bg-surface2 text-text'
+                  ? 'text-on-primary inline-flex min-h-14 flex-1 items-center justify-center gap-2 border-0 bg-primary active:scale-[0.98]'
+                  : 'inline-flex min-h-14 flex-1 items-center justify-center gap-2 border border-border bg-surface2 text-text active:scale-[0.98]'
               }
               onClick={() => setPaymentMethod('Card')}
             >
@@ -327,7 +331,7 @@ export default function CashierPage() {
 
         <button
           type="button"
-          className="w-full border-0 bg-primary text-white"
+          className="text-on-primary min-h-14 w-full border-0 bg-primary active:scale-[0.98]"
           disabled={cart.length === 0 || submitting}
           onClick={checkout}
         >
@@ -344,12 +348,12 @@ export default function CashierPage() {
           <div key="store" className="cashier-sidebar-panel flex items-center gap-2 md:flex-col md:items-stretch">
             <button
               type="button"
-              className={`cashier-category-button flex min-w-[4.5rem] flex-col items-center gap-1 border-0 bg-transparent p-1 ${selectedCategory === null ? 'is-selected' : ''}`}
+              className={`cashier-category-button flex min-h-14 min-w-[4.5rem] flex-col items-center gap-2 border-0 bg-transparent p-2 ${selectedCategory === null ? 'is-selected' : ''}`}
               onClick={() => setSelectedCategory(null)}
             >
               <span
                 className={`cashier-category-icon flex h-9 w-9 items-center justify-center rounded-xl md:h-10 md:w-10 ${
-                  selectedCategory === null ? 'bg-primary text-white' : 'bg-surface2 text-text'
+                  selectedCategory === null ? 'text-on-primary bg-primary' : 'bg-surface2 text-text'
                 }`}
               >
                 <CategoryIcon category={null} />
@@ -362,12 +366,12 @@ export default function CashierPage() {
               <button
                 key={cat}
                 type="button"
-                className={`cashier-category-button flex min-w-[4.5rem] flex-col items-center gap-1 border-0 bg-transparent p-1 ${selectedCategory === cat ? 'is-selected' : ''}`}
+                className={`cashier-category-button flex min-h-14 min-w-[4.5rem] flex-col items-center gap-2 border-0 bg-transparent p-2 ${selectedCategory === cat ? 'is-selected' : ''}`}
                 onClick={() => setSelectedCategory(cat)}
               >
                 <span
                   className={`cashier-category-icon flex h-9 w-9 items-center justify-center rounded-xl md:h-10 md:w-10 ${
-                    selectedCategory === cat ? 'bg-primary text-white' : 'bg-surface2 text-text'
+                    selectedCategory === cat ? 'text-on-primary bg-primary' : 'bg-surface2 text-text'
                   }`}
                 >
                   <CategoryIcon category={cat} />
@@ -380,7 +384,7 @@ export default function CashierPage() {
             {onlineChannels.length > 0 && (
               <button
                 type="button"
-                className="cashier-category-button flex min-w-[4.5rem] flex-col items-center gap-1 border-0 bg-transparent p-1"
+                className="cashier-category-button flex min-h-14 min-w-[4.5rem] flex-col items-center gap-2 border-0 bg-transparent p-2"
                 onClick={() => setSidebarView('online')}
               >
                 <span className="cashier-category-icon flex h-9 w-9 items-center justify-center rounded-xl bg-surface2 text-text md:h-10 md:w-10"><OnlineOrdersIcon /></span>
@@ -390,7 +394,7 @@ export default function CashierPage() {
           </div>
         ) : (
           <div key="online" className="cashier-sidebar-panel flex items-center gap-2 md:flex-col md:items-stretch">
-            <button type="button" className="cashier-channel-back flex min-w-[4.5rem] flex-col items-center gap-1 border-0 bg-transparent p-1" onClick={goToStore}>
+            <button type="button" className="cashier-channel-back flex min-h-14 min-w-[4.5rem] flex-col items-center gap-2 border-0 bg-transparent p-2" onClick={goToStore}>
               <span className="cashier-category-icon flex h-9 w-9 items-center justify-center rounded-xl md:h-10 md:w-10"><StoreIcon /></span>
               <span className="text-xs">{t('cashier.backToStore')}</span>
             </button>
@@ -398,11 +402,11 @@ export default function CashierPage() {
               <button
                 key={channel.id}
                 type="button"
-                className={`cashier-category-button flex min-w-[4.5rem] flex-col items-center gap-1 border-0 bg-transparent p-1 ${channel.id === channelId ? 'is-selected' : ''}`}
+                className={`cashier-category-button flex min-h-14 min-w-[4.5rem] flex-col items-center gap-2 border-0 bg-transparent p-2 ${channel.id === channelId ? 'is-selected' : ''}`}
                 onClick={() => void selectChannel(channel)}
               >
-                <span className={`cashier-category-icon flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl md:h-10 md:w-10 ${channel.id === channelId ? 'bg-primary text-white' : 'bg-surface2 text-text'}`}>
-                  {channel.logoUrl ? <img src={channel.logoUrl} alt="" className="h-full w-full object-contain" /> : <OnlineOrdersIcon />}
+                <span className={`cashier-category-icon flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl md:h-10 md:w-10 ${channel.id === channelId ? 'text-on-primary bg-primary' : 'bg-surface2 text-text'}`}>
+                  {channel.logoUrl ? <img src={resolveApiAssetUrl(channel.logoUrl)} alt="" className="h-full w-full object-contain" /> : <OnlineOrdersIcon />}
                 </span>
                 <span className={`text-xs ${channel.id === channelId ? 'text-primary' : 'text-muted'}`}>{productName(channel)}</span>
               </button>
@@ -411,21 +415,21 @@ export default function CashierPage() {
         )}
       </aside>
 
-      <div className="cashier-catalog flex-1 overflow-y-auto p-3 pb-24 sm:p-4 xl:pb-4">
-        {selectedChannel && !selectedChannel.isInStore && <div className="cashier-channel-context"><span>{selectedChannel.logoUrl && <img src={selectedChannel.logoUrl} alt="" />}{t('cashier.currentOrder')}: <strong>{productName(selectedChannel)}</strong></span><button type="button" onClick={goToStore}>{t('cashier.backToStore')}</button></div>}
+      <div className="cashier-catalog flex flex-1 flex-col gap-4 overflow-y-auto p-3 pb-24 sm:p-4 xl:pb-4">
+        {selectedChannel && !selectedChannel.isInStore && <div className="cashier-channel-context"><span>{selectedChannel.logoUrl && <img src={resolveApiAssetUrl(selectedChannel.logoUrl)} alt="" />}{t('cashier.currentOrder')}: <strong>{productName(selectedChannel)}</strong></span><button type="button" onClick={goToStore}>{t('cashier.backToStore')}</button></div>}
         {closingWarning && (
-          <div className="mb-4 rounded-xl border border-primary bg-surface p-3 text-primary">
+          <div className="rounded-xl border border-primary bg-surface p-3 text-primary">
             {t('cashier.closingWarning', { minutes: closingWarning.minutesRemaining })}
           </div>
         )}
         {!currentShift && (
-          <div className="mb-4 flex items-center justify-between gap-3 rounded-xl border border-danger bg-surface p-3 text-danger">
+          <div className="flex items-center justify-between gap-3 rounded-xl border border-danger bg-surface p-3 text-danger">
             <span>{t('cashier.shiftRequired')}</span>
-            <Link className="rounded-lg bg-primary px-3 py-2 font-bold text-bg" to="/shift">{t('cashier.openShift')}</Link>
+            <Link className="inline-flex min-h-14 items-center rounded-xl bg-primary px-3 py-2 font-bold text-bg" to="/shift">{t('cashier.openShift')}</Link>
           </div>
         )}
         {branches.length > 0 && (
-          <div className="cashier-toolbar mb-4 flex flex-wrap items-end justify-between gap-3 rounded-2xl border border-border bg-surface p-3 sm:p-4">
+          <div className="cashier-toolbar flex flex-wrap items-end justify-between gap-3 rounded-2xl border border-border bg-surface p-3 sm:p-4">
           <label className="flex w-full max-w-xs flex-col gap-1 text-sm font-semibold text-muted sm:w-auto sm:min-w-64">
             {t('cashier.branch')}
             <select value={branchId} disabled={Boolean(user?.branchId)} onChange={(e) => setBranchId(e.target.value)}>
@@ -456,14 +460,14 @@ export default function CashierPage() {
                 {product.iconOrImageUrl ? (
                   <img src={product.iconOrImageUrl} alt={productName(product)} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
                 ) : (
-                  <div className="flex h-full w-full items-center justify-center text-3xl">🍵</div>
+                  <div className="flex h-full w-full items-center justify-center font-cairo text-3xl font-bold text-primary">{productName(product).charAt(0)}</div>
                 )}
               </div>
-              <div className="w-full p-3">
+              <div className="flex w-full flex-col gap-1 p-3">
                 <div className="truncate text-sm font-bold text-text">{productName(product)}</div>
-                <Money className="mt-1 font-bold text-primary" value={channelPrices[product.id] ?? product.price} />
+                <Money className="font-bold text-primary" value={channelPrices[product.id] ?? product.price} />
               </div>
-              <span className="product-add-indicator absolute end-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-xl text-white shadow-lg" aria-hidden="true">+</span>
+              <span className="product-add-indicator text-on-primary absolute end-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-primary shadow-lg" aria-hidden="true"><AppIcon className="h-4 w-4" name="plus" /></span>
             </button>
           ))}
         </div>
@@ -477,7 +481,7 @@ export default function CashierPage() {
         {cart.length > 0 && !cartOpen && (
           <button
             type="button"
-            className="cashier-cart-fab fixed inset-x-4 bottom-4 z-40 flex items-center justify-between rounded-2xl border-0 bg-primary px-4 py-3 text-white shadow-lg md:start-auto md:w-80"
+            className="cashier-cart-fab text-on-primary fixed inset-x-4 bottom-4 z-40 flex items-center justify-between rounded-2xl border-0 bg-primary px-4 py-3 shadow-lg md:start-auto md:w-80"
             onClick={() => setCartOpen(true)}
           >
             <span>
@@ -490,11 +494,11 @@ export default function CashierPage() {
       </div>
 
       {successSale && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={() => setSuccessSale(null)}>
-          <div className="rounded-xl bg-surface p-6 text-center" onClick={(e) => e.stopPropagation()}>
+        <div className="app-scrim fixed inset-0 z-50 flex items-center justify-center" onClick={() => setSuccessSale(null)}>
+          <div className="flex flex-col gap-4 rounded-3xl bg-surface p-6 text-center" onClick={(e) => e.stopPropagation()}>
             <p className="font-cairo text-xl font-bold text-primary">{t('cashier.saleSuccess')}</p>
-            <p className="mt-2 text-2xl text-accent"><Money value={successSale.totalAmount} /></p>
-            <button type="button" className="mt-4 border-0 bg-primary text-white" onClick={() => setSuccessSale(null)}>
+            <p className="text-2xl text-accent"><Money value={successSale.totalAmount} /></p>
+            <button type="button" className="text-on-primary min-h-14 border-0 bg-primary" onClick={() => setSuccessSale(null)}>
               {t('cashier.close')}
             </button>
           </div>

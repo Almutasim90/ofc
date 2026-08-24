@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
-import { api } from '../api/client'
+import { api, resolveApiAssetUrl } from '../api/client'
 import type { ProductChannelPriceDto, ProductDto, SalesChannelDto } from '../api/types'
 
 const emptyForm = { nameAr: '', nameEn: '', logoUrl: '', isActive: true }
@@ -49,7 +49,7 @@ export default function ChannelsPage() {
         <label>{t('channels.nameAr')}<input required value={form.nameAr} onChange={event => setForm({ ...form, nameAr: event.target.value })} /></label>
         <label>{t('channels.nameEn')}<input required value={form.nameEn} onChange={event => setForm({ ...form, nameEn: event.target.value })} /></label>
         <div className="channel-logo-field"><span className="channel-field-label">{t('channels.logo')}</span><div className="channel-logo-picker">
-          <div className="channel-logo-preview-box">{form.logoUrl ? <img src={form.logoUrl} alt="" /> : <span>{form.nameAr.charAt(0) || '+'}</span>}</div>
+          <div className="channel-logo-preview-box">{form.logoUrl ? <img src={resolveApiAssetUrl(form.logoUrl)} alt="" /> : <span>{form.nameAr.charAt(0) || '+'}</span>}</div>
           <div><button className="button-secondary channel-upload-button" type="button" disabled={uploading} onClick={() => fileInput.current?.click()}>{uploading ? t('channels.uploading') : t('channels.uploadLogo')}</button><small>{t('channels.logoHint')}</small></div>
           <input ref={fileInput} className="sr-only" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" onChange={uploadLogo} />
         </div></div>
@@ -58,7 +58,7 @@ export default function ChannelsPage() {
       <div className="channel-form-actions"><button type="submit" disabled={uploading}>{selected ? t('common.update') : t('common.save')}</button>{selected && <button className="button-secondary" type="button" onClick={() => { setSelected(null); setForm(emptyForm) }}>{t('common.cancel')}</button>}</div>
     </form>
     <div className="table-shell channel-table"><table><thead><tr><th>{t('channels.logo')}</th><th>{t('channels.channel')}</th><th>{t('channels.status')}</th><th>{t('common.actions')}</th></tr></thead><tbody>{channels.map(channel => <tr key={channel.id}>
-      <td><div className="channel-table-logo">{channel.logoUrl ? <img src={channel.logoUrl} alt="" /> : <span>{(i18n.language === 'ar' ? channel.nameAr : channel.nameEn).charAt(0)}</span>}</div></td>
+      <td><div className="channel-table-logo">{channel.logoUrl ? <img src={resolveApiAssetUrl(channel.logoUrl)} alt="" /> : <span>{(i18n.language === 'ar' ? channel.nameAr : channel.nameEn).charAt(0)}</span>}</div></td>
       <td><strong>{i18n.language === 'ar' ? channel.nameAr : channel.nameEn}</strong></td><td><span className={`channel-status ${channel.isActive ? 'is-active' : ''}`}>{channel.isActive ? t('channels.active') : t('channels.inactive')}</span></td>
       <td><div className="channel-row-actions"><button onClick={() => void editPrices(channel)}>{t('channels.pricing')}</button><button className="button-secondary" onClick={() => { setSelected(channel); setForm({ nameAr: channel.nameAr, nameEn: channel.nameEn, logoUrl: channel.logoUrl ?? '', isActive: channel.isActive }); window.scrollTo({ top: 0, behavior: 'smooth' }) }}>{t('common.edit')}</button>{!channel.isInStore && <button className="button-secondary" onClick={async () => { await api.put(`/api/channels/${channel.id}`, { nameAr: channel.nameAr, nameEn: channel.nameEn, logoUrl: channel.logoUrl, isActive: !channel.isActive }); await load() }}>{channel.isActive ? t('channels.stop') : t('channels.enable')}</button>}{!channel.isInStore && <button className="button-danger" onClick={async () => { await api.delete(`/api/channels/${channel.id}`); await load() }}>{t('common.delete')}</button>}</div></td>
     </tr>)}</tbody></table></div>
