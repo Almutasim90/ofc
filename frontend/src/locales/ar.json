@@ -42,6 +42,7 @@
     "settings": "الإعدادات",
     "channels": "قنوات البيع",
     "aiSettings": "الذكاء الاصطناعي",
+    "emailSettings": "البريد الإلكتروني",
     "notifications": "التنبيهات",
     "more": "المزيد",
     "closeMenu": "إغلاق القائمة",
@@ -132,7 +133,8 @@
     ,"viewAll": "عرض كل التنبيهات"
   },
   "channels": {"title":"قنوات البيع","description":"أضف شركات الطلبات الإلكترونية وتحكم في شعاراتها وأسعارها وحالتها.","nameAr":"الاسم بالعربية","nameEn":"الاسم بالإنجليزية","logoUrl":"رابط الشعار","uploadLogo":"رفع الشعار","uploading":"جارٍ الرفع...","logoHint":"PNG أو JPG أو WebP أو SVG — بحد أقصى 2 MB","pricing":"تسعير المنتجات","logo":"الشعار","channel":"الشركة","status":"الحالة","active":"مفعلة","inactive":"متوقفة","stop":"إيقاف","enable":"تفعيل"},
-  "ai": {"title":"إعدادات الذكاء الاصطناعي","provider":"المزوّد","model":"النموذج","apiKey":"مفتاح API","analyze":"تحليل ذكي","summary":"ملخص","anomaly":"اكتشاف الشذوذ","forecast":"توقع الطلب"},
+  "ai": {"title":"إعدادات الذكاء الاصطناعي","description":"اختر المزوّد والنموذج المستخدم للتحليلات. يُحفظ مفتاح API مشفراً ولا يظهر كاملاً بعد الحفظ.","active":"تفعيل التحليل الذكي","provider":"المزوّد","model":"النموذج","customModel":"نموذج آخر...","useSuggested":"استخدام نموذج مقترح","apiKey":"مفتاح API","keyHint":"اتركه فارغاً للاحتفاظ بالمفتاح المحفوظ.","saved":"تم حفظ إعدادات الذكاء الاصطناعي.","loadError":"تعذر تحميل إعدادات الذكاء الاصطناعي.","saveError":"تعذر حفظ الإعدادات.","analyze":"تحليل ذكي","summary":"ملخص","anomaly":"اكتشاف الشذوذ","forecast":"توقع الطلب"},
+  "email": {"title":"إعدادات البريد الإلكتروني","description":"اضبط حساب SMTP المستخدم لإرسال تنبيهات النظام تلقائياً. تُحفظ كلمة المرور مشفرة.","active":"تفعيل إرسال الإشعارات بالبريد","smtpHost":"خادم SMTP","smtpPort":"المنفذ","username":"اسم المستخدم","password":"كلمة مرور البريد أو كلمة مرور التطبيق","fromEmail":"بريد المرسل","fromName":"اسم المرسل","recipients":"مستلمو الإشعارات","recipientsHint":"افصل بين العناوين بفاصلة أو فاصلة منقوطة.","useSsl":"استخدام اتصال آمن SSL/TLS","saved":"تم حفظ إعدادات البريد.","loadError":"تعذر تحميل إعدادات البريد.","saveError":"تعذر حفظ إعدادات البريد.","testTitle":"اختبار الإرسال","testRecipient":"أرسل رسالة اختبار إلى","sendTest":"إرسال اختبار","testSent":"تم إرسال رسالة الاختبار بنجاح.","testError":"فشل إرسال رسالة الاختبار."},
   "closing": {
     "title": "جدول الإغلاق التلقائي",
     "timezoneHint": "جميع أوقات الإغلاق حسب توقيت مسقط. يمكن للكاشير فتح وردية في أي وقت.",
@@ -223,7 +225,7 @@
     "passwordMismatch": "كلمتا المرور الجديدتان غير متطابقتين.",
     "saveError": "تعذر حفظ الإعدادات."
   },
-  "settingsHub": {"search":"بحث في الإعدادات...","closingSummary":"الإغلاق التلقائي والاستثناءات","usersSummary":"المستخدمون والصلاحيات","branchesSummary":"إدارة الأفرع وحالتها","channelsSummary":"قنوات الطلبات وأسعارها","aiSummary":"المزوّد والنموذج ومفتاح API","count":"{{count}} عناصر"},
+  "settingsHub": {"search":"بحث في الإعدادات...","closingSummary":"الإغلاق التلقائي والاستثناءات","usersSummary":"المستخدمون والصلاحيات","branchesSummary":"إدارة الأفرع وحالتها","channelsSummary":"قنوات الطلبات وأسعارها","aiSummary":"المزوّد والنموذج ومفتاح API","emailSummary":"حساب الإرسال ومستلمو التنبيهات","count":"{{count}} عناصر"},
   "users": {
     "title": "إدارة المستخدمين",
     "fullName": "الاسم الكامل",
@@ -363,7 +365,8 @@
     "reason": "السبب",
     "setThreshold": "ضبط الحد",
     "save": "حفظ",
-    "cancel": "إلغاء"
+    "cancel": "إلغاء",
+    "receiveGoods": "استلام بضاعة","packageType": "نوع العبوة","selectPackage": "اختر العبوة","packageCount": "عدد العبوات","note": "ملاحظة اختيارية","quantityToAdd": "الكمية التي ستضاف","addPackageType": "إضافة نوع عبوة","packageNameAr": "اسم العبوة بالعربية","packageNameEn": "اسم العبوة بالإنجليزية","packageConversion": "كمية الوحدة داخل العبوة","confirmReceipt": "تأكيد الاستلام","addInventoryItem":"إضافة صنف للمخزون","measurementType":"نوع القياس","measureWeight":"وزن","measureVolume":"حجم / سوائل","measureCount":"عدد / حبات","baseUnit":"الوحدة الأساسية","stepOf":"الخطوة {{step}} من {{total}}","createStep1":"بيانات الصنف","createStep2":"طريقة وصوله من المورد","createStep3":"الرصيد الأولي","packageExampleAr":"مثال: كرتون 3 كجم","packageExampleEn":"مثال: 3 kg carton","initialPackageCount":"عدد العبوات الموجودة حالياً","createAndAdd":"إنشاء الصنف وإضافة الرصيد"
   },
   "common": {
     "save": "حفظ",
@@ -376,6 +379,6 @@
     "hidePassword": "إخفاء كلمة المرور",
     "loading": "جارٍ التحميل...",
     "search": "بحث في الجدول...",
-    "unauthorized": "لا تملك صلاحية الوصول لهذه الصفحة"
+    "unauthorized": "لا تملك صلاحية الوصول لهذه الصفحة","previous":"السابق","next":"التالي","cancel":"إلغاء"
   }
 }

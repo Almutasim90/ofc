@@ -33,6 +33,8 @@ Edit `.env` and fill in real values:
 | Variable | Notes |
 |---|---|
 | `SUPABASE_DB_CONNECTION` | Same Postgres connection string as local dev. |
+| `SUPABASE_URL` | **Required.** Your Supabase Kong gateway URL (not the raw Postgres host) - e.g. `https://lolat-db.almutasim.site`. Used for Storage (uploaded images). |
+| `SUPABASE_SECRET_KEY` | **Required.** The self-hosted `sb_secret_...` key (same role as `service_role`). The API refuses to start without both this and `SUPABASE_URL` outside Development. |
 | `JWT_SECRET` | **Required.** Generate a real one: `openssl rand -base64 64`. The API refuses to start without it outside Development. |
 | `JWT_ISSUER` / `JWT_AUDIENCE` | Fine to leave as the defaults. |
 | `SMTP_HOST` / `SMTP_PORT` / `SMTP_USERNAME` / `SMTP_PASSWORD` / `SMTP_FROM` / `SMTP_ALERT_RECIPIENTS` | Low-stock alert email. |

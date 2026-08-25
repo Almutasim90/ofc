@@ -19,6 +19,8 @@ public interface IAppDbContext
     DbSet<BranchRawMaterialStock> BranchRawMaterialStocks { get; }
     DbSet<ProductRecipe> ProductRecipes { get; }
     DbSet<StockAdjustment> StockAdjustments { get; }
+    DbSet<SupplyPackage> SupplyPackages { get; }
+    DbSet<StockReceipt> StockReceipts { get; }
 
     DbSet<Sale> Sales { get; }
     DbSet<SaleItem> SaleItems { get; }
@@ -31,6 +33,7 @@ public interface IAppDbContext
     DbSet<LowStockNotification> LowStockNotifications { get; }
     DbSet<AiProviderSetting> AiProviderSettings { get; }
     DbSet<AiInsightRequest> AiInsightRequests { get; }
+    DbSet<EmailSettings> EmailSettings { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

@@ -2,11 +2,11 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { api } from '../api/client'
 import { useAuth } from '../auth/AuthContext'
-import type { BranchDto, StockStatusDto } from '../api/types'
+import type { BranchDto, StockStatusDto, SupplyPackageDto } from '../api/types'
 import { EditIcon, IconAction, SearchBox } from '../components/TableTools'
 
 export default function InventoryPage() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const { user } = useAuth()
   const [branches, setBranches] = useState<BranchDto[]>([])
   const [branchId, setBranchId] = useState('')
@@ -14,6 +14,8 @@ export default function InventoryPage() {
   const [loading, setLoading] = useState(true)
   const [adjusting, setAdjusting] = useState<StockStatusDto | null>(null)
   const [search, setSearch] = useState('')
+  const [receiving, setReceiving] = useState(false)
+  const [creating, setCreating] = useState(false)
 
   useEffect(() => {
     const init = async () => {
@@ -53,7 +55,7 @@ export default function InventoryPage() {
       {loading ? (
         <p>{t('common.loading')}</p>
       ) : (
-        <><div className="table-toolbar"><SearchBox value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('common.search')} /></div><div className="table-shell"><table>
+        <><div className="table-toolbar"><SearchBox value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('common.search')} /><div className="row-actions"><button type="button" onClick={()=>setCreating(true)}>{t('inventory.addInventoryItem')}</button><button className="button-secondary" type="button" onClick={()=>setReceiving(true)} disabled={!stock.length}>{t('inventory.receiveGoods')}</button></div></div><div className="table-shell"><table>
           <thead>
             <tr>
               <th>{t('inventory.rawMaterial')}</th>
@@ -67,7 +69,7 @@ export default function InventoryPage() {
             {stock.filter((item) => `${item.nameAr ?? ''} ${item.nameEn} ${item.unit}`.toLowerCase().includes(search.trim().toLowerCase())).map((item) => (
               <tr key={item.rawMaterialId}>
                 <td>
-                  {item.nameEn} ({item.unit})
+                  {i18n.language === 'ar' ? item.nameAr : item.nameEn} ({item.unit})
                 </td>
                 <td>{item.currentQuantity}</td>
                 <td>{item.lowStockThreshold}</td>
@@ -92,8 +94,45 @@ export default function InventoryPage() {
           }}
         />
       )}
+      {receiving && <ReceiveModal stock={stock} branchId={branchId} onClose={()=>setReceiving(false)} onSaved={async()=>{setReceiving(false);await load()}} />}
+      {creating && <CreateInventoryItemWizard branchId={branchId} onClose={()=>setCreating(false)} onSaved={async()=>{setCreating(false);await load()}} />}
     </section>
   )
+}
+
+function CreateInventoryItemWizard({branchId,onClose,onSaved}:{branchId:string;onClose:()=>void;onSaved:()=>void}) {
+  const {t}=useTranslation(); const [step,setStep]=useState(1); const [busy,setBusy]=useState(false)
+  const [form,setForm]=useState({nameAr:'',nameEn:'',measurementType:'Count',packageNameAr:'',packageNameEn:'',baseQuantityPerPackage:'1',initialPackageCount:'0',lowStockThreshold:'0',note:''})
+  const unit=form.measurementType==='Weight'?'g':form.measurementType==='Volume'?'ml':'piece'; const total=Number(form.baseQuantityPerPackage||0)*Number(form.initialPackageCount||0)
+  const submit=async()=>{setBusy(true);try{await api.post('/api/inventory/items',{branchId,...form,baseQuantityPerPackage:Number(form.baseQuantityPerPackage),initialPackageCount:Number(form.initialPackageCount),lowStockThreshold:Number(form.lowStockThreshold),note:form.note||null});onSaved()}finally{setBusy(false)}}
+  return <div className="modal-backdrop"><div className="modal product-modal"><div className="product-modal-header"><div><span className="section-kicker">{t('inventory.stepOf',{step,total:3})}</span><h2>{t(`inventory.createStep${step}`)}</h2></div><button className="modal-close" onClick={onClose}>×</button></div>
+    <div className="pagination-controls"><span className={step>=1?'text-primary':''}>1</span><span>—</span><span className={step>=2?'text-primary':''}>2</span><span>—</span><span className={step>=3?'text-primary':''}>3</span></div>
+    {step===1&&<div className="product-form-grid"><label>{t('rawMaterials.nameAr')}<input autoFocus value={form.nameAr} onChange={e=>setForm({...form,nameAr:e.target.value})}/></label><label>{t('rawMaterials.nameEn')}<input value={form.nameEn} onChange={e=>setForm({...form,nameEn:e.target.value})}/></label><label>{t('inventory.measurementType')}<select value={form.measurementType} onChange={e=>setForm({...form,measurementType:e.target.value})}><option value="Count">{t('inventory.measureCount')}</option><option value="Weight">{t('inventory.measureWeight')}</option><option value="Volume">{t('inventory.measureVolume')}</option></select><small>{t('inventory.baseUnit')}: {unit}</small></label></div>}
+    {step===2&&<div className="product-form-grid"><label>{t('inventory.packageNameAr')}<input autoFocus value={form.packageNameAr} onChange={e=>setForm({...form,packageNameAr:e.target.value})} placeholder={t('inventory.packageExampleAr')}/></label><label>{t('inventory.packageNameEn')}<input value={form.packageNameEn} onChange={e=>setForm({...form,packageNameEn:e.target.value})} placeholder={t('inventory.packageExampleEn')}/></label><label>{t('inventory.packageConversion')} ({unit})<input type="number" min="0.001" step="0.001" value={form.baseQuantityPerPackage} onChange={e=>setForm({...form,baseQuantityPerPackage:e.target.value})}/></label></div>}
+    {step===3&&<div className="product-form-grid"><label>{t('inventory.initialPackageCount')}<input autoFocus type="number" min="0" step="0.001" value={form.initialPackageCount} onChange={e=>setForm({...form,initialPackageCount:e.target.value})}/></label><label>{t('inventory.lowStockThreshold')} ({unit})<input type="number" min="0" step="0.001" value={form.lowStockThreshold} onChange={e=>setForm({...form,lowStockThreshold:e.target.value})}/></label><label>{t('inventory.note')}<input value={form.note} onChange={e=>setForm({...form,note:e.target.value})}/></label><div className="ui-card"><strong>{t('inventory.quantityToAdd')}: {total.toFixed(3)} {unit}</strong><p>{form.initialPackageCount} × {form.packageNameAr||t('inventory.packageType')}</p></div></div>}
+    <div className="modal-actions">{step>1&&<button className="button-secondary" type="button" onClick={()=>setStep(step-1)}>{t('common.previous')}</button>}{step<3?<button type="button" disabled={(step===1&&(!form.nameAr||!form.nameEn))||(step===2&&(!form.packageNameAr||!form.packageNameEn||Number(form.baseQuantityPerPackage)<=0))} onClick={()=>setStep(step+1)}>{t('common.next')}</button>:<button type="button" disabled={busy} onClick={submit}>{t('inventory.createAndAdd')}</button>}<button className="button-secondary" type="button" onClick={onClose}>{t('common.cancel')}</button></div>
+  </div></div>
+}
+
+function ReceiveModal({stock,branchId,onClose,onSaved}:{stock:StockStatusDto[];branchId:string;onClose:()=>void;onSaved:()=>void}) {
+  const {t,i18n}=useTranslation(); const [materialId,setMaterialId]=useState(stock[0]?.rawMaterialId??''); const [packages,setPackages]=useState<SupplyPackageDto[]>([])
+  const [packageId,setPackageId]=useState(''); const [count,setCount]=useState('1'); const [note,setNote]=useState(''); const [submitting,setSubmitting]=useState(false)
+  const [addingPackage,setAddingPackage]=useState(false); const [packageNameAr,setPackageNameAr]=useState(''); const [packageNameEn,setPackageNameEn]=useState(''); const [baseQuantity,setBaseQuantity]=useState('')
+  const material=stock.find(x=>x.rawMaterialId===materialId)
+  const loadPackages=async(id:string)=>{const rows=await api.get<SupplyPackageDto[]>(`/api/inventory/supply-packages?rawMaterialId=${id}`);setPackages(rows);setPackageId(rows[0]?.id??'')}
+  useEffect(()=>{if(materialId)void loadPackages(materialId)},[materialId])
+  const createPackage=async()=>{setSubmitting(true);try{const item=await api.post<SupplyPackageDto>('/api/inventory/supply-packages',{rawMaterialId:materialId,nameAr:packageNameAr,nameEn:packageNameEn,baseQuantity:Number(baseQuantity),isActive:true});await loadPackages(materialId);setPackageId(item.id);setAddingPackage(false);setPackageNameAr('');setPackageNameEn('');setBaseQuantity('')}finally{setSubmitting(false)}}
+  const receive=async()=>{setSubmitting(true);try{await api.post('/api/inventory/receipts',{branchId,supplyPackageId:packageId,packageCount:Number(count),note:note||null});onSaved()}finally{setSubmitting(false)}}
+  const selectedPackage=packages.find(x=>x.id===packageId); const total=(selectedPackage?.baseQuantity??0)*Number(count||0)
+  return <div className="modal-backdrop"><div className="modal product-modal"><div className="product-modal-header"><h2>{t('inventory.receiveGoods')}</h2><button className="modal-close" onClick={onClose}>×</button></div><div className="product-form-grid">
+    <label>{t('inventory.rawMaterial')}<select value={materialId} onChange={e=>setMaterialId(e.target.value)}>{stock.map(x=><option key={x.rawMaterialId} value={x.rawMaterialId}>{i18n.language==='ar'?x.nameAr:x.nameEn}</option>)}</select></label>
+    <label>{t('inventory.packageType')}<select value={packageId} onChange={e=>setPackageId(e.target.value)}><option value="">{t('inventory.selectPackage')}</option>{packages.map(x=><option key={x.id} value={x.id}>{i18n.language==='ar'?x.nameAr:x.nameEn} — {x.baseQuantity} {material?.unit}</option>)}</select></label>
+    <label>{t('inventory.packageCount')}<input type="number" min="0.001" step="0.001" value={count} onChange={e=>setCount(e.target.value)}/></label>
+    <label>{t('inventory.note')}<input value={note} onChange={e=>setNote(e.target.value)}/></label>
+  </div>{selectedPackage&&<div className="ui-card"><strong>{t('inventory.quantityToAdd')}: {total.toFixed(3)} {material?.unit}</strong></div>}
+  <button className="button-secondary" type="button" onClick={()=>setAddingPackage(v=>!v)}>{t('inventory.addPackageType')}</button>
+  {addingPackage&&<div className="product-form-grid"><label>{t('inventory.packageNameAr')}<input value={packageNameAr} onChange={e=>setPackageNameAr(e.target.value)}/></label><label>{t('inventory.packageNameEn')}<input value={packageNameEn} onChange={e=>setPackageNameEn(e.target.value)}/></label><label>{t('inventory.packageConversion')} ({material?.unit})<input type="number" min="0.001" step="0.001" value={baseQuantity} onChange={e=>setBaseQuantity(e.target.value)}/></label><button type="button" disabled={submitting||!packageNameAr||!packageNameEn||Number(baseQuantity)<=0} onClick={createPackage}>{t('common.save')}</button></div>}
+  <div className="modal-actions"><button type="button" disabled={submitting||!packageId||Number(count)<=0} onClick={receive}>{t('inventory.confirmReceipt')}</button><button type="button" className="button-secondary" onClick={onClose}>{t('common.cancel')}</button></div></div></div>
 }
 
 function AdjustModal({

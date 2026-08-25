@@ -5,4 +5,7 @@
     <Project Path="src/POS.Domain/POS.Domain.csproj" />
     <Project Path="src/POS.Infrastructure/POS.Infrastructure.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/POS.Application.Tests/POS.Application.Tests.csproj" />
+  </Folder>
 </Solution>

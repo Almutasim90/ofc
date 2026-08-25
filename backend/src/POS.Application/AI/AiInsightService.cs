@@ -25,10 +25,14 @@ public class AiInsightService(IAppDbContext db, ICurrentUserService currentUser,
     }
     public async Task<AiSettingsDto> SaveSettingsAsync(UpdateAiSettingsRequest r, CancellationToken ct = default)
     {
+        var provider = r.Provider.Trim();
+        var model = r.Model.Trim();
+        if (provider is not ("OpenAI" or "Anthropic")) throw new ValidationException("Supported AI providers are OpenAI and Anthropic.");
+        if (string.IsNullOrWhiteSpace(model) || model.Length > 100) throw new ValidationException("A valid AI model name is required.");
         var all = await db.AiProviderSettings.ToListAsync(ct); foreach (var item in all) item.IsActive = false;
-        var current = all.FirstOrDefault(x => x.Provider == r.Provider && x.Model == r.Model) ?? new AiProviderSetting { Id = Guid.NewGuid() };
+        var current = all.FirstOrDefault(x => x.Provider == provider && x.Model == model) ?? new AiProviderSetting { Id = Guid.NewGuid() };
         if (!all.Contains(current)) db.AiProviderSettings.Add(current);
-        current.Provider = r.Provider; current.Model = r.Model; current.IsActive = r.IsActive;
+        current.Provider = provider; current.Model = model; current.IsActive = r.IsActive;
         if (!string.IsNullOrWhiteSpace(r.ApiKey)) current.ApiKeyEncrypted = protector.Protect(r.ApiKey);
         if (string.IsNullOrWhiteSpace(current.ApiKeyEncrypted)) throw new ValidationException("API key is required.");
         await db.SaveChangesAsync(ct); return await GetSettingsAsync(ct);

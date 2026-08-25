@@ -9,14 +9,18 @@ namespace POS.Infrastructure;
 public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(
-        this IServiceCollection services, string? connectionString, JwtOptions jwtOptions)
+        this IServiceCollection services, string? connectionString, JwtOptions jwtOptions, SupabaseStorageOptions storageOptions)
     {
         services.AddHttpContextAccessor();
+        services.AddHttpClient();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
         services.AddSingleton<IPasswordHasher, PasswordHasherService>();
         services.AddSingleton(jwtOptions);
         services.AddSingleton<IJwtTokenService, JwtTokenService>();
+        services.AddSingleton(storageOptions);
+        services.AddSingleton<IFileStorageService, SupabaseStorageService>();
         services.AddScoped<IDomainEventPublisher, DomainEventPublisher>();
+        services.AddScoped<IEmailNotificationSender, DatabaseEmailNotificationSender>();
         services.AddHostedService<AutomaticShiftClosingService>();
         services.AddHostedService<LowStockMonitoringService>();
 

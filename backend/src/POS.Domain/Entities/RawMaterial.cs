@@ -8,4 +8,5 @@ public class RawMaterial
 
     /// <summary>e.g. "piece", "kg", "liter" - free text unit label.</summary>
     public string Unit { get; set; } = string.Empty;
+    public string MeasurementType { get; set; } = "Custom";
 }

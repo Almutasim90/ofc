@@ -52,7 +52,8 @@ public class ShiftService(IAppDbContext db, ICurrentUserService currentUser)
             OpenedAt = DateTime.UtcNow,
         };
         db.Shifts.Add(shift);
-        await db.SaveChangesAsync(cancellationToken);
+        try { await db.SaveChangesAsync(cancellationToken); }
+        catch (DbUpdateException) { throw new ValidationException("This cashier already has an open shift."); }
         return await ToDtoAsync(shift, cancellationToken);
     }
 
@@ -77,10 +78,10 @@ public class ShiftService(IAppDbContext db, ICurrentUserService currentUser)
             .Where(s => s.ShiftId == shift.Id && s.Status == SaleStatus.Completed && s.PaymentMethod == PaymentMethods.Cash)
             .Where(s => s.Channel.IsInStore)
             .SumAsync(s => s.TotalAmount, cancellationToken);
-        shift.ClosingCashExpected = shift.OpeningCash + cashSales;
-        var closingCashActual = request.Counts.Sum(c => c.Denomination * c.Quantity);
+        shift.ClosingCashExpected = ShiftCashCalculator.Expected(shift.OpeningCash, cashSales);
+        var closingCashActual = ShiftCashCalculator.Actual(request.Counts);
         shift.ClosingCashActual = closingCashActual;
-        shift.VarianceAmount = closingCashActual - shift.ClosingCashExpected;
+        shift.VarianceAmount = ShiftCashCalculator.Variance(closingCashActual, shift.ClosingCashExpected);
         shift.ClosedAt = DateTime.UtcNow;
         shift.Status = ShiftStatus.Closed;
         shift.AutoClosed = false;
@@ -94,7 +95,11 @@ public class ShiftService(IAppDbContext db, ICurrentUserService currentUser)
             });
         }
 
-        await db.SaveChangesAsync(cancellationToken);
+        try { await db.SaveChangesAsync(cancellationToken); }
+        catch (DbUpdateConcurrencyException)
+        {
+            throw new ValidationException("This shift was closed from another session. Refresh and try again.");
+        }
         var countDtos = request.Counts.Where(c => c.Quantity > 0)
             .OrderByDescending(c => c.Denomination)
             .Select(c => new ShiftCashCountDto(c.Denomination, c.Quantity, c.Denomination * c.Quantity))
@@ -119,7 +124,7 @@ public class ShiftService(IAppDbContext db, ICurrentUserService currentUser)
 
     private static ShiftDto ToDto(Shift shift, decimal cashSales, IReadOnlyList<ShiftCashCountDto>? counts = null) => new(
         shift.Id, shift.BranchId, shift.CashierUserId, shift.OpeningCash,
-        shift.Status == ShiftStatus.Open ? shift.OpeningCash + cashSales : shift.ClosingCashExpected,
+        shift.Status == ShiftStatus.Open ? ShiftCashCalculator.Expected(shift.OpeningCash, cashSales) : shift.ClosingCashExpected,
         shift.ClosingCashActual, shift.VarianceAmount, shift.OpenedAt, shift.ClosedAt,
         shift.Status, shift.AutoClosed, cashSales, counts ?? []);
 

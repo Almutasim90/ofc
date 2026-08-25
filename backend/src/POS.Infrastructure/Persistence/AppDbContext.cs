@@ -28,6 +28,8 @@ public class AppDbContext : DbContext, IAppDbContext
     public DbSet<BranchRawMaterialStock> BranchRawMaterialStocks => Set<BranchRawMaterialStock>();
     public DbSet<ProductRecipe> ProductRecipes => Set<ProductRecipe>();
     public DbSet<StockAdjustment> StockAdjustments => Set<StockAdjustment>();
+    public DbSet<SupplyPackage> SupplyPackages => Set<SupplyPackage>();
+    public DbSet<StockReceipt> StockReceipts => Set<StockReceipt>();
 
     public DbSet<Sale> Sales => Set<Sale>();
     public DbSet<SaleItem> SaleItems => Set<SaleItem>();
@@ -40,6 +42,7 @@ public class AppDbContext : DbContext, IAppDbContext
     public DbSet<LowStockNotification> LowStockNotifications => Set<LowStockNotification>();
     public DbSet<AiProviderSetting> AiProviderSettings => Set<AiProviderSetting>();
     public DbSet<AiInsightRequest> AiInsightRequests => Set<AiInsightRequest>();
+    public DbSet<EmailSettings> EmailSettings => Set<EmailSettings>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -139,6 +142,7 @@ public class AppDbContext : DbContext, IAppDbContext
             entity.Property(m => m.NameAr).IsRequired().HasMaxLength(200);
             entity.Property(m => m.NameEn).IsRequired().HasMaxLength(200);
             entity.Property(m => m.Unit).IsRequired().HasMaxLength(50);
+            entity.Property(m => m.MeasurementType).IsRequired().HasMaxLength(20);
         });
 
         modelBuilder.Entity<BranchRawMaterialStock>(entity =>
@@ -179,6 +183,29 @@ public class AppDbContext : DbContext, IAppDbContext
                 _currentUser == null
                 || _currentUser.BypassBranchFilter
                 || a.BranchId == _currentUser.BranchId);
+        });
+
+        modelBuilder.Entity<SupplyPackage>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.NameAr).IsRequired().HasMaxLength(150);
+            entity.Property(x => x.NameEn).IsRequired().HasMaxLength(150);
+            entity.Property(x => x.BaseQuantity).HasPrecision(18, 3);
+            entity.HasOne(x => x.RawMaterial).WithMany().HasForeignKey(x => x.RawMaterialId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasIndex(x => new { x.RawMaterialId, x.NameEn }).IsUnique();
+        });
+
+        modelBuilder.Entity<StockReceipt>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.PackageCount).HasPrecision(18, 3);
+            entity.Property(x => x.BaseQuantityAdded).HasPrecision(18, 3);
+            entity.Property(x => x.PackageNameSnapshot).IsRequired().HasMaxLength(150);
+            entity.Property(x => x.Note).HasMaxLength(500);
+            entity.HasOne(x => x.RawMaterial).WithMany().HasForeignKey(x => x.RawMaterialId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(x => x.SupplyPackage).WithMany().HasForeignKey(x => x.SupplyPackageId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasIndex(x => new { x.BranchId, x.ReceivedAt });
+            entity.HasQueryFilter(x => _currentUser == null || _currentUser.BypassBranchFilter || x.BranchId == _currentUser.BranchId);
         });
 
         modelBuilder.Entity<Sale>(entity =>
@@ -242,6 +269,8 @@ public class AppDbContext : DbContext, IAppDbContext
             entity.Property(s => s.Status).IsRequired().HasMaxLength(20);
             entity.HasIndex(s => new { s.BranchId, s.OpenedAt });
             entity.HasIndex(s => new { s.CashierUserId, s.Status });
+            entity.HasIndex(s => s.CashierUserId).IsUnique().HasFilter("\"Status\" = 'Open'");
+            entity.Property(s => s.Version).IsRowVersion();
 
             entity.HasQueryFilter(s =>
                 _currentUser == null || _currentUser.BypassBranchFilter || s.BranchId == _currentUser.BranchId);
@@ -301,5 +330,14 @@ public class AppDbContext : DbContext, IAppDbContext
         });
         modelBuilder.Entity<AiProviderSetting>(entity => { entity.HasKey(x => x.Id); entity.Property(x => x.Provider).HasMaxLength(50); entity.Property(x => x.Model).HasMaxLength(100); });
         modelBuilder.Entity<AiInsightRequest>(entity => { entity.HasKey(x => x.Id); entity.Property(x => x.RequestType).HasMaxLength(50); entity.Property(x => x.ResultSummary).HasMaxLength(8000); entity.HasIndex(x => x.CreatedAt); });
+        modelBuilder.Entity<EmailSettings>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.SmtpHost).HasMaxLength(255);
+            entity.Property(x => x.Username).HasMaxLength(255);
+            entity.Property(x => x.FromEmail).HasMaxLength(320);
+            entity.Property(x => x.FromName).HasMaxLength(200);
+            entity.Property(x => x.Recipients).HasMaxLength(2000);
+        });
     }
 }

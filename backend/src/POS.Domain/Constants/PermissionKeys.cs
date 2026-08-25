@@ -13,6 +13,7 @@ public static class PermissionKeys
     public const string ProductsManage = "products.manage";
     public const string ChannelsManage = "channels.manage";
     public const string AiManage = "ai.manage";
+    public const string EmailManage = "email.manage";
 
     public static readonly IReadOnlyList<string> All =
     [
@@ -27,5 +28,6 @@ public static class PermissionKeys
         ProductsManage,
         ChannelsManage,
         AiManage,
+        EmailManage,
     ];
 }

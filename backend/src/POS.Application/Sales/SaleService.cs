@@ -4,6 +4,7 @@ using POS.Application.Common;
 using POS.Domain.Constants;
 using POS.Domain.Entities;
 using POS.Domain.Events;
+using POS.Application.Closing;
 
 namespace POS.Application.Sales;
 
@@ -103,7 +104,7 @@ public class SaleService(IAppDbContext db, IDomainEventPublisher eventPublisher,
             ChannelId = channel.Id,
             ShiftId = shift.Id,
             CashierUserId = userId,
-            BusinessDate = DateOnly.FromDateTime(DateTime.UtcNow),
+            BusinessDate = DateOnly.FromDateTime(MuscatClock.ToLocal(DateTime.UtcNow)),
             CreatedAt = DateTime.UtcNow,
             PaymentMethod = request.PaymentMethod,
             DiscountType = NormalizeDiscountType(request.DiscountType),

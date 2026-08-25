@@ -1,11 +1,12 @@
 using Microsoft.AspNetCore.Mvc;
 using POS.API.Authorization;
+using POS.Application.Abstractions;
 using POS.Domain.Constants;
 
 namespace POS.API.Controllers;
 
 [ApiController, Route("api/uploads")]
-public class UploadsController(IWebHostEnvironment environment) : ControllerBase
+public class UploadsController(IFileStorageService storage) : ControllerBase
 {
     private static readonly HashSet<string> AllowedContentTypes =
     [
@@ -44,12 +45,10 @@ public class UploadsController(IWebHostEnvironment environment) : ControllerBase
             _ => throw new InvalidOperationException()
         };
 
-        var folder = Path.Combine(environment.ContentRootPath, "wwwroot", "uploads", subfolder);
-        Directory.CreateDirectory(folder);
         var fileName = $"{Guid.NewGuid():N}{extension}";
-        await using var stream = System.IO.File.Create(Path.Combine(folder, fileName));
-        await file.CopyToAsync(stream, ct);
+        await using var stream = file.OpenReadStream();
+        var url = await storage.UploadAsync(stream, file.ContentType, $"{subfolder}/{fileName}", ct);
 
-        return Ok(new { url = $"/uploads/{subfolder}/{fileName}" });
+        return Ok(new { url });
     }
 }

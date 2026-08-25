@@ -45,7 +45,7 @@ public class AutomaticShiftClosingService(IServiceScopeFactory scopeFactory, ILo
             var cashSales = await db.Sales.IgnoreQueryFilters()
                 .Where(s => s.ShiftId == shift.Id && s.Status == SaleStatus.Completed && s.PaymentMethod == PaymentMethods.Cash && s.Channel.IsInStore)
                 .SumAsync(s => s.TotalAmount, cancellationToken);
-            shift.ClosingCashExpected = shift.OpeningCash + cashSales;
+            shift.ClosingCashExpected = POS.Application.Shifts.ShiftCashCalculator.Expected(shift.OpeningCash, cashSales);
             shift.ClosingCashActual = null;
             shift.VarianceAmount = null;
             shift.ClosedAt = now;

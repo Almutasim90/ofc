@@ -84,12 +84,13 @@ function MaterialForm({
   const [nameAr, setNameAr] = useState(existing?.nameAr ?? '')
   const [nameEn, setNameEn] = useState(existing?.nameEn ?? '')
   const [unit, setUnit] = useState(existing?.unit ?? '')
+  const [measurementType, setMeasurementType] = useState(existing?.measurementType ?? 'Count')
   const [submitting, setSubmitting] = useState(false)
 
   const onSubmit = async () => {
     setSubmitting(true)
     try {
-      const request: CreateRawMaterialRequest | UpdateRawMaterialRequest = { nameAr, nameEn, unit }
+      const request: CreateRawMaterialRequest | UpdateRawMaterialRequest = { nameAr, nameEn, unit, measurementType }
       if (editing.mode === 'create') {
         await api.post('/api/raw-materials', request)
       } else {
@@ -115,7 +116,8 @@ function MaterialForm({
         </label>
         <label>
           {t('rawMaterials.unit')}
-          <input value={unit} onChange={(e) => setUnit(e.target.value)} required placeholder="kg / piece / liter" />
+          <select value={measurementType} onChange={(e) => { const value=e.target.value as 'Weight'|'Volume'|'Count'; setMeasurementType(value); setUnit(value==='Weight'?'g':value==='Volume'?'ml':'piece') }}><option value="Weight">{t('inventory.measureWeight')}</option><option value="Volume">{t('inventory.measureVolume')}</option><option value="Count">{t('inventory.measureCount')}</option></select>
+          <input value={unit} readOnly />
         </label>
         <div className="modal-actions">
           <button type="button" onClick={onSubmit} disabled={submitting}>

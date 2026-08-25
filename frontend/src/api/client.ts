@@ -21,6 +21,10 @@ const API_URL = getApiUrl()
 
 export function resolveApiAssetUrl(url: string | null | undefined) {
   if (!url) return ''
+  // Only backend-owned paths (uploaded files) need rewriting onto the API
+  // origin. Everything else (bundled frontend assets, absolute URLs, data
+  // URIs) already resolves correctly against the current page.
+  if (!url.startsWith('/uploads/')) return url
 
   try {
     const resolved = new URL(url, `${API_URL || window.location.origin}/`)

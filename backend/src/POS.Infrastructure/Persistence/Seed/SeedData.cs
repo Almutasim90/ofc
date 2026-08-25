@@ -82,16 +82,16 @@ public static class SeedData
     {
         var catalog = new[]
         {
-            new ProductSeed("بكورة (5 حبات)", "Bakora (5 pieces)", "Food", 0.100m, "/products/bakora-5.webp"),
-            new ProductSeed("بطاطا (4 حبات)", "Potato fritters (4 pieces)", "Food", 0.100m, "/products/potato-4.webp"),
-            new ProductSeed("شاي أخضر", "Green tea", "Tea", 0.100m, "/products/green-tea.webp"),
-            new ProductSeed("شاي كرك صغير", "Small karak tea", "Tea", 0.100m, "/products/karak-small.webp"),
-            new ProductSeed("شاي كرك كبير", "Large karak tea", "Tea", 0.200m, "/products/karak-large.webp"),
-            new ProductSeed("زلابية (5 حبات)", "Zalabia (5 pieces)", "Sweet", 0.100m, "/products/zalabia-5.webp"),
-            new ProductSeed("دونات (حبتان)", "Donuts (2 pieces)", "Sweet", 0.100m, "/products/donuts-2.webp"),
-            new ProductSeed("لولاة (12 حبة)", "Lolat (12 pieces)", "Food", 0.100m, "/products/lolat-12.webp"),
-            new ProductSeed("كينزا كولا", "Kinza cola", "Drinks", 0.300m, "/products/kinza-cola.webp"),
-            new ProductSeed("مياه صغيرة", "Small water", "Drinks", 0.100m, "/products/water-small.webp"),
+            new ProductSeed("بكورة (5 حبات)", "Bakora (5 pieces)", "Food", 0.100m, "https://lolat-db.almutasim.site/storage/v1/object/public/uploads/products/d8b0f49a46094bdcba8c311a60168751.webp"),
+            new ProductSeed("بطاطا (4 حبات)", "Potato fritters (4 pieces)", "Food", 0.100m, "https://lolat-db.almutasim.site/storage/v1/object/public/uploads/products/ad5c8c1040ae47518cfbc2ed5f12c521.webp"),
+            new ProductSeed("شاي أخضر", "Green tea", "Tea", 0.100m, "https://lolat-db.almutasim.site/storage/v1/object/public/uploads/products/fc32003b89164f91b692488f16670003.webp"),
+            new ProductSeed("شاي كرك صغير", "Small karak tea", "Tea", 0.100m, "https://lolat-db.almutasim.site/storage/v1/object/public/uploads/products/f29fa08c86a040a88bd21588e4beaa17.webp"),
+            new ProductSeed("شاي كرك كبير", "Large karak tea", "Tea", 0.200m, "https://lolat-db.almutasim.site/storage/v1/object/public/uploads/products/13b7d4da25b04d55a07d66e559a6e9a8.webp"),
+            new ProductSeed("زلابية (5 حبات)", "Zalabia (5 pieces)", "Sweet", 0.100m, "https://lolat-db.almutasim.site/storage/v1/object/public/uploads/products/a39376eba7074c7dadb3c5c0b019963e.webp"),
+            new ProductSeed("دونات (حبتان)", "Donuts (2 pieces)", "Sweet", 0.100m, "https://lolat-db.almutasim.site/storage/v1/object/public/uploads/products/136d8a5b7270468eafc3019f721e4535.webp"),
+            new ProductSeed("لولاة (12 حبة)", "Lolat (12 pieces)", "Food", 0.100m, "https://lolat-db.almutasim.site/storage/v1/object/public/uploads/products/3730418980a94446a39e0b4f0097a7ad.webp"),
+            new ProductSeed("كينزا كولا", "Kinza cola", "Drinks", 0.300m, "https://lolat-db.almutasim.site/storage/v1/object/public/uploads/products/b9bb6dcd73fe4d1ea008b12d7f7ceaf2.webp"),
+            new ProductSeed("مياه صغيرة", "Small water", "Drinks", 0.100m, "https://lolat-db.almutasim.site/storage/v1/object/public/uploads/products/e958ef257fea4dd9aa93d9a84f6d6dc2.webp"),
         };
 
         var existingNames = await db.Products.Select(p => p.NameEn).ToListAsync(cancellationToken);

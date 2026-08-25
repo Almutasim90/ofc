@@ -61,7 +61,24 @@ var jwtOptions = new JwtOptions(
     Audience: Environment.GetEnvironmentVariable("JWT_AUDIENCE") ?? "POS.Client",
     ExpiryMinutes: 480);
 
-builder.Services.AddInfrastructure(connectionString, jwtOptions);
+var supabaseUrl = Environment.GetEnvironmentVariable("SUPABASE_URL");
+var supabaseSecretKey = Environment.GetEnvironmentVariable("SUPABASE_SECRET_KEY");
+if (string.IsNullOrWhiteSpace(supabaseUrl) || string.IsNullOrWhiteSpace(supabaseSecretKey))
+{
+    if (!builder.Environment.IsDevelopment())
+    {
+        throw new InvalidOperationException("SUPABASE_URL and SUPABASE_SECRET_KEY must be set outside Development.");
+    }
+
+    // Dev-only fallback so a fresh clone still boots without Storage configured;
+    // image uploads will fail until real values are set in .env.
+    supabaseUrl ??= "http://localhost";
+    supabaseSecretKey ??= "unconfigured";
+}
+
+var storageOptions = new SupabaseStorageOptions(supabaseUrl, supabaseSecretKey);
+
+builder.Services.AddInfrastructure(connectionString, jwtOptions, storageOptions);
 builder.Services.AddApplication();
 
 builder.Services

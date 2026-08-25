@@ -14,17 +14,16 @@ public static class ClosingScheduleCalculator
         var openedLocal = MuscatClock.ToLocal(shiftOpenedUtc);
         var byDate = exceptions.GroupBy(e => e.Date).ToDictionary(g => g.Key, g => g.ToList());
 
-        for (var offset = 0; offset <= 7; offset++)
-        {
-            var date = DateOnly.FromDateTime(openedLocal).AddDays(offset);
-            byDate.TryGetValue(date, out var candidates);
-            var exception = candidates?.FirstOrDefault(e => e.BranchId == branchId)
-                ?? candidates?.FirstOrDefault(e => e.BranchId is null);
-            var closeTime = exception?.OverrideCloseTime ?? config.DefaultCloseTime;
-            var dueLocal = date.ToDateTime(closeTime);
-            if (dueLocal > openedLocal)
-                return MuscatClock.ToUtc(dueLocal);
-        }
-        return null;
+        // The schedule is attached to the shift's Muscat business date. A close
+        // time earlier than the opening time (for example 01:00) means the next
+        // calendar day, not that the exception should be skipped.
+        var businessDate = DateOnly.FromDateTime(openedLocal);
+        byDate.TryGetValue(businessDate, out var candidates);
+        var exception = candidates?.FirstOrDefault(e => e.BranchId == branchId)
+            ?? candidates?.FirstOrDefault(e => e.BranchId is null);
+        var closeTime = exception?.OverrideCloseTime ?? config.DefaultCloseTime;
+        var dueLocal = businessDate.ToDateTime(closeTime);
+        if (dueLocal <= openedLocal) dueLocal = dueLocal.AddDays(1);
+        return MuscatClock.ToUtc(dueLocal);
     }
 }

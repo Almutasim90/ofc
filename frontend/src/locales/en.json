@@ -42,6 +42,7 @@
     "settings": "Settings",
     "channels": "Sales channels",
     "aiSettings": "AI settings",
+    "emailSettings": "Email",
     "notifications": "Notifications",
     "more": "More",
     "closeMenu": "Close navigation",
@@ -132,7 +133,8 @@
     ,"viewAll": "View all notifications"
   },
   "channels": {"title":"Sales channels","description":"Add online ordering companies and manage their logos, prices, and availability.","nameAr":"Arabic name","nameEn":"English name","logoUrl":"Logo URL","uploadLogo":"Upload logo","uploading":"Uploading...","logoHint":"PNG, JPG, WebP, or SVG — up to 2 MB","pricing":"Product pricing","logo":"Logo","channel":"Company","status":"Status","active":"Active","inactive":"Stopped","stop":"Stop","enable":"Enable"},
-  "ai": {"title":"AI settings","provider":"Provider","model":"Model","apiKey":"API key","analyze":"AI insight","summary":"Summary","anomaly":"Anomaly detection","forecast":"Demand forecast"},
+  "ai": {"title":"AI settings","description":"Choose the provider and model used for insights. The API key is encrypted and is never shown in full after saving.","active":"Enable AI insights","provider":"Provider","model":"Model","customModel":"Another model...","useSuggested":"Use a suggested model","apiKey":"API key","keyHint":"Leave blank to keep the saved key.","saved":"AI settings saved.","loadError":"Could not load AI settings.","saveError":"Could not save AI settings.","analyze":"AI insight","summary":"Summary","anomaly":"Anomaly detection","forecast":"Demand forecast"},
+  "email": {"title":"Email settings","description":"Configure the SMTP account used to send system alerts automatically. The password is stored encrypted.","active":"Enable email notifications","smtpHost":"SMTP server","smtpPort":"Port","username":"Username","password":"Email password or app password","fromEmail":"Sender email","fromName":"Sender name","recipients":"Alert recipients","recipientsHint":"Separate addresses with commas or semicolons.","useSsl":"Use secure SSL/TLS connection","saved":"Email settings saved.","loadError":"Could not load email settings.","saveError":"Could not save email settings.","testTitle":"Test delivery","testRecipient":"Send a test message to","sendTest":"Send test","testSent":"Test email sent successfully.","testError":"Test email delivery failed."},
   "closing": {
     "title": "Automatic closing schedule",
     "timezoneHint": "All closing times use Muscat time (Asia/Muscat). Cashiers may open shifts at any time.",
@@ -223,7 +225,7 @@
     "passwordMismatch": "The new passwords do not match.",
     "saveError": "Could not save your settings."
   },
-  "settingsHub": {"search":"Search settings...","closingSummary":"Automatic closing and exceptions","usersSummary":"Users and permissions","branchesSummary":"Manage branches and status","channelsSummary":"Order channels and pricing","aiSummary":"Provider, model, and API key","count":"{{count}} items"},
+  "settingsHub": {"search":"Search settings...","closingSummary":"Automatic closing and exceptions","usersSummary":"Users and permissions","branchesSummary":"Manage branches and status","channelsSummary":"Order channels and pricing","aiSummary":"Provider, model, and API key","emailSummary":"Sender account and alert recipients","count":"{{count}} items"},
   "users": {
     "title": "User Management",
     "fullName": "Full name",
@@ -365,7 +367,8 @@
     "reason": "Reason",
     "setThreshold": "Set threshold",
     "save": "Save",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "receiveGoods": "Receive goods","packageType": "Package type","selectPackage": "Select package","packageCount": "Package count","note": "Optional note","quantityToAdd": "Quantity to add","addPackageType": "Add package type","packageNameAr": "Arabic package name","packageNameEn": "English package name","packageConversion": "Base quantity per package","confirmReceipt": "Confirm receipt","addInventoryItem":"Add inventory item","measurementType":"Measurement type","measureWeight":"Weight","measureVolume":"Volume / liquids","measureCount":"Count / pieces","baseUnit":"Base unit","stepOf":"Step {{step}} of {{total}}","createStep1":"Item details","createStep2":"Supplier package","createStep3":"Opening stock","packageExampleAr":"Example: كرتون 3 كجم","packageExampleEn":"Example: 3 kg carton","initialPackageCount":"Packages currently in stock","createAndAdd":"Create item and add stock"
   },
   "common": {
     "save": "Save",
@@ -376,6 +379,6 @@
     "hidePassword": "Hide password",
     "loading": "Loading...",
     "search": "Search table...",
-    "unauthorized": "You do not have access to this page"
+    "unauthorized": "You do not have access to this page","previous":"Previous","next":"Next","cancel":"Cancel"
   }
 }

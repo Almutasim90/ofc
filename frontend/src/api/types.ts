@@ -101,12 +101,14 @@ export interface RawMaterialDto {
   nameAr: string
   nameEn: string
   unit: string
+  measurementType: 'Weight' | 'Volume' | 'Count' | 'Custom'
 }
 
 export interface CreateRawMaterialRequest {
   nameAr: string
   nameEn: string
   unit: string
+  measurementType?: string
 }
 
 export type UpdateRawMaterialRequest = CreateRawMaterialRequest
@@ -146,6 +148,9 @@ export interface SetLowStockThresholdRequest {
   rawMaterialId: string
   threshold: number
 }
+
+export interface SupplyPackageDto { id:string; rawMaterialId:string; nameAr:string; nameEn:string; baseQuantity:number; isActive:boolean }
+export interface StockReceiptDto { id:string; branchId:string; rawMaterialId:string; rawMaterialNameAr:string; rawMaterialNameEn:string; unit:string; supplyPackageId:string; packageName:string; packageCount:number; baseQuantityAdded:number; note:string|null; receivedAt:string }
 
 export interface SaleLineRequest {
   productId: string

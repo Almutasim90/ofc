@@ -21,6 +21,7 @@ export default function SettingsPage() {
     {to:'/branches',title:t('nav.branches'),summary:summaries.branches??t('settingsHub.branchesSummary'),permission:'branches.manage'},
     {to:'/channels',title:t('nav.channels'),summary:summaries.channels??t('settingsHub.channelsSummary'),permission:'channels.manage'},
     {to:'/ai-settings',title:t('nav.aiSettings'),summary:summaries.ai??t('settingsHub.aiSummary'),permission:'ai.manage'},
+    {to:'/email-settings',title:t('nav.emailSettings'),summary:t('settingsHub.emailSummary'),permission:'email.manage'},
   ].filter(c=>hasPermission(c.permission)&&`${c.title} ${c.summary}`.toLocaleLowerCase().includes(search.toLocaleLowerCase()))
   return <section><h1>{t('settings.title')}</h1>{message && <p className="text-primary">{message}</p>}{error && <p className="error-text">{error}</p>}<div className="grid gap-6 lg:grid-cols-2">
     <form className="ui-card ui-stack" onSubmit={savePreferences}><h2>{t('settings.preferences')}</h2><label className="flex flex-col gap-1 text-muted">{t('settings.language')}<select value={language} onChange={(e) => setLanguage(e.target.value)}><option value="ar">العربية</option><option value="en">English</option></select></label><button>{t('settings.save')}</button></form>

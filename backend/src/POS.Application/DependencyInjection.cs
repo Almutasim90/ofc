@@ -10,6 +10,7 @@ using POS.Application.Users;
 using POS.Application.Channels;
 using POS.Application.Notifications;
 using POS.Application.AI;
+using POS.Application.Settings;
 
 namespace POS.Application;
 
@@ -22,6 +23,7 @@ public static class DependencyInjection
         services.AddScoped<ChannelService>();
         services.AddScoped<NotificationService>();
         services.AddScoped<AiInsightService>();
+        services.AddScoped<EmailSettingsService>();
         services.AddHttpClient();
         services.AddScoped<BranchService>();
         services.AddScoped<ProductService>();
