@@ -14,7 +14,7 @@ public static class ClosingScheduleCalculator
         var openedLocal = MuscatClock.ToLocal(shiftOpenedUtc);
         var byDate = exceptions.GroupBy(e => e.Date).ToDictionary(g => g.Key, g => g.ToList());
 
-        // The schedule is attached to the shift's Muscat business date. A close
+        // The schedule is attached to the shift's server-local business date. A close
         // time earlier than the opening time (for example 01:00) means the next
         // calendar day, not that the exception should be skipped.
         var businessDate = DateOnly.FromDateTime(openedLocal);

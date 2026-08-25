@@ -75,7 +75,7 @@ public class EmailSettingsService(IAppDbContext db, IDataProtectionProvider prot
                   </section>
                   <table role="presentation" width="100%" cellspacing="0" cellpadding="10" style="margin-top:24px;border:1px solid;border-radius:10px">
                     <tr><td dir="rtl" style="text-align:right"><strong>الحالة / Status</strong></td><td style="text-align:left">Connected</td></tr>
-                    <tr><td dir="rtl" style="text-align:right"><strong>وقت الإرسال / Sent at</strong></td><td style="text-align:left">{{sentAt:yyyy-MM-dd HH:mm}} Asia/Muscat</td></tr>
+                    <tr><td dir="rtl" style="text-align:right"><strong>وقت الإرسال / Sent at</strong></td><td style="text-align:left">{{sentAt:yyyy-MM-dd HH:mm}} Server local time</td></tr>
                   </table>
                 </td></tr>
                 <tr><td dir="rtl" style="padding:18px;text-align:center;border-top:1px solid;font-size:12px">
