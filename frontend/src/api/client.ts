@@ -24,19 +24,21 @@ const API_URL = getApiUrl()
 
 export function resolveApiAssetUrl(url: string | null | undefined) {
   if (!url) return ''
+  // Old rows may still hold a direct Supabase public-object URL from before
+  // uploads were proxied through the API - normalize those to the current
+  // /api/uploads/file/... shape so they go through the same resolution below.
   const storageMarker = '/storage/v1/object/public/uploads/'
   const markerIndex = url.indexOf(storageMarker)
-  if (markerIndex >= 0) {
-    const path = url.slice(markerIndex + storageMarker.length)
-    return `${API_URL}/api/uploads/file/${path}`
-  }
-  // Only backend-owned paths (uploaded files) need rewriting onto the API
-  // origin. Everything else (bundled frontend assets, absolute URLs, data
-  // URIs) already resolves correctly against the current page.
-  if (!url.startsWith('/uploads/')) return url
+  const normalized = markerIndex >= 0 ? `/api/uploads/file/${url.slice(markerIndex + storageMarker.length)}` : url
+
+  // Only backend-owned paths (uploaded files, whether served through the API
+  // proxy or - for legacy rows - straight off local disk) need rewriting onto
+  // the API origin. Everything else (bundled frontend assets, absolute URLs,
+  // data URIs) already resolves correctly against the current page.
+  if (!normalized.startsWith('/api/uploads/') && !normalized.startsWith('/uploads/')) return normalized
 
   try {
-    const resolved = new URL(url, `${API_URL || window.location.origin}/`)
+    const resolved = new URL(normalized, `${API_URL || window.location.origin}/`)
     if (LOOPBACK_HOSTS.has(resolved.hostname) && API_URL) {
       const apiOrigin = new URL(API_URL)
       resolved.protocol = apiOrigin.protocol
@@ -44,7 +46,7 @@ export function resolveApiAssetUrl(url: string | null | undefined) {
     }
     return resolved.toString()
   } catch {
-    return url
+    return normalized
   }
 }
 
