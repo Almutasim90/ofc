@@ -8,17 +8,37 @@ public class SupabaseStorageService(SupabaseStorageOptions options, IHttpClientF
     public async Task<string> UploadAsync(Stream content, string contentType, string path, CancellationToken cancellationToken = default)
     {
         var client = clients.CreateClient();
-        client.DefaultRequestHeaders.Add("apikey", options.SecretKey);
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", options.SecretKey);
+        try
+        {
+            client.DefaultRequestHeaders.Add("apikey", options.SecretKey);
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", options.SecretKey);
+        }
+        catch (FormatException ex)
+        {
+            throw new InvalidOperationException(
+                "SUPABASE_SECRET_KEY has an invalid format in Dokploy. Remove quotes, spaces, and line breaks.", ex);
+        }
 
         using var body = new StreamContent(content);
         body.Headers.ContentType = new MediaTypeHeaderValue(contentType);
 
-        var response = await client.PostAsync($"{options.Url}/storage/v1/object/{options.Bucket}/{path}", body, cancellationToken);
+        HttpResponseMessage response;
+        try
+        {
+            response = await client.PostAsync($"{options.Url}/storage/v1/object/{options.Bucket}/{path}", body, cancellationToken);
+        }
+        catch (Exception ex) when (ex is HttpRequestException or FormatException)
+        {
+            throw new InvalidOperationException(
+                "Supabase Storage could not be reached. Verify SUPABASE_URL and SUPABASE_SECRET_KEY in Dokploy.", ex);
+        }
+        using (response)
+        {
         if (!response.IsSuccessStatusCode)
         {
             var error = await response.Content.ReadAsStringAsync(cancellationToken);
             throw new InvalidOperationException($"Supabase Storage upload failed ({(int)response.StatusCode}): {error}");
+        }
         }
 
         return $"{options.Url}/storage/v1/object/public/{options.Bucket}/{path}";

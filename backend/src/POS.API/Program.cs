@@ -61,8 +61,16 @@ var jwtOptions = new JwtOptions(
     Audience: Environment.GetEnvironmentVariable("JWT_AUDIENCE") ?? "POS.Client",
     ExpiryMinutes: 480);
 
-var supabaseUrl = Environment.GetEnvironmentVariable("SUPABASE_URL");
-var supabaseSecretKey = Environment.GetEnvironmentVariable("SUPABASE_SECRET_KEY");
+static string? CleanEnvironmentValue(string name)
+{
+    var value = Environment.GetEnvironmentVariable(name)?.Trim();
+    if (value?.Length >= 2 && ((value[0] == '"' && value[^1] == '"') || (value[0] == '\'' && value[^1] == '\'')))
+        value = value[1..^1].Trim();
+    return value;
+}
+
+var supabaseUrl = CleanEnvironmentValue("SUPABASE_URL")?.TrimEnd('/');
+var supabaseSecretKey = CleanEnvironmentValue("SUPABASE_SECRET_KEY");
 if (string.IsNullOrWhiteSpace(supabaseUrl) || string.IsNullOrWhiteSpace(supabaseSecretKey))
 {
     if (!builder.Environment.IsDevelopment())

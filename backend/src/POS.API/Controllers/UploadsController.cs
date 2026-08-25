@@ -62,7 +62,18 @@ public class UploadsController(IFileStorageService storage) : ControllerBase
 
         var fileName = $"{Guid.NewGuid():N}{extension}";
         await using var stream = file.OpenReadStream();
-        var url = await storage.UploadAsync(stream, file.ContentType, $"{subfolder}/{fileName}", ct);
+        string url;
+        try
+        {
+            url = await storage.UploadAsync(stream, file.ContentType, $"{subfolder}/{fileName}", ct);
+        }
+        catch (InvalidOperationException ex)
+        {
+            // Storage failures are actionable configuration/upstream errors,
+            // not unknown application crashes. The storage response contains
+            // no credentials and helps administrators fix Dokploy variables.
+            return StatusCode(StatusCodes.Status502BadGateway, new { error = ex.Message });
+        }
 
         return Ok(new { url });
     }
