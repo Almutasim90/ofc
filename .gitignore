@@ -8,6 +8,11 @@ backend/**/obj/
 backend/**/.vs/
 *.user
 
+# Runtime-uploaded files (legacy local-disk fallback; live images are in
+# Supabase Storage now, this dir only exists for the pre-migration /uploads/
+# path still served for old references)
+backend/src/POS.API/wwwroot/uploads/
+
 # Node / Vite
 frontend/node_modules/
 frontend/dist/
