@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using POS.Infrastructure.Persistence;
 using POS.Domain.Entities;
 using POS.Application.Abstractions;
+using POS.Application.Notifications;
 
 namespace POS.Infrastructure.Services;
 
@@ -32,12 +33,16 @@ public class LowStockMonitoringService(IServiceScopeFactory scopes, ILogger<LowS
             {
                 db.LowStockNotifications.Add(new LowStockNotification { Id = Guid.NewGuid(), BranchId = stock.BranchId, RawMaterialId = stock.RawMaterialId, TriggeredAt = DateTime.UtcNow });
                 var branchName = await db.Branches.IgnoreQueryFilters().Where(x => x.Id == stock.BranchId).Select(x => x.NameAr).SingleAsync(ct);
-                var materialName = await db.RawMaterials.Where(x => x.Id == stock.RawMaterialId).Select(x => x.NameAr).SingleAsync(ct);
+                var material = await db.RawMaterials.Where(x => x.Id == stock.RawMaterialId)
+                    .Select(x => new { x.NameAr, x.Unit }).SingleAsync(ct);
                 try
                 {
-                    await emailSender.SendAsync("تنبيه انخفاض المخزون",
-                        $"انخفض مخزون {materialName} في فرع {branchName}. الرصيد الحالي: {stock.CurrentQuantity:N3}، حد التنبيه: {stock.LowStockThreshold:N3}.",
-                        cancellationToken: ct);
+                    var body = LowStockEmailTemplate.Build(new LowStockEmailData(
+                        branchName, material.NameAr, material.Unit, stock.CurrentQuantity,
+                        stock.LowStockThreshold, DateTime.UtcNow));
+                    await emailSender.SendAsync(
+                        $"تنبيه مخزون: {material.NameAr} — {branchName}", body,
+                        isHtml: true, cancellationToken: ct);
                 }
                 catch (Exception ex) { logger.LogWarning(ex, "Low-stock email could not be sent for branch {BranchId} material {MaterialId}.", stock.BranchId, stock.RawMaterialId); }
             }

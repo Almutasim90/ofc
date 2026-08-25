@@ -134,6 +134,10 @@ export interface StockStatusDto {
   currentQuantity: number
   lowStockThreshold: number
   isLowStock: boolean
+  supplyPackageId: string | null
+  packageNameAr: string | null
+  packageNameEn: string | null
+  baseQuantityPerPackage: number | null
 }
 
 export interface AdjustStockRequest {

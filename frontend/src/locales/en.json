@@ -355,6 +355,7 @@
   },
   "inventory": {
     "title": "Inventory",
+    "receivedDate": "Packing / receipt date",
     "branch": "Branch",
     "rawMaterial": "Raw material",
     "currentQuantity": "Current quantity",
@@ -368,7 +369,7 @@
     "setThreshold": "Set threshold",
     "save": "Save",
     "cancel": "Cancel",
-    "receiveGoods": "Receive goods","packageType": "Package type","selectPackage": "Select package","packageCount": "Package count","note": "Optional note","quantityToAdd": "Quantity to add","addPackageType": "Add package type","packageNameAr": "Arabic package name","packageNameEn": "English package name","packageConversion": "Base quantity per package","confirmReceipt": "Confirm receipt","addInventoryItem":"Add inventory item","measurementType":"Measurement type","measureWeight":"Weight","measureVolume":"Volume / liquids","measureCount":"Count / pieces","baseUnit":"Base unit","stepOf":"Step {{step}} of {{total}}","createStep1":"Item details","createStep2":"Supplier package","createStep3":"Opening stock","packageExampleAr":"Example: كرتون 3 كجم","packageExampleEn":"Example: 3 kg carton","initialPackageCount":"Packages currently in stock","createAndAdd":"Create item and add stock"
+    "receiveGoods": "Receive goods","packageType": "Purchase package","selectPackage": "Select package","packageCount": "Number of packages","note": "Optional note","quantityToAdd": "Result in consumption units","addPackageType": "Add package type","packageNameAr": "Arabic package name","packageNameEn": "English package name","packageConversion": "Conversion to the base unit","confirmReceipt": "Confirm receipt","addInventoryItem":"Add inventory item","measurementType":"Measurement type","measureWeight":"Weight","measureVolume":"Volume / liquids","measureCount":"Count / pieces","baseUnit":"Base consumption unit","consumptionUnit":"Consumption unit","purchasePackage":"Purchase package","conversionFactor":"Conversion factor","stepOf":"Step {{step}} of {{total}}","createStep1":"Material and consumption unit","createStep2":"Purchase package and conversion","createStep3":"Opening stock","packageExampleAr":"Example: كرتون","packageExampleEn":"Example: carton","initialPackageCount":"Packages currently in stock","createAndAdd":"Create item and add stock"
   },
   "common": {
     "save": "Save",

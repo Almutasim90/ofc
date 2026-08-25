@@ -40,7 +40,8 @@ public class RawMaterialService(IAppDbContext db)
         material.NameAr = request.NameAr;
         material.NameEn = request.NameEn;
         var hasMovements = await db.StockAdjustments.AnyAsync(x => x.RawMaterialId == id, cancellationToken)
-            || await db.ProductRecipes.AnyAsync(x => x.RawMaterialId == id, cancellationToken);
+            || await db.ProductRecipes.AnyAsync(x => x.RawMaterialId == id, cancellationToken)
+            || await db.SupplyPackages.AnyAsync(x => x.RawMaterialId == id, cancellationToken);
         if (hasMovements && (!material.Unit.Equals(request.Unit, StringComparison.OrdinalIgnoreCase)
             || !material.MeasurementType.Equals(request.MeasurementType, StringComparison.OrdinalIgnoreCase)))
             throw new ValidationException("The measurement unit cannot be changed after inventory movements or recipes exist.");

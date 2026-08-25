@@ -353,6 +353,7 @@
   },
   "inventory": {
     "title": "المخزون",
+    "receivedDate": "تاريخ التعبئة / الاستلام",
     "branch": "الفرع",
     "rawMaterial": "المادة الخام",
     "currentQuantity": "الكمية الحالية",
@@ -366,7 +367,7 @@
     "setThreshold": "ضبط الحد",
     "save": "حفظ",
     "cancel": "إلغاء",
-    "receiveGoods": "استلام بضاعة","packageType": "نوع العبوة","selectPackage": "اختر العبوة","packageCount": "عدد العبوات","note": "ملاحظة اختيارية","quantityToAdd": "الكمية التي ستضاف","addPackageType": "إضافة نوع عبوة","packageNameAr": "اسم العبوة بالعربية","packageNameEn": "اسم العبوة بالإنجليزية","packageConversion": "كمية الوحدة داخل العبوة","confirmReceipt": "تأكيد الاستلام","addInventoryItem":"إضافة صنف للمخزون","measurementType":"نوع القياس","measureWeight":"وزن","measureVolume":"حجم / سوائل","measureCount":"عدد / حبات","baseUnit":"الوحدة الأساسية","stepOf":"الخطوة {{step}} من {{total}}","createStep1":"بيانات الصنف","createStep2":"طريقة وصوله من المورد","createStep3":"الرصيد الأولي","packageExampleAr":"مثال: كرتون 3 كجم","packageExampleEn":"مثال: 3 kg carton","initialPackageCount":"عدد العبوات الموجودة حالياً","createAndAdd":"إنشاء الصنف وإضافة الرصيد"
+    "receiveGoods": "استلام بضاعة","packageType": "وحدة التعبئة","selectPackage": "اختر العبوة","packageCount": "عدد وحدات التعبئة","note": "ملاحظة اختيارية","quantityToAdd": "الناتج بوحدة الاستهلاك","addPackageType": "إضافة نوع عبوة","packageNameAr": "اسم وحدة التعبئة بالعربية","packageNameEn": "اسم وحدة التعبئة بالإنجليزية","packageConversion": "معامل التحويل للوحدة الأساسية","confirmReceipt": "تأكيد الاستلام","addInventoryItem":"إضافة صنف للمخزون","measurementType":"نوع القياس","measureWeight":"وزن","measureVolume":"حجم / سوائل","measureCount":"عدد / حبات","baseUnit":"وحدة الاستهلاك الأساسية","consumptionUnit":"وحدة الاستهلاك","purchasePackage":"وحدة التعبئة","conversionFactor":"معامل التحويل","stepOf":"الخطوة {{step}} من {{total}}","createStep1":"المادة ووحدة الاستهلاك","createStep2":"وحدة التعبئة ومعامل التحويل","createStep3":"الرصيد الأولي","packageExampleAr":"مثال: كرتون","packageExampleEn":"Example: carton","initialPackageCount":"عدد وحدات التعبئة الموجودة حالياً","createAndAdd":"إنشاء الصنف وإضافة الرصيد"
   },
   "common": {
     "save": "حفظ",

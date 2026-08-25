@@ -84,17 +84,6 @@ public class SaleService(IAppDbContext db, IDomainEventPublisher eventPublisher,
                 .Where(s => s.BranchId == request.BranchId && materialIds.Contains(s.RawMaterialId))
                 .ToListAsync(cancellationToken);
             stockByMaterial = stocks.ToDictionary(s => s.RawMaterialId);
-
-            foreach (var (materialId, requiredQty) in requiredByMaterial)
-            {
-                var currentQty = stockByMaterial.TryGetValue(materialId, out var stock) ? stock.CurrentQuantity : 0m;
-                if (currentQty < requiredQty)
-                {
-                    var material = await db.RawMaterials.FirstAsync(m => m.Id == materialId, cancellationToken);
-                    throw new ValidationException(
-                        $"Insufficient stock for '{material.NameEn}': need {requiredQty}, have {currentQty}.");
-                }
-            }
         }
 
         var sale = new Sale
@@ -153,11 +142,20 @@ public class SaleService(IAppDbContext db, IDomainEventPublisher eventPublisher,
         {
             if (!stockByMaterial.TryGetValue(materialId, out var stock))
             {
-                // Shouldn't happen - availability was checked above - but guard defensively.
-                throw new ValidationException("Stock changed while processing the sale. Please retry.");
+                stock = new BranchRawMaterialStock
+                {
+                    BranchId = request.BranchId,
+                    RawMaterialId = materialId,
+                    CurrentQuantity = 0m,
+                    LowStockThreshold = 0m,
+                };
+                db.BranchRawMaterialStocks.Add(stock);
+                stockByMaterial[materialId] = stock;
             }
 
-            stock.CurrentQuantity -= requiredQty;
+            // Stock is advisory and must never block a valid sale. Keep the
+            // balance non-negative; the monitor alerts management to replenish.
+            stock.CurrentQuantity = StockLevelCalculator.AfterSale(stock.CurrentQuantity, requiredQty);
         }
 
         // One SaveChangesAsync call = one atomic transaction for the Sale, its SaleItems,

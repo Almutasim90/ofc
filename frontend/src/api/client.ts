@@ -7,8 +7,11 @@ function getApiUrl() {
   try {
     const configured = new URL(configuredUrl)
     if (LOOPBACK_HOSTS.has(configured.hostname) && !LOOPBACK_HOSTS.has(window.location.hostname)) {
-      configured.hostname = window.location.hostname
-      return configured.toString().replace(/\/$/, '')
+      // A localhost URL is useful for local development, but it must never be
+      // rewritten to the production hostname while retaining its development
+      // protocol/port (for example http://example.com:5246). In production the
+      // reverse proxy exposes the API on the same origin under /api.
+      return ''
     }
   } catch {
     return configuredUrl
@@ -21,6 +24,12 @@ const API_URL = getApiUrl()
 
 export function resolveApiAssetUrl(url: string | null | undefined) {
   if (!url) return ''
+  const storageMarker = '/storage/v1/object/public/uploads/'
+  const markerIndex = url.indexOf(storageMarker)
+  if (markerIndex >= 0) {
+    const path = url.slice(markerIndex + storageMarker.length)
+    return `${API_URL}/api/uploads/file/${path}`
+  }
   // Only backend-owned paths (uploaded files) need rewriting onto the API
   // origin. Everything else (bundled frontend assets, absolute URLs, data
   // URIs) already resolves correctly against the current page.

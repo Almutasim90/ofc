@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using POS.Application.Abstractions;
 using POS.Application.Common;
+using POS.Application.Closing;
 using POS.Domain.Entities;
 
 namespace POS.Application.Inventory;
@@ -8,7 +9,7 @@ namespace POS.Application.Inventory;
 public class StockService(IAppDbContext db, ICurrentUserService currentUser)
 {
     private static readonly IReadOnlyDictionary<string, string> BaseUnits = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-    { ["Weight"] = "g", ["Volume"] = "ml", ["Count"] = "piece" };
+    { ["Weight"] = "kg", ["Volume"] = "ml", ["Count"] = "piece" };
     public async Task<List<StockStatusDto>> GetStatusAsync(Guid branchId, CancellationToken cancellationToken = default)
     {
         EnsureBranchScope(branchId);
@@ -18,6 +19,8 @@ public class StockService(IAppDbContext db, ICurrentUserService currentUser)
             .Where(s => s.BranchId == branchId)
             .ToListAsync(cancellationToken);
         var stockByMaterial = stocks.ToDictionary(s => s.RawMaterialId);
+        var packages = await db.SupplyPackages.AsNoTracking().Where(x => x.IsActive).ToListAsync(cancellationToken);
+        var packageByMaterial = packages.GroupBy(x => x.RawMaterialId).ToDictionary(x => x.Key, x => x.First());
 
         return materials
             .Select(m =>
@@ -25,7 +28,9 @@ public class StockService(IAppDbContext db, ICurrentUserService currentUser)
                 var hasStock = stockByMaterial.TryGetValue(m.Id, out var stock);
                 var currentQuantity = hasStock ? stock!.CurrentQuantity : 0m;
                 var threshold = hasStock ? stock!.LowStockThreshold : 0m;
-                return new StockStatusDto(m.Id, m.NameAr, m.NameEn, m.Unit, currentQuantity, threshold, currentQuantity <= threshold);
+                packageByMaterial.TryGetValue(m.Id, out var package);
+                return new StockStatusDto(m.Id, m.NameAr, m.NameEn, m.Unit, currentQuantity, threshold,
+                    currentQuantity <= threshold, package?.Id, package?.NameAr, package?.NameEn, package?.BaseQuantity);
             })
             .OrderBy(s => s.NameEn)
             .ToList();
@@ -117,6 +122,8 @@ public class StockService(IAppDbContext db, ICurrentUserService currentUser)
         if (string.IsNullOrWhiteSpace(request.NameAr) || string.IsNullOrWhiteSpace(request.NameEn))
             throw new ValidationException("Package names are required.");
         if (!await db.RawMaterials.AnyAsync(x => x.Id == request.RawMaterialId, ct)) throw new NotFoundException("Raw material not found.");
+        if (await db.SupplyPackages.AnyAsync(x => x.RawMaterialId == request.RawMaterialId, ct))
+            throw new ValidationException("The purchase package and conversion are permanent and were already configured for this raw material.");
         var item = new SupplyPackage { Id = Guid.NewGuid(), RawMaterialId = request.RawMaterialId,
             NameAr = request.NameAr.Trim(), NameEn = request.NameEn.Trim(), BaseQuantity = request.BaseQuantity, IsActive = request.IsActive };
         db.SupplyPackages.Add(item); await db.SaveChangesAsync(ct);
@@ -129,7 +136,7 @@ public class StockService(IAppDbContext db, ICurrentUserService currentUser)
         if (request.PackageCount <= 0) throw new ValidationException("Package count must be greater than zero.");
         var package = await db.SupplyPackages.Include(x => x.RawMaterial)
             .FirstOrDefaultAsync(x => x.Id == request.SupplyPackageId && x.IsActive, ct) ?? throw new NotFoundException("Supply package not found.");
-        var quantityAdded = decimal.Round(package.BaseQuantity * request.PackageCount, 3);
+        var quantityAdded = InventoryQuantityCalculator.FromPackages(package.BaseQuantity, request.PackageCount);
         var stock = await db.BranchRawMaterialStocks.FirstOrDefaultAsync(x => x.BranchId == request.BranchId && x.RawMaterialId == package.RawMaterialId, ct);
         if (stock is null)
         {
@@ -137,10 +144,13 @@ public class StockService(IAppDbContext db, ICurrentUserService currentUser)
             db.BranchRawMaterialStocks.Add(stock);
         }
         stock.CurrentQuantity += quantityAdded;
+        var receivedAt = request.ReceivedDate.HasValue
+            ? MuscatClock.ToUtc(request.ReceivedDate.Value.ToDateTime(new TimeOnly(12, 0)))
+            : DateTime.UtcNow;
         var receipt = new StockReceipt { Id = Guid.NewGuid(), BranchId = request.BranchId, RawMaterialId = package.RawMaterialId,
             SupplyPackageId = package.Id, PackageCount = request.PackageCount, BaseQuantityAdded = quantityAdded,
             PackageNameSnapshot = package.NameAr, Note = string.IsNullOrWhiteSpace(request.Note) ? null : request.Note.Trim(),
-            ReceivedByUserId = userId, ReceivedAt = DateTime.UtcNow };
+            ReceivedByUserId = userId, ReceivedAt = receivedAt };
         db.StockReceipts.Add(receipt);
         db.StockAdjustments.Add(new StockAdjustment { Id = Guid.NewGuid(), BranchId = request.BranchId,
             RawMaterialId = package.RawMaterialId, QuantityChange = quantityAdded, Reason = $"Receipt: {request.PackageCount} × {package.NameAr}",
@@ -177,7 +187,7 @@ public class StockService(IAppDbContext db, ICurrentUserService currentUser)
             MeasurementType = request.MeasurementType, Unit = unit };
         var package = new SupplyPackage { Id = Guid.NewGuid(), RawMaterialId = material.Id, NameAr = request.PackageNameAr.Trim(),
             NameEn = request.PackageNameEn.Trim(), BaseQuantity = request.BaseQuantityPerPackage, IsActive = true };
-        var initialQuantity = decimal.Round(request.BaseQuantityPerPackage * request.InitialPackageCount, 3);
+        var initialQuantity = InventoryQuantityCalculator.FromPackages(request.BaseQuantityPerPackage, request.InitialPackageCount);
         var stock = new BranchRawMaterialStock { BranchId = request.BranchId, RawMaterialId = material.Id,
             CurrentQuantity = initialQuantity, LowStockThreshold = request.LowStockThreshold };
         db.RawMaterials.Add(material); db.SupplyPackages.Add(package); db.BranchRawMaterialStocks.Add(stock);

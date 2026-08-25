@@ -23,6 +23,21 @@ public class UploadsController(IFileStorageService storage) : ControllerBase
     public async Task<ActionResult<object>> UploadProductImage(IFormFile file, CancellationToken ct)
         => await SaveImage(file, "products", "Image", ct, 5 * 1024 * 1024);
 
+    [HttpGet("file/{**path}")]
+    [ResponseCache(Duration = 86400, Location = ResponseCacheLocation.Any)]
+    public async Task<IActionResult> GetFile(string path, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(path) || path.Contains("..", StringComparison.Ordinal)
+            || !(path.StartsWith("channels/", StringComparison.Ordinal) || path.StartsWith("products/", StringComparison.Ordinal)))
+            return NotFound();
+        try
+        {
+            var file = await storage.DownloadAsync(path, ct);
+            return File(file.Content, file.ContentType);
+        }
+        catch (FileNotFoundException) { return NotFound(); }
+    }
+
     private async Task<ActionResult<object>> SaveImage(
         IFormFile file,
         string subfolder,
