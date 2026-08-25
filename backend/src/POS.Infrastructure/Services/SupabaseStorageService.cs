@@ -30,7 +30,8 @@ public class SupabaseStorageService(SupabaseStorageOptions options, IHttpClientF
         client.DefaultRequestHeaders.Add("apikey", options.SecretKey);
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", options.SecretKey);
 
-        using var response = await client.GetAsync($"{options.Url}/storage/v1/object/{options.Bucket}/{path}", cancellationToken);
+        using var response = await client.GetAsync(
+            $"{options.Url}/storage/v1/object/authenticated/{options.Bucket}/{path}", cancellationToken);
         if (!response.IsSuccessStatusCode) throw new FileNotFoundException("Stored image was not found.", path);
         var contentType = response.Content.Headers.ContentType?.MediaType ?? "application/octet-stream";
         return new StoredFile(await response.Content.ReadAsByteArrayAsync(cancellationToken), contentType);
