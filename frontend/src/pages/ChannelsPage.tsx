@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
-import { api, resolveApiAssetUrl } from '../api/client'
+import { api, ApiError, resolveApiAssetUrl } from '../api/client'
 import type { ProductChannelPriceDto, ProductDto, SalesChannelDto } from '../api/types'
 
 const emptyForm = { nameAr: '', nameEn: '', logoUrl: '', isActive: true }
@@ -15,6 +15,8 @@ export default function ChannelsPage() {
   const [prices, setPrices] = useState<Record<string, string>>({})
   const [form, setForm] = useState(emptyForm)
   const [uploading, setUploading] = useState(false)
+  const [uploadError, setUploadError] = useState<string | null>(null)
+  const [uploadSuccess, setUploadSuccess] = useState(false)
 
   const load = () => Promise.all([api.get<SalesChannelDto[]>('/api/channels'), api.get<ProductDto[]>('/api/products')]).then(([channelRows, productRows]) => { setChannels(channelRows); setProducts(productRows) })
   useEffect(() => { void load() }, [])
@@ -22,11 +24,27 @@ export default function ChannelsPage() {
   const uploadLogo = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (!file) return
+    setUploadError(null)
+    setUploadSuccess(false)
+    if (file.size > 5 * 1024 * 1024) {
+      setUploadError(t('channels.logoTooLarge'))
+      event.target.value = ''
+      return
+    }
     setUploading(true)
     try {
       const body = new FormData(); body.append('file', file)
       const result = await api.upload<{ url: string }>('/api/uploads/channel-logo', body)
-      setForm(current => ({ ...current, logoUrl: result.url }))
+      const nextForm = { ...form, logoUrl: result.url }
+      setForm(nextForm)
+      if (selected) {
+        await api.put(`/api/channels/${selected.id}`, nextForm)
+        setSelected(current => current ? { ...current, logoUrl: result.url } : current)
+        await load()
+      }
+      setUploadSuccess(true)
+    } catch (error) {
+      setUploadError(error instanceof ApiError ? `${t('channels.uploadError')} (${error.status}: ${error.message})` : t('channels.uploadError'))
     } finally { setUploading(false); event.target.value = '' }
   }
 
@@ -50,7 +68,7 @@ export default function ChannelsPage() {
         <label>{t('channels.nameEn')}<input required value={form.nameEn} onChange={event => setForm({ ...form, nameEn: event.target.value })} /></label>
         <div className="channel-logo-field"><span className="channel-field-label">{t('channels.logo')}</span><div className="channel-logo-picker">
           <div className="channel-logo-preview-box">{form.logoUrl ? <img src={resolveApiAssetUrl(form.logoUrl)} alt="" /> : <span>{form.nameAr.charAt(0) || '+'}</span>}</div>
-          <div><button className="button-secondary channel-upload-button" type="button" disabled={uploading} onClick={() => fileInput.current?.click()}>{uploading ? t('channels.uploading') : t('channels.uploadLogo')}</button><small>{t('channels.logoHint')}</small></div>
+          <div><button className="button-secondary channel-upload-button" type="button" disabled={uploading} onClick={() => fileInput.current?.click()}>{uploading ? t('channels.uploading') : t('channels.uploadLogo')}</button><small>{t('channels.logoHint')}</small>{uploadError && <p className="error-text" role="alert">{uploadError}</p>}{uploadSuccess && <p className="success-text">{selected ? t('channels.logoSaved') : t('channels.logoUploaded')}</p>}</div>
           <input ref={fileInput} className="sr-only" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" onChange={uploadLogo} />
         </div></div>
         <label className="channel-active-toggle"><input type="checkbox" checked={form.isActive} disabled={selected?.isInStore} onChange={event => setForm({ ...form, isActive: event.target.checked })} /><span>{t('channels.active')}</span></label>

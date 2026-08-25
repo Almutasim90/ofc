@@ -14,9 +14,9 @@ public class UploadsController(IFileStorageService storage) : ControllerBase
     ];
 
     [HttpPost("channel-logo"), RequirePermission(PermissionKeys.ChannelsManage)]
-    [RequestSizeLimit(2 * 1024 * 1024)]
+    [RequestSizeLimit(5 * 1024 * 1024)]
     public async Task<ActionResult<object>> UploadChannelLogo(IFormFile file, CancellationToken ct)
-        => await SaveImage(file, "channels", "Logo", ct);
+        => await SaveImage(file, "channels", "Logo", ct, 5 * 1024 * 1024);
 
     [HttpPost("product-image"), RequirePermission(PermissionKeys.ProductsManage)]
     [RequestSizeLimit(5 * 1024 * 1024)]
