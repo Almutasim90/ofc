@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router-dom'
-import { api } from '../api/client'
+import { api, resolveApiAssetUrl } from '../api/client'
 import { useAuth } from '../auth/AuthContext'
 import type { BranchDto, ProductDto, RawMaterialDto, RecipeLineDto } from '../api/types'
 import { DeleteIcon, IconAction, SearchBox } from '../components/TableTools'
@@ -169,5 +169,5 @@ export default function ProductRecipePage() {
 function ProductRecipeImage({ product }: { product: ProductDto }) {
   const source = product.iconOrImageUrl?.trim()
   const isImage = source && (source.startsWith('/') || source.startsWith('http://') || source.startsWith('https://') || source.startsWith('data:image/'))
-  return <div className="recipe-product-image">{isImage ? <img src={source} alt={product.nameAr} /> : <span>{source || product.nameAr.charAt(0)}</span>}</div>
+  return <div className="recipe-product-image">{isImage ? <img src={resolveApiAssetUrl(source)} alt={product.nameAr} /> : <span>{source || product.nameAr.charAt(0)}</span>}</div>
 }

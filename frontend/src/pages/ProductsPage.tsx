@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState, type ChangeEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
-import { api } from '../api/client'
+import { api, resolveApiAssetUrl } from '../api/client'
 import type { CreateProductRequest, ProductDto, UpdateProductRequest } from '../api/types'
 import Money from '../components/Money'
 import { DetailsIcon, EditIcon, IconAction, SearchBox } from '../components/TableTools'
@@ -114,7 +114,7 @@ function ProductThumbnail({ product }: { product: ProductDto }) {
   if (!source) return <span className="product-thumbnail product-thumbnail--fallback">{product.nameEn.charAt(0) || product.nameAr.charAt(0)}</span>
   const isImage = source.startsWith('/') || source.startsWith('http://') || source.startsWith('https://') || source.startsWith('data:image/')
   return isImage
-    ? <img className="product-thumbnail" src={source} alt="" />
+    ? <img className="product-thumbnail" src={resolveApiAssetUrl(source)} alt="" />
     : <span className="product-thumbnail product-thumbnail--fallback" aria-hidden="true">{source}</span>
 }
 
@@ -137,6 +137,23 @@ function ProductForm({
   const [iconOrImageUrl, setIconOrImageUrl] = useState(existing?.iconOrImageUrl ?? '')
   const [isActive, setIsActive] = useState(existing?.isActive ?? true)
   const [submitting, setSubmitting] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const fileInput = useRef<HTMLInputElement>(null)
+
+  const uploadImage = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+    setUploading(true)
+    try {
+      const body = new FormData()
+      body.append('file', file)
+      const result = await api.upload<{ url: string }>('/api/uploads/product-image', body)
+      setIconOrImageUrl(result.url)
+    } finally {
+      setUploading(false)
+      event.target.value = ''
+    }
+  }
 
   const onSubmit = async () => {
     setSubmitting(true)
@@ -194,10 +211,21 @@ function ProductForm({
           {t('products.price')}
           <input type="number" step="0.001" min="0" value={price} onChange={(e) => setPrice(e.target.value)} required />
         </label>
-        <label>
-          {t('products.icon')}
-          <input value={iconOrImageUrl} onChange={(e) => setIconOrImageUrl(e.target.value)} placeholder="https://... or emoji" />
-        </label>
+        <div className="channel-logo-field">
+          <span className="channel-field-label">{t('products.image')}</span>
+          <div className="channel-logo-picker">
+            <div className="channel-logo-preview-box">
+              {iconOrImageUrl ? <img src={resolveApiAssetUrl(iconOrImageUrl)} alt="" /> : <span>+</span>}
+            </div>
+            <div>
+              <button className="button-secondary channel-upload-button" type="button" disabled={uploading} onClick={() => fileInput.current?.click()}>
+                {uploading ? t('products.uploading') : t('products.uploadImage')}
+              </button>
+              <small>{t('products.imageHint')}</small>
+            </div>
+            <input ref={fileInput} className="sr-only" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" onChange={uploadImage} />
+          </div>
+        </div>
         {editing.mode === 'edit' && (
           <label className="checkbox-field">
             <input type="checkbox" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />
@@ -206,7 +234,7 @@ function ProductForm({
         )}
         </div>
         <div className="modal-actions">
-          <button type="button" onClick={onSubmit} disabled={submitting}>
+          <button type="button" onClick={onSubmit} disabled={submitting || uploading}>
             {t('products.save')}
           </button>
           <button type="button" onClick={onClose}>

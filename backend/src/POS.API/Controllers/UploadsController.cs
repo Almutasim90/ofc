@@ -15,9 +15,22 @@ public class UploadsController(IWebHostEnvironment environment) : ControllerBase
     [HttpPost("channel-logo"), RequirePermission(PermissionKeys.ChannelsManage)]
     [RequestSizeLimit(2 * 1024 * 1024)]
     public async Task<ActionResult<object>> UploadChannelLogo(IFormFile file, CancellationToken ct)
+        => await SaveImage(file, "channels", "Logo", ct);
+
+    [HttpPost("product-image"), RequirePermission(PermissionKeys.ProductsManage)]
+    [RequestSizeLimit(5 * 1024 * 1024)]
+    public async Task<ActionResult<object>> UploadProductImage(IFormFile file, CancellationToken ct)
+        => await SaveImage(file, "products", "Image", ct, 5 * 1024 * 1024);
+
+    private async Task<ActionResult<object>> SaveImage(
+        IFormFile file,
+        string subfolder,
+        string label,
+        CancellationToken ct,
+        long maxBytes = 2 * 1024 * 1024)
     {
-        if (file.Length == 0 || file.Length > 2 * 1024 * 1024)
-            return BadRequest(new { error = "Logo must be between 1 byte and 2 MB." });
+        if (file.Length == 0 || file.Length > maxBytes)
+            return BadRequest(new { error = $"{label} must be between 1 byte and {maxBytes / 1024 / 1024} MB." });
 
         if (!AllowedContentTypes.Contains(file.ContentType.ToLowerInvariant()))
             return BadRequest(new { error = "Only JPG, PNG, WebP, and SVG images are supported." });
@@ -31,12 +44,12 @@ public class UploadsController(IWebHostEnvironment environment) : ControllerBase
             _ => throw new InvalidOperationException()
         };
 
-        var folder = Path.Combine(environment.ContentRootPath, "wwwroot", "uploads", "channels");
+        var folder = Path.Combine(environment.ContentRootPath, "wwwroot", "uploads", subfolder);
         Directory.CreateDirectory(folder);
         var fileName = $"{Guid.NewGuid():N}{extension}";
         await using var stream = System.IO.File.Create(Path.Combine(folder, fileName));
         await file.CopyToAsync(stream, ct);
 
-        return Ok(new { url = $"/uploads/channels/{fileName}" });
+        return Ok(new { url = $"/uploads/{subfolder}/{fileName}" });
     }
 }

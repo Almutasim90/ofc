@@ -458,7 +458,7 @@ export default function CashierPage() {
             >
               <div className="product-card-image aspect-square w-full bg-surface2">
                 {product.iconOrImageUrl ? (
-                  <img src={product.iconOrImageUrl} alt={productName(product)} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                  <img src={resolveApiAssetUrl(product.iconOrImageUrl)} alt={productName(product)} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center font-cairo text-3xl font-bold text-primary">{productName(product).charAt(0)}</div>
                 )}
