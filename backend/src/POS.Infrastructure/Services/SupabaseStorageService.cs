@@ -21,17 +21,17 @@ public class SupabaseStorageService(SupabaseStorageOptions options, IHttpClientF
             throw new InvalidOperationException($"Supabase Storage upload failed ({(int)response.StatusCode}): {error}");
         }
 
-        return $"/api/uploads/file/{path}";
+        return $"{options.Url}/storage/v1/object/public/{options.Bucket}/{path}";
     }
 
     public async Task<StoredFile> DownloadAsync(string path, CancellationToken cancellationToken = default)
     {
+        // The uploads bucket is public. Read it through the public endpoint so
+        // display does not depend on production secret-key formatting, while
+        // retaining this method for rows saved with the temporary /api proxy URL.
         var client = clients.CreateClient();
-        client.DefaultRequestHeaders.Add("apikey", options.SecretKey);
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", options.SecretKey);
-
         using var response = await client.GetAsync(
-            $"{options.Url}/storage/v1/object/authenticated/{options.Bucket}/{path}", cancellationToken);
+            $"{options.Url}/storage/v1/object/public/{options.Bucket}/{path}", cancellationToken);
         if (!response.IsSuccessStatusCode) throw new FileNotFoundException("Stored image was not found.", path);
         var contentType = response.Content.Headers.ContentType?.MediaType ?? "application/octet-stream";
         return new StoredFile(await response.Content.ReadAsByteArrayAsync(cancellationToken), contentType);
