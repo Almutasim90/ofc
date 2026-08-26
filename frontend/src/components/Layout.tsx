@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { Link, NavLink, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../auth/AuthContext'
@@ -37,6 +37,20 @@ export default function Layout({ children }: { children: ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => localStorage.getItem('sidebar-collapsed') === 'true')
   const [moreOpen, setMoreOpen] = useState(false)
+  const kiosk = pathname === '/cashier'
+
+  // Kiosk mode: the cashier screen requests fullscreen and hides everything
+  // except the two deliberate ways out (the Shift link, the username). Ending
+  // up on any other route - via those links, browser back, a typed URL - is
+  // what turns it back off, so there's no separate "exit" handler to wire.
+  useEffect(() => {
+    if (kiosk) {
+      document.documentElement.requestFullscreen?.().catch(() => {})
+    } else if (document.fullscreenElement) {
+      document.exitFullscreen().catch(() => {})
+    }
+  }, [kiosk])
+
   if (!user || pathname === '/login') return <main>{children}</main>
 
   const operational = pathname === '/cashier' || pathname === '/shift'
@@ -61,7 +75,7 @@ export default function Layout({ children }: { children: ReactNode }) {
   const translatedRole = t(`roles.${user.roleName}`, { defaultValue: user.roleName })
   const breadcrumbTrail = getBreadcrumbTrail(pathname, navItems, t)
 
-  if (operational) return <div className="flex h-screen flex-col overflow-hidden bg-bg"><header className="top-bar h-16 flex-none"><Link className="hidden items-center gap-2 font-cairo text-xl font-extrabold text-primary xl:flex" to="/"><span className="brand-mark">ل</span>{t('app.title')}</Link><nav className="top-bar-nav">{navItems.slice(0, 2).map((item) => <NavLink key={item.to} to={item.to}>{item.label}</NavLink>)}</nav><div className="top-bar-actions"><NotificationBell /><ThemeToggle /><LanguageSwitcher /><UserSettingsLink fullName={user.fullName} roleName={user.roleName} /><button className="logout-button" onClick={logout} aria-label={t('nav.logout')} title={t('nav.logout')}><LogoutIcon /><span className="logout-label">{t('nav.logout')}</span></button></div></header><main className={`min-h-0 flex-1 ${pathname === '/shift' ? 'admin-content overflow-y-auto p-4 lg:p-6' : 'overflow-hidden'}`}>{pathname === '/shift' && <Breadcrumb items={breadcrumbTrail} />}{children}</main></div>
+  if (operational) return <div className="flex h-screen flex-col overflow-hidden bg-bg"><header className="top-bar h-16 flex-none">{!kiosk && <Link className="hidden items-center gap-2 font-cairo text-xl font-extrabold text-primary xl:flex" to="/"><span className="brand-mark">ل</span>{t('app.title')}</Link>}<nav className="top-bar-nav">{navItems.slice(0, 2).map((item) => <NavLink key={item.to} to={item.to}>{item.label}</NavLink>)}</nav><div className="top-bar-actions">{!kiosk && <><NotificationBell /><ThemeToggle /><LanguageSwitcher /></>}<UserSettingsLink fullName={user.fullName} roleName={user.roleName} />{!kiosk && <button className="logout-button" onClick={logout} aria-label={t('nav.logout')} title={t('nav.logout')}><LogoutIcon /><span className="logout-label">{t('nav.logout')}</span></button>}</div></header><main className={`min-h-0 flex-1 ${pathname === '/shift' ? 'admin-content overflow-y-auto p-4 lg:p-6' : 'overflow-hidden'}`}>{pathname === '/shift' && <Breadcrumb items={breadcrumbTrail} />}{children}</main></div>
 
   return <div className="admin-shell min-h-screen bg-bg text-text">
     {mobileOpen && <button aria-label={t('nav.closeMenu')} className="app-scrim fixed inset-0 z-30 rounded-none lg:hidden" onClick={() => setMobileOpen(false)} />}
