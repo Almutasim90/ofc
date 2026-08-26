@@ -43,6 +43,7 @@ public class AppDbContext : DbContext, IAppDbContext
     public DbSet<AiProviderSetting> AiProviderSettings => Set<AiProviderSetting>();
     public DbSet<AiInsightRequest> AiInsightRequests => Set<AiInsightRequest>();
     public DbSet<EmailSettings> EmailSettings => Set<EmailSettings>();
+    public DbSet<ReceiptSettings> ReceiptSettings => Set<ReceiptSettings>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -338,6 +339,11 @@ public class AppDbContext : DbContext, IAppDbContext
             entity.Property(x => x.FromEmail).HasMaxLength(320);
             entity.Property(x => x.FromName).HasMaxLength(200);
             entity.Property(x => x.Recipients).HasMaxLength(2000);
+        });
+        modelBuilder.Entity<ReceiptSettings>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.HeaderText).HasMaxLength(500);
         });
     }
 }

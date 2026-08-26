@@ -57,7 +57,7 @@ public class AiInsightService(IAppDbContext db, ICurrentUserService currentUser,
         var instruction = isCustom ? question! : $"a concise {r.RequestType} insight";
         var prompt = $"You are a POS analytics assistant. Respond in Arabic only. Given this data: sales={JsonSerializer.Serialize(sales)}, shifts={JsonSerializer.Serialize(shifts)} — {instruction}. Clearly label any forecasts as estimates based on sales history.";
         var result = await CallProviderAsync(settings, prompt, 1200, ct);
-        var label = isCustom ? question![..Math.Min(question.Length, 150)] : r.RequestType;
+        var label = isCustom ? question![..Math.Min(question!.Length, 50)] : r.RequestType;
         var audit = new AiInsightRequest { Id = Guid.NewGuid(), RequestedByUserId = currentUser.UserId!.Value, BranchId = branchId, RequestType = label, CreatedAt = DateTime.UtcNow, ResultSummary = result[..Math.Min(result.Length, 8000)] };
         db.AiInsightRequests.Add(audit); await db.SaveChangesAsync(ct); return new(audit.Id, audit.RequestType, result, audit.CreatedAt);
     }

@@ -24,6 +24,7 @@ public static class DependencyInjection
         services.AddScoped<NotificationService>();
         services.AddScoped<AiInsightService>();
         services.AddScoped<EmailSettingsService>();
+        services.AddScoped<ReceiptSettingsService>();
         services.AddHttpClient();
         services.AddScoped<BranchService>();
         services.AddScoped<ProductService>();

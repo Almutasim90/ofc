@@ -22,6 +22,7 @@ import AiSettingsPage from './pages/AiSettingsPage'
 import AiInsightsPage from './pages/AiInsightsPage'
 import NotificationsPage from './pages/NotificationsPage'
 import EmailSettingsPage from './pages/EmailSettingsPage'
+import ReceiptSettingsPage from './pages/ReceiptSettingsPage'
 
 const ReportsPage = lazy(() => import('./pages/ReportsPage'))
 
@@ -58,6 +59,7 @@ function App() {
               <Route path="/channels" element={<ProtectedRoute permission="channels.manage"><ChannelsPage /></ProtectedRoute>} />
               <Route path="/ai-settings" element={<ProtectedRoute permission="ai.manage"><AiSettingsPage /></ProtectedRoute>} />
               <Route path="/email-settings" element={<ProtectedRoute permission="email.manage"><EmailSettingsPage /></ProtectedRoute>} />
+              <Route path="/receipt-settings" element={<ProtectedRoute permission="receipt.manage"><ReceiptSettingsPage /></ProtectedRoute>} />
               <Route path="/notifications" element={<ProtectedRoute permission="inventory.adjust"><NotificationsPage /></ProtectedRoute>} />
               <Route
                 path="/users"
