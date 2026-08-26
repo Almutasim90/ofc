@@ -19,6 +19,7 @@ import ClosingSchedulePage from './pages/ClosingSchedulePage'
 import SettingsPage from './pages/SettingsPage'
 import ChannelsPage from './pages/ChannelsPage'
 import AiSettingsPage from './pages/AiSettingsPage'
+import AiInsightsPage from './pages/AiInsightsPage'
 import NotificationsPage from './pages/NotificationsPage'
 import EmailSettingsPage from './pages/EmailSettingsPage'
 
@@ -52,6 +53,7 @@ function App() {
                   <Suspense fallback={null}><ReportsPage /></Suspense>
                 </ProtectedRoute>
               } />
+              <Route path="/ai-insights" element={<ProtectedRoute permission="reports.branch.view"><AiInsightsPage /></ProtectedRoute>} />
               <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
               <Route path="/channels" element={<ProtectedRoute permission="channels.manage"><ChannelsPage /></ProtectedRoute>} />
               <Route path="/ai-settings" element={<ProtectedRoute permission="ai.manage"><AiSettingsPage /></ProtectedRoute>} />

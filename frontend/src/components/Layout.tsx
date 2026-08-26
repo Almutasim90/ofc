@@ -44,6 +44,7 @@ export default function Layout({ children }: { children: ReactNode }) {
     { to: '/cashier', label: t('nav.cashier'), icon: 'cashier', permission: 'sales.create' },
     { to: '/shift', label: t('nav.shift'), icon: 'shift', permission: 'sales.create' },
     { to: '/reports', label: t('nav.reports'), icon: 'reports', permission: 'reports.branch.view' },
+    { to: '/ai-insights', label: t('nav.aiInsights'), icon: 'ai', permission: 'reports.branch.view' },
     { to: '/inventory', label: t('nav.inventory'), icon: 'inventory', permission: 'inventory.adjust' },
     { to: '/products', label: t('nav.products'), icon: 'products', permission: 'products.manage' },
     { to: '/raw-materials', label: t('nav.rawMaterials'), icon: 'materials', permission: 'products.manage' },

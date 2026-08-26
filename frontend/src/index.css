@@ -636,6 +636,10 @@ body {
 .notification-item { display: flex; align-items: flex-start; gap: var(--space-2); padding: var(--space-3); border-radius: var(--radius-control); background: rgb(var(--color-surface2)); font-size: var(--text-sm); }
 .notification-item > span { width: var(--space-2); height: var(--space-2); flex: none; margin-top: var(--space-1); border-radius: 50%; background: rgb(var(--color-primary)); }
 .notification-item.is-warning > span { background: rgb(var(--color-accent)); }
+.ai-insight-result { white-space: pre-wrap; line-height: var(--leading-body); }
+.ai-insight-history { display: grid; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
+.ai-insight-history-item { display: flex; width: 100%; align-items: center; justify-content: space-between; gap: var(--space-3); padding: var(--space-3); border-radius: var(--radius-control); background: rgb(var(--color-surface2)); text-align: start; transition: background-color 150ms ease; }
+.ai-insight-history-item:hover { background: rgb(var(--color-primary) / 0.1); }
 .settings-card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr)); gap: var(--space-3); padding: var(--space-4); border: 1px solid rgb(var(--color-border)); border-radius: var(--radius-card); background: rgb(var(--color-surface)); }
 .settings-card-grid label { display: grid; gap: var(--space-1); }
 .settings-hub-card { display: flex; align-items: flex-start; gap: var(--space-3); min-height: 2.75rem; }

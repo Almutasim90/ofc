@@ -39,6 +39,7 @@
     "shift": "Shift",
     "closingSchedule": "Closing schedule",
     "reports": "Reports",
+    "aiInsights": "AI Insights",
     "settings": "Settings",
     "channels": "Sales channels",
     "aiSettings": "AI settings",
@@ -138,6 +139,7 @@
   },
   "channels": {"title":"Sales channels","description":"Add online ordering companies and manage their logos, prices, and availability.","nameAr":"Arabic name","nameEn":"English name","logoUrl":"Logo URL","uploadLogo":"Upload logo","uploading":"Uploading...","logoHint":"PNG, JPG, WebP, or SVG — up to 5 MB","logoTooLarge":"The logo is larger than 5 MB.","uploadError":"Could not upload the logo","logoSaved":"The logo was uploaded and saved to the channel.","logoUploaded":"The logo was uploaded. Save the channel to finish.","pricing":"Product pricing","logo":"Logo","channel":"Company","status":"Status","active":"Active","inactive":"Stopped","stop":"Stop","enable":"Enable"},
   "ai": {"title":"AI settings","description":"Choose the provider and model used for insights. The API key is encrypted and is never shown in full after saving.","active":"Enable AI insights","provider":"Provider","providerCustom":"Custom provider...","baseUrl":"API base URL","baseUrlHint":"Must be an OpenAI-compatible chat/completions endpoint.","model":"Model","modelHint":"Type any model name you want, or pick a suggestion.","apiKey":"API key","keyHint":"Leave blank to keep the saved key.","saved":"AI settings saved.","loadError":"Could not load AI settings.","saveError":"Could not save AI settings.","analyze":"AI insight","summary":"Summary","anomaly":"Anomaly detection","forecast":"Demand forecast","test":"Test connection","testSuccess":"Connection works — the provider replied: \"{{reply}}\"","testError":"Connection test failed."},
+  "aiInsights": {"title":"AI Insights","description":"Ask the configured AI provider to analyze sales and shift data for the selected period, either with a quick preset or your own question.","presetsTitle":"Quick analysis","customTitle":"Ask a question","questionLabel":"Your question","questionPlaceholder":"e.g. Why did tea sales drop last week?","ask":"Analyze","recentTitle":"Recent insights","error":"Could not generate the insight. Configure and test the AI provider first."},
   "email": {"title":"Email settings","description":"Configure the SMTP account used to send system alerts automatically. The password is stored encrypted.","active":"Enable email notifications","smtpHost":"SMTP server","smtpPort":"Port","username":"Username","password":"Email password or app password","fromEmail":"Sender email","fromName":"Sender name","recipients":"Alert recipients","recipientsHint":"Separate addresses with commas or semicolons.","useSsl":"Use secure SSL/TLS connection","saved":"Email settings saved.","loadError":"Could not load email settings.","saveError":"Could not save email settings.","testTitle":"Test delivery","testRecipient":"Send a test message to","sendTest":"Send test","testSent":"Test email sent successfully.","testError":"Test email delivery failed."},
   "closing": {
     "title": "Automatic closing schedule",
