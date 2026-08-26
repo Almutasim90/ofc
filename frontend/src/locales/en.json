@@ -211,7 +211,7 @@
     "payment": { "cash": "Cash", "card": "Card" }
   },
   "settings": {
-    "title": "Personal settings",
+    "hubTitle": "Settings center",
     "preferences": "Preferences",
     "language": "Preferred language",
     "save": "Save preferences",
@@ -225,7 +225,7 @@
     "passwordMismatch": "The new passwords do not match.",
     "saveError": "Could not save your settings."
   },
-  "settingsHub": {"search":"Search settings...","closingSummary":"Automatic closing and exceptions","usersSummary":"Users and permissions","branchesSummary":"Manage branches and status","channelsSummary":"Order channels and pricing","aiSummary":"Provider, model, and API key","emailSummary":"Sender account and alert recipients","count":"{{count}} items"},
+  "settingsHub": {"search":"Search settings...","myAccount":"My account","groupOperations":"Operations","groupIntegrations":"Sales & integrations","closingSummary":"Automatic closing and exceptions","usersSummary":"Users and permissions","branchesSummary":"Manage branches and status","channelsSummary":"Order channels and pricing","aiSummary":"Provider, model, and API key","emailSummary":"Sender account and alert recipients","count":"{{count}} items"},
   "users": {
     "title": "User Management",
     "fullName": "Full name",

@@ -82,21 +82,23 @@ export default function ClosingSchedulePage() {
       <p className="text-muted">{t('closing.timezoneHint')}</p>
       {error && <p className="error-text">{error}</p>}
 
-      <form className="ui-card ui-stack max-w-lg" onSubmit={saveConfig}>
+      <form className="ui-card ui-stack" onSubmit={saveConfig}>
         <h2>{t('closing.defaultSchedule')}</h2>
-        <label className="flex flex-col gap-1 text-muted">{t('closing.defaultTime')}
-          <input type="time" required value={defaultTime} onChange={(e) => setDefaultTime(e.target.value)} />
-        </label>
-        <label className="flex min-h-11 items-center gap-2 text-muted">
-          <input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} />
-          {t('closing.active')}
-        </label>
+        <div className="settings-form-grid">
+          <label className="flex flex-col gap-1 text-muted">{t('closing.defaultTime')}
+            <input type="time" required value={defaultTime} onChange={(e) => setDefaultTime(e.target.value)} />
+          </label>
+          <label className="flex min-h-11 items-center gap-2 text-muted">
+            <input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} />
+            {t('closing.active')}
+          </label>
+        </div>
         <button disabled={saving || !config}>{t('closing.saveConfig')}</button>
       </form>
 
       <form className="ui-card ui-stack" onSubmit={saveException}>
         <h2>{editingId ? t('closing.editException') : t('closing.addException')}</h2>
-        <div className="grid gap-3 md:grid-cols-4">
+        <div className="settings-form-grid">
           <label className="flex flex-col gap-1 text-muted">{t('closing.date')}
             <input type="date" required value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
           </label>

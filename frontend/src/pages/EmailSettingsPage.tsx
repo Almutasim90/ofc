@@ -26,9 +26,9 @@ export default function EmailSettingsPage() {
   const test = async () => { setBusy(true); setError(null); setMessage(null); try { await api.post('/api/email-settings/test', {recipient:testRecipient}); setMessage(t('email.testSent')) } catch(err) { setError(err instanceof ApiError ? err.message : t('email.testError')) } finally { setBusy(false) } }
 
   return <section><h1>{t('email.title')}</h1><p>{t('email.description')}</p>{message&&<p className="text-primary">{message}</p>}{error&&<p className="error-text" role="alert">{error}</p>}
-    <form className="ui-card ui-stack max-w-2xl" onSubmit={save}>
+    <form className="ui-card ui-stack" onSubmit={save}>
       <label className="checkbox-field"><input type="checkbox" checked={form.isActive} onChange={e=>setForm({...form,isActive:e.target.checked})}/><span>{t('email.active')}</span></label>
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="settings-form-grid">
         <label>{t('email.smtpHost')}<input required={form.isActive} value={form.smtpHost} onChange={e=>setForm({...form,smtpHost:e.target.value})}/></label>
         <label>{t('email.smtpPort')}<input type="number" min="1" max="65535" required value={form.smtpPort} onChange={e=>setForm({...form,smtpPort:Number(e.target.value)})}/></label>
         <label>{t('email.username')}<input value={form.username} onChange={e=>setForm({...form,username:e.target.value})}/></label>
@@ -40,6 +40,6 @@ export default function EmailSettingsPage() {
       <label className="checkbox-field"><input type="checkbox" checked={form.useSsl} onChange={e=>setForm({...form,useSsl:e.target.checked})}/><span>{t('email.useSsl')}</span></label>
       <button disabled={busy}>{t('common.save')}</button>
     </form>
-    <div className="ui-card ui-stack max-w-2xl"><h2>{t('email.testTitle')}</h2><label>{t('email.testRecipient')}<input type="email" value={testRecipient} onChange={e=>setTestRecipient(e.target.value)}/></label><button type="button" disabled={busy||!testRecipient||!form.isActive} onClick={test}>{t('email.sendTest')}</button></div>
+    <div className="ui-card ui-stack max-w-md"><h2>{t('email.testTitle')}</h2><label>{t('email.testRecipient')}<input type="email" value={testRecipient} onChange={e=>setTestRecipient(e.target.value)}/></label><button type="button" disabled={busy||!testRecipient||!form.isActive} onClick={test}>{t('email.sendTest')}</button></div>
   </section>
 }

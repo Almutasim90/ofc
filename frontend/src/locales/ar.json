@@ -211,7 +211,7 @@
     "payment": { "cash": "نقدي", "card": "بطاقة" }
   },
   "settings": {
-    "title": "الإعدادات الشخصية",
+    "hubTitle": "مركز الإعدادات",
     "preferences": "التفضيلات",
     "language": "اللغة المفضلة",
     "save": "حفظ التفضيلات",
@@ -225,7 +225,7 @@
     "passwordMismatch": "كلمتا المرور الجديدتان غير متطابقتين.",
     "saveError": "تعذر حفظ الإعدادات."
   },
-  "settingsHub": {"search":"بحث في الإعدادات...","closingSummary":"الإغلاق التلقائي والاستثناءات","usersSummary":"المستخدمون والصلاحيات","branchesSummary":"إدارة الأفرع وحالتها","channelsSummary":"قنوات الطلبات وأسعارها","aiSummary":"المزوّد والنموذج ومفتاح API","emailSummary":"حساب الإرسال ومستلمو التنبيهات","count":"{{count}} عناصر"},
+  "settingsHub": {"search":"بحث في الإعدادات...","myAccount":"حسابي","groupOperations":"التشغيل","groupIntegrations":"المبيعات والتكامل","closingSummary":"الإغلاق التلقائي والاستثناءات","usersSummary":"المستخدمون والصلاحيات","branchesSummary":"إدارة الأفرع وحالتها","channelsSummary":"قنوات الطلبات وأسعارها","aiSummary":"المزوّد والنموذج ومفتاح API","emailSummary":"حساب الإرسال ومستلمو التنبيهات","count":"{{count}} عناصر"},
   "users": {
     "title": "إدارة المستخدمين",
     "fullName": "الاسم الكامل",

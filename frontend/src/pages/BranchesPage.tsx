@@ -111,30 +111,32 @@ function BranchForm({
 
   return (
     <div className="modal-backdrop">
-      <div className="modal">
+      <div className="modal branch-modal">
         <h2>{editing.mode === 'create' ? t('branches.createTitle') : t('branches.editTitle')}</h2>
-        <label>
-          {t('branches.nameAr')}
-          <input value={nameAr} onChange={(e) => setNameAr(e.target.value)} required />
-        </label>
-        <label>
-          {t('branches.nameEn')}
-          <input value={nameEn} onChange={(e) => setNameEn(e.target.value)} required />
-        </label>
-        <label>
-          {t('branches.code')}
-          <input value={code} onChange={(e) => setCode(e.target.value)} required />
-        </label>
-        <label>
-          {t('branches.defaultOpeningFloat')}
-          <input type="number" min="0" step="0.001" value={defaultOpeningFloat} onChange={(e) => setDefaultOpeningFloat(e.target.value)} required />
-        </label>
-        {editing.mode === 'edit' && (
+        <div className="settings-form-grid">
           <label>
-            {t('branches.active')}
-            <input type="checkbox" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />
+            {t('branches.nameAr')}
+            <input value={nameAr} onChange={(e) => setNameAr(e.target.value)} required />
           </label>
-        )}
+          <label>
+            {t('branches.nameEn')}
+            <input value={nameEn} onChange={(e) => setNameEn(e.target.value)} required />
+          </label>
+          <label>
+            {t('branches.code')}
+            <input value={code} onChange={(e) => setCode(e.target.value)} required />
+          </label>
+          <label>
+            {t('branches.defaultOpeningFloat')}
+            <input type="number" min="0" step="0.001" value={defaultOpeningFloat} onChange={(e) => setDefaultOpeningFloat(e.target.value)} required />
+          </label>
+          {editing.mode === 'edit' && (
+            <label>
+              {t('branches.active')}
+              <input type="checkbox" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />
+            </label>
+          )}
+        </div>
         <div className="modal-actions">
           <button type="button" onClick={onSubmit} disabled={submitting}>
             {t('branches.save')}
