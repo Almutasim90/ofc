@@ -126,6 +126,8 @@
     ,"decreaseQuantity": "Decrease quantity"
     ,"noBranches": "No active branches are available yet. Ask an administrator to add a branch before opening a shift."
     ,"noBranchesAdmin": "No active branches are available yet. Add or activate a branch on the"
+    ,"salesTitle": "This shift's sales"
+    ,"salesEmpty": "No sales yet in this shift."
   },
   "notifications": {
     "title": "Notifications",

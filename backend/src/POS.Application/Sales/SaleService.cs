@@ -173,6 +173,24 @@ public class SaleService(IAppDbContext db, IDomainEventPublisher eventPublisher,
                 i.LineTotal, i.DiscountType, i.DiscountValue)).ToList());
     }
 
+    public async Task<IReadOnlyList<SaleDto>> ListForShiftAsync(Guid shiftId, CancellationToken cancellationToken = default)
+    {
+        var userId = currentUser.UserId ?? throw new UnauthorizedException("Missing user context.");
+        var shift = await db.Shifts.AsNoTracking().FirstOrDefaultAsync(s => s.Id == shiftId, cancellationToken)
+            ?? throw new NotFoundException("Shift not found.");
+        if (shift.CashierUserId != userId && !currentUser.BypassBranchFilter)
+            throw new ForbiddenException("You do not have access to this shift.");
+
+        return await db.Sales.AsNoTracking()
+            .Where(s => s.ShiftId == shiftId && s.Status == SaleStatus.Completed)
+            .OrderByDescending(s => s.CreatedAt)
+            .Select(s => new SaleDto(
+                s.Id, s.BranchId, s.ChannelId, s.ShiftId, s.CashierUserId, s.BusinessDate, s.CreatedAt, s.TotalAmount,
+                s.DiscountType, s.DiscountValue, s.DiscountAmount, s.PaymentMethod, s.Status,
+                s.Items.Select(i => new SaleItemDto(i.ProductId, i.ProductNameSnapshot, i.UnitPriceSnapshot, i.Quantity, i.LineTotal, i.DiscountType, i.DiscountValue)).ToList()))
+            .ToListAsync(cancellationToken);
+    }
+
     private static string NormalizeDiscountType(string? type) => string.IsNullOrWhiteSpace(type) ? "None" : type;
 
     private static void ValidateDiscount(string? type, decimal value)

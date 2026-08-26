@@ -16,4 +16,8 @@ public class SalesController(SaleService saleService) : ControllerBase
         var sale = await saleService.CreateAsync(request, cancellationToken);
         return CreatedAtAction(nameof(Create), new { id = sale.Id }, sale);
     }
+
+    [HttpGet]
+    public async Task<ActionResult<IReadOnlyList<SaleDto>>> ListForShift([FromQuery] Guid shiftId, CancellationToken cancellationToken) =>
+        Ok(await saleService.ListForShiftAsync(shiftId, cancellationToken));
 }

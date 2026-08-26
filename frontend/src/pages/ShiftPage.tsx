@@ -3,8 +3,10 @@ import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { api, ApiError } from '../api/client'
 import { useAuth } from '../auth/AuthContext'
-import type { BranchDto, ShiftDto } from '../api/types'
+import type { BranchDto, SaleDto, ShiftDto } from '../api/types'
 import Money from '../components/Money'
+import AppIcon from '../components/AppIcon'
+import Receipt from '../components/Receipt'
 
 export default function ShiftPage() {
   const { t, i18n } = useTranslation()
@@ -20,6 +22,9 @@ export default function ShiftPage() {
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [sales, setSales] = useState<SaleDto[]>([])
+  const [receiptHeader, setReceiptHeader] = useState<string | null>(null)
+  const [printSale, setPrintSale] = useState<SaleDto | null>(null)
 
   useEffect(() => {
     const load = async () => {
@@ -44,6 +49,23 @@ export default function ShiftPage() {
     }
     load()
   }, [t, user?.branchId])
+
+  useEffect(() => {
+    api.get<{ headerText: string | null }>('/api/receipt-settings').then((x) => setReceiptHeader(x.headerText)).catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    if (!shift) { setSales([]); return }
+    api.get<SaleDto[]>(`/api/sales?shiftId=${shift.id}`).then(setSales).catch(() => {})
+  }, [shift])
+
+  useEffect(() => {
+    if (!printSale) return
+    window.print()
+    const reset = () => setPrintSale(null)
+    window.addEventListener('afterprint', reset)
+    return () => window.removeEventListener('afterprint', reset)
+  }, [printSale])
 
   const openShift = async (event: FormEvent) => {
     event.preventDefault()
@@ -95,6 +117,8 @@ export default function ShiftPage() {
   if (loading) return <p>{t('common.loading')}</p>
   const branchName = (branch: BranchDto) => i18n.language === 'ar' ? branch.nameAr : branch.nameEn
   const selectedBranch = branches.find((branch) => branch.id === branchId)
+  const printSaleBranch = branches.find((branch) => branch.id === printSale?.branchId)
+  const printBranchName = printSaleBranch ? branchName(printSaleBranch) : ''
   const countedTotal = denominations.reduce((sum, denomination) => sum + denomination * (cashCounts[denomination.toString()] ?? 0), 0)
   const changeCount = (denomination: number, delta: number) => setCashCounts((current) => ({
     ...current,
@@ -186,6 +210,28 @@ export default function ShiftPage() {
           )}
         </form>
       )}
+
+      {shift && (
+        <div className="ui-card ui-stack">
+          <h2>{t('shifts.salesTitle')}</h2>
+          {sales.length === 0 ? (
+            <p className="text-sm text-muted">{t('shifts.salesEmpty')}</p>
+          ) : (
+            <ul className="shift-sales-list">
+              {sales.map((sale) => <li key={sale.id} className="shift-sale-row">
+                <span className="shift-sale-time">{new Date(sale.createdAt).toLocaleTimeString(i18n.language, { hour: '2-digit', minute: '2-digit' })}</span>
+                <span className="shift-sale-payment">{sale.paymentMethod === 'Cash' ? t('cashier.cash') : t('cashier.card')}</span>
+                <Money value={sale.totalAmount} />
+                <button type="button" className="shift-sale-print" onClick={() => setPrintSale(sale)} aria-label={t('receipt.print')} title={t('receipt.print')}>
+                  <AppIcon className="h-4 w-4" name="printer" />
+                </button>
+              </li>)}
+            </ul>
+          )}
+        </div>
+      )}
+
+      {printSale && <Receipt sale={printSale} headerText={receiptHeader} branchName={printBranchName} cashierName={user?.fullName ?? ''} />}
 
       {lastClosed && (
         <div className="ui-card ui-stack">
