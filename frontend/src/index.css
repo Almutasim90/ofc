@@ -638,6 +638,9 @@ body {
 .notification-item.is-warning > span { background: rgb(var(--color-accent)); }
 .settings-card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr)); gap: var(--space-3); padding: var(--space-4); border: 1px solid rgb(var(--color-border)); border-radius: var(--radius-card); background: rgb(var(--color-surface)); }
 .settings-card-grid label { display: grid; gap: var(--space-1); }
+.settings-hub-card { display: flex; align-items: flex-start; gap: var(--space-3); min-height: 2.75rem; }
+.settings-hub-card-icon { display: flex; flex: none; align-items: center; justify-content: center; width: 2.75rem; height: 2.75rem; border-radius: var(--radius-control); background: rgb(var(--color-primary) / 0.1); color: rgb(var(--color-primary)); transition: background-color 180ms ease, color 180ms ease, transform 180ms ease; }
+.settings-hub-card:hover .settings-hub-card-icon { background: rgb(var(--color-primary)); color: var(--sidebar-text); transform: scale(1.06); }
 .channels-page { display: grid; gap: var(--space-6); }
 .page-heading > div { display: grid; gap: var(--space-1); }
 .page-heading p { margin: 0; color: rgb(var(--color-muted)); }

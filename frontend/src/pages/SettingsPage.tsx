@@ -4,6 +4,7 @@ import { api, ApiError } from '../api/client'
 import { useAuth } from '../auth/AuthContext'
 import { useTheme } from '../theme/ThemeContext'
 import { Link } from 'react-router-dom'
+import AppIcon, { type AppIconName } from '../components/AppIcon'
 
 export default function SettingsPage() {
   const { t, i18n } = useTranslation(); const { user, updatePreferences, hasPermission } = useAuth(); const { theme } = useTheme()
@@ -16,16 +17,16 @@ export default function SettingsPage() {
   const savePreferences = async (event: FormEvent) => { event.preventDefault(); setError(null); setMessage(null); try { await api.put('/api/me/preferences', { preferredLanguage: language, preferredTheme: theme }); await i18n.changeLanguage(language); updatePreferences(language, theme); setMessage(t('settings.saved')) } catch { setError(t('settings.saveError')) } }
   const changePassword = async (event: FormEvent) => { event.preventDefault(); setError(null); setMessage(null); if (newPassword !== confirmPassword) { setError(t('settings.passwordMismatch')); return } try { await api.put('/api/me/password', { currentPassword, newPassword }); setCurrentPassword(''); setNewPassword(''); setConfirmPassword(''); setMessage(t('settings.passwordChanged')) } catch (err) { setError(err instanceof ApiError ? err.message : t('settings.saveError')) } }
   const allCards=[
-    {to:'/branches',title:t('nav.branches'),summary:summaries.branches??t('settingsHub.branchesSummary'),permission:'branches.manage',group:'operations' as const},
-    {to:'/users',title:t('nav.users'),summary:summaries.users??t('settingsHub.usersSummary'),permission:'users.manage',group:'operations' as const},
-    {to:'/closing-schedule',title:t('nav.closingSchedule'),summary:summaries.closing??t('settingsHub.closingSummary'),permission:'closing.configure',group:'operations' as const},
-    {to:'/channels',title:t('nav.channels'),summary:summaries.channels??t('settingsHub.channelsSummary'),permission:'channels.manage',group:'integrations' as const},
-    {to:'/ai-settings',title:t('nav.aiSettings'),summary:summaries.ai??t('settingsHub.aiSummary'),permission:'ai.manage',group:'integrations' as const},
-    {to:'/email-settings',title:t('nav.emailSettings'),summary:summaries.email??t('settingsHub.emailSummary'),permission:'email.manage',group:'integrations' as const},
+    {to:'/branches',title:t('nav.branches'),summary:summaries.branches??t('settingsHub.branchesSummary'),permission:'branches.manage',group:'operations' as const,icon:'branches' as AppIconName},
+    {to:'/users',title:t('nav.users'),summary:summaries.users??t('settingsHub.usersSummary'),permission:'users.manage',group:'operations' as const,icon:'users' as AppIconName},
+    {to:'/closing-schedule',title:t('nav.closingSchedule'),summary:summaries.closing??t('settingsHub.closingSummary'),permission:'closing.configure',group:'operations' as const,icon:'schedule' as AppIconName},
+    {to:'/channels',title:t('nav.channels'),summary:summaries.channels??t('settingsHub.channelsSummary'),permission:'channels.manage',group:'integrations' as const,icon:'channels' as AppIconName},
+    {to:'/ai-settings',title:t('nav.aiSettings'),summary:summaries.ai??t('settingsHub.aiSummary'),permission:'ai.manage',group:'integrations' as const,icon:'ai' as AppIconName},
+    {to:'/email-settings',title:t('nav.emailSettings'),summary:summaries.email??t('settingsHub.emailSummary'),permission:'email.manage',group:'integrations' as const,icon:'email' as AppIconName},
   ].filter(c=>hasPermission(c.permission)&&`${c.title} ${c.summary}`.toLocaleLowerCase().includes(search.toLocaleLowerCase()))
   const operationsCards=allCards.filter(c=>c.group==='operations')
   const integrationsCards=allCards.filter(c=>c.group==='integrations')
-  const cardGrid=(items:typeof allCards)=><div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{items.map(c=><Link key={c.to} to={c.to} className="ui-card ui-card-interactive ui-stack min-h-11"><h2 className="truncate">{c.title}</h2><p className="line-clamp-2">{c.summary}</p></Link>)}</div>
+  const cardGrid=(items:typeof allCards)=><div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{items.map(c=><Link key={c.to} to={c.to} className="ui-card ui-card-interactive settings-hub-card"><span className="settings-hub-card-icon"><AppIcon className="h-5 w-5" name={c.icon} /></span><span className="min-w-0"><h2 className="truncate">{c.title}</h2><p className="line-clamp-2">{c.summary}</p></span></Link>)}</div>
   return <section><h1>{t('settings.hubTitle')}</h1>{message && <p className="text-primary">{message}</p>}{error && <p className="error-text">{error}</p>}
     <div className="ui-stack">
       <input className="w-full max-w-md" placeholder={t('settingsHub.search')} value={search} onChange={e=>setSearch(e.target.value)}/>

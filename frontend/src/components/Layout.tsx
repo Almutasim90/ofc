@@ -52,7 +52,7 @@ export default function Layout({ children }: { children: ReactNode }) {
     { to: '/closing-schedule', label: t('nav.closingSchedule'), icon: 'schedule', permission: 'closing.configure' },
     { to: '/channels', label: t('nav.channels'), icon: 'channels', permission: 'channels.manage' },
     { to: '/ai-settings', label: t('nav.aiSettings'), icon: 'ai', permission: 'ai.manage' },
-    { to: '/email-settings', label: t('nav.emailSettings'), icon: 'notifications', permission: 'email.manage' },
+    { to: '/email-settings', label: t('nav.emailSettings'), icon: 'email', permission: 'email.manage' },
     { to: '/notifications', label: t('nav.notifications'), icon: 'notifications', permission: 'inventory.adjust' },
     { to: '/settings', label: t('nav.settings'), icon: 'settings' },
   ] satisfies NavItem[]).filter((item) => !item.permission || hasPermission(item.permission))
