@@ -8,5 +8,6 @@ public class AiController(AiInsightService service) : ControllerBase
 {
     [HttpGet("settings"), RequirePermission(PermissionKeys.AiManage)] public async Task<ActionResult<AiSettingsDto>> Settings(CancellationToken ct) => Ok(await service.GetSettingsAsync(ct));
     [HttpPut("settings"), RequirePermission(PermissionKeys.AiManage)] public async Task<ActionResult<AiSettingsDto>> Settings(UpdateAiSettingsRequest r, CancellationToken ct) => Ok(await service.SaveSettingsAsync(r, ct));
+    [HttpPost("settings/test"), RequirePermission(PermissionKeys.AiManage)] public async Task<ActionResult<AiTestResultDto>> TestConnection(CancellationToken ct) => Ok(await service.TestConnectionAsync(ct));
     [HttpPost("insights"), RequirePermission(PermissionKeys.ReportsBranchView)] public async Task<ActionResult<AiInsightDto>> Insight(GenerateInsightRequest r, CancellationToken ct) => Ok(await service.GenerateAsync(r, ct));
 }
