@@ -12,6 +12,7 @@ public record SaleItemDto(
 
 public record SaleDto(
     Guid Id,
+    int SaleNumber,
     Guid BranchId,
     Guid ChannelId,
     Guid ShiftId,

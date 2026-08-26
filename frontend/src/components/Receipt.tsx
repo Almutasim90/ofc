@@ -16,6 +16,7 @@ export default function Receipt({ sale, headerText, branchName, cashierName }: R
   return (
     <div className="receipt-print" dir={i18n.language === 'ar' ? 'rtl' : 'ltr'}>
       {headerText && <div className="receipt-header">{headerText.split('\n').map((line, index) => <div key={index}>{line}</div>)}</div>}
+      <div className="receipt-number">{t('receipt.number', { number: sale.saleNumber })}</div>
       <div className="receipt-divider" />
       <div className="receipt-meta">
         <div><span>{t('receipt.date')}</span><span>{new Date(sale.createdAt).toLocaleString(i18n.language)}</span></div>

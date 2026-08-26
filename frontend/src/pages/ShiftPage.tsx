@@ -219,6 +219,7 @@ export default function ShiftPage() {
           ) : (
             <ul className="shift-sales-list">
               {sales.map((sale) => <li key={sale.id} className="shift-sale-row">
+                <span className="shift-sale-number">#{sale.saleNumber}</span>
                 <span className="shift-sale-time">{new Date(sale.createdAt).toLocaleTimeString(i18n.language, { hour: '2-digit', minute: '2-digit' })}</span>
                 <span className="shift-sale-payment">{sale.paymentMethod === 'Cash' ? t('cashier.cash') : t('cashier.card')}</span>
                 <Money value={sale.totalAmount} />

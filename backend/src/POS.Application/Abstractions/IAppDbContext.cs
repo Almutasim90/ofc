@@ -37,4 +37,5 @@ public interface IAppDbContext
     DbSet<ReceiptSettings> ReceiptSettings { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
+    Task<int> ClaimNextSaleNumberAsync(Guid branchId, CancellationToken cancellationToken = default);
 }

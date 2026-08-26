@@ -45,6 +45,19 @@ public class AppDbContext : DbContext, IAppDbContext
     public DbSet<EmailSettings> EmailSettings => Set<EmailSettings>();
     public DbSet<ReceiptSettings> ReceiptSettings => Set<ReceiptSettings>();
 
+    // A single UPDATE ... RETURNING is one atomic statement in Postgres: concurrent callers
+    // for the same branch serialize on the row lock and each gets a distinct number, so this
+    // never needs an explicit transaction or a retry loop.
+    public async Task<int> ClaimNextSaleNumberAsync(Guid branchId, CancellationToken cancellationToken = default)
+    {
+        var claimed = await Database.SqlQuery<int>(
+            $"""UPDATE "Branches" SET "NextSaleNumber" = "NextSaleNumber" + 1 WHERE "Id" = {branchId} RETURNING "NextSaleNumber" - 1 AS "Value" """)
+            .ToListAsync(cancellationToken);
+        return claimed.Count > 0
+            ? claimed[0]
+            : throw new InvalidOperationException($"Branch {branchId} was not found while claiming a sale number.");
+    }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -219,6 +232,7 @@ public class AppDbContext : DbContext, IAppDbContext
             entity.Property(s => s.PaymentMethod).IsRequired().HasMaxLength(20);
             entity.Property(s => s.Status).IsRequired().HasMaxLength(20);
             entity.HasIndex(s => new { s.BranchId, s.BusinessDate });
+            entity.HasIndex(s => new { s.BranchId, s.SaleNumber }).IsUnique();
             entity.HasOne(s => s.Shift).WithMany(s => s.Sales).HasForeignKey(s => s.ShiftId).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne(s => s.Channel).WithMany().HasForeignKey(s => s.ChannelId).OnDelete(DeleteBehavior.Restrict);
 

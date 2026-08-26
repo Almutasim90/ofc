@@ -14,6 +14,10 @@ public class Sale
 
     public Guid CashierUserId { get; set; }
 
+    /// <summary>Sequential, per-branch, human-facing receipt number (branch's first sale is 1,
+    /// its second is 2, ...). Distinct from Id, which stays the internal row identifier.</summary>
+    public int SaleNumber { get; set; }
+
     /// <summary>The accounting day this sale counts against - distinct from CreatedAt so a
     /// late-night closing schedule (Sprint 5) can roll sales into the previous business day.</summary>
     public DateOnly BusinessDate { get; set; }

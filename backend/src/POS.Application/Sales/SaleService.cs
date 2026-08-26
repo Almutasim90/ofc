@@ -86,9 +86,12 @@ public class SaleService(IAppDbContext db, IDomainEventPublisher eventPublisher,
             stockByMaterial = stocks.ToDictionary(s => s.RawMaterialId);
         }
 
+        var saleNumber = await db.ClaimNextSaleNumberAsync(request.BranchId, cancellationToken);
+
         var sale = new Sale
         {
             Id = Guid.NewGuid(),
+            SaleNumber = saleNumber,
             BranchId = request.BranchId,
             ChannelId = channel.Id,
             ShiftId = shift.Id,
@@ -166,7 +169,7 @@ public class SaleService(IAppDbContext db, IDomainEventPublisher eventPublisher,
             new SaleCompletedEvent(sale.Id, sale.BranchId, sale.CashierUserId, sale.CreatedAt), cancellationToken);
 
         return new SaleDto(
-            sale.Id, sale.BranchId, sale.ChannelId, sale.ShiftId, sale.CashierUserId, sale.BusinessDate, sale.CreatedAt, sale.TotalAmount,
+            sale.Id, sale.SaleNumber, sale.BranchId, sale.ChannelId, sale.ShiftId, sale.CashierUserId, sale.BusinessDate, sale.CreatedAt, sale.TotalAmount,
             sale.DiscountType, sale.DiscountValue, sale.DiscountAmount,
             sale.PaymentMethod, sale.Status,
             sale.Items.Select(i => new SaleItemDto(i.ProductId, i.ProductNameSnapshot, i.UnitPriceSnapshot, i.Quantity,
@@ -185,7 +188,7 @@ public class SaleService(IAppDbContext db, IDomainEventPublisher eventPublisher,
             .Where(s => s.ShiftId == shiftId && s.Status == SaleStatus.Completed)
             .OrderByDescending(s => s.CreatedAt)
             .Select(s => new SaleDto(
-                s.Id, s.BranchId, s.ChannelId, s.ShiftId, s.CashierUserId, s.BusinessDate, s.CreatedAt, s.TotalAmount,
+                s.Id, s.SaleNumber, s.BranchId, s.ChannelId, s.ShiftId, s.CashierUserId, s.BusinessDate, s.CreatedAt, s.TotalAmount,
                 s.DiscountType, s.DiscountValue, s.DiscountAmount, s.PaymentMethod, s.Status,
                 s.Items.Select(i => new SaleItemDto(i.ProductId, i.ProductNameSnapshot, i.UnitPriceSnapshot, i.Quantity, i.LineTotal, i.DiscountType, i.DiscountValue)).ToList()))
             .ToListAsync(cancellationToken);
