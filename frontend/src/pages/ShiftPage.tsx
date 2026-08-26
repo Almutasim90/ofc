@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Link } from 'react-router-dom'
 import { api, ApiError } from '../api/client'
 import { useAuth } from '../auth/AuthContext'
 import type { BranchDto, ShiftDto } from '../api/types'
@@ -7,7 +8,7 @@ import Money from '../components/Money'
 
 export default function ShiftPage() {
   const { t, i18n } = useTranslation()
-  const { user } = useAuth()
+  const { user, hasPermission } = useAuth()
   const [shift, setShift] = useState<ShiftDto | null>(null)
   const [lastClosed, setLastClosed] = useState<ShiftDto | null>(null)
   const [branches, setBranches] = useState<BranchDto[]>([])
@@ -151,24 +152,38 @@ export default function ShiftPage() {
       ) : (
         <form className="ui-card ui-stack max-w-md" onSubmit={openShift}>
           <h2>{t('shifts.open')}</h2>
-          {!user?.branchId && (
-            <label className="flex flex-col gap-1 text-muted">
-              {t('shifts.branch')}
-              <select required value={branchId} onChange={(event) => setBranchId(event.target.value)}>
-                {branches.map((branch) => <option key={branch.id} value={branch.id}>{branchName(branch)}</option>)}
-              </select>
-            </label>
+          {!user?.branchId && branches.length === 0 ? (
+            <p className="error-text" role="alert">
+              {hasPermission('branches.manage') ? (
+                <>
+                  {t('shifts.noBranchesAdmin')} <Link to="/branches">{t('nav.branches')}</Link>
+                </>
+              ) : (
+                t('shifts.noBranches')
+              )}
+            </p>
+          ) : (
+            <>
+              {!user?.branchId && (
+                <label className="flex flex-col gap-1 text-muted">
+                  {t('shifts.branch')}
+                  <select required value={branchId} onChange={(event) => setBranchId(event.target.value)}>
+                    {branches.map((branch) => <option key={branch.id} value={branch.id}>{branchName(branch)}</option>)}
+                  </select>
+                </label>
+              )}
+              <div className="shift-opening-float">
+                <span>{t('shifts.defaultOpening')}</span>
+                <strong><Money value={customizeOpening ? Number(openingCash) : selectedBranch?.defaultOpeningFloat ?? 0} /></strong>
+              </div>
+              <button type="button" className="shift-edit-opening" onClick={() => setCustomizeOpening((value) => !value)}>{customizeOpening ? t('shifts.useDefault') : t('shifts.editOpening')}</button>
+              {customizeOpening && <label className="flex flex-col gap-1 text-muted">
+                  {t('shifts.openingCash')}
+                  <input type="number" min="0" step="0.001" required value={openingCash} onChange={(event) => setOpeningCash(event.target.value)} />
+              </label>}
+              <button disabled={submitting || !branchId}>{t('shifts.openSubmit')}</button>
+            </>
           )}
-          <div className="shift-opening-float">
-            <span>{t('shifts.defaultOpening')}</span>
-            <strong><Money value={customizeOpening ? Number(openingCash) : selectedBranch?.defaultOpeningFloat ?? 0} /></strong>
-          </div>
-          <button type="button" className="shift-edit-opening" onClick={() => setCustomizeOpening((value) => !value)}>{customizeOpening ? t('shifts.useDefault') : t('shifts.editOpening')}</button>
-          {customizeOpening && <label className="flex flex-col gap-1 text-muted">
-              {t('shifts.openingCash')}
-              <input type="number" min="0" step="0.001" required value={openingCash} onChange={(event) => setOpeningCash(event.target.value)} />
-          </label>}
-          <button disabled={submitting || !branchId}>{t('shifts.openSubmit')}</button>
         </form>
       )}
 

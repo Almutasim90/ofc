@@ -120,6 +120,8 @@
     ,"denominationQuantity": "عدد فئة {{denomination}}"
     ,"increaseQuantity": "زيادة العدد"
     ,"decreaseQuantity": "تقليل العدد"
+    ,"noBranches": "لا توجد فروع نشطة بعد. يرجى التواصل مع المسؤول لإضافة فرع قبل فتح وردية."
+    ,"noBranchesAdmin": "لا توجد فروع نشطة بعد. أضف فرعًا أو فعّله من صفحة"
   },
   "notifications": {
     "title": "الإشعارات",
