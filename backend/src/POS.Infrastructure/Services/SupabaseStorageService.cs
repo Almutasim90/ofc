@@ -5,9 +5,16 @@ namespace POS.Infrastructure.Services;
 
 public class SupabaseStorageService(SupabaseStorageOptions options, IHttpClientFactory clients) : IFileStorageService
 {
+    // Shorter than the reverse proxy's default 60s upstream read timeout, so a
+    // hung/unreachable Supabase host produces our own descriptive JSON error
+    // instead of nginx silently killing the connection and returning its own
+    // blank 502 page (which the frontend then shows as "(502: )").
+    private static readonly TimeSpan UploadTimeout = TimeSpan.FromSeconds(20);
+
     public async Task<string> UploadAsync(Stream content, string contentType, string path, CancellationToken cancellationToken = default)
     {
         var client = clients.CreateClient();
+        client.Timeout = UploadTimeout;
         try
         {
             client.DefaultRequestHeaders.Add("apikey", options.SecretKey);
@@ -31,6 +38,11 @@ public class SupabaseStorageService(SupabaseStorageOptions options, IHttpClientF
         {
             throw new InvalidOperationException(
                 "Supabase Storage could not be reached. Verify SUPABASE_URL and SUPABASE_SECRET_KEY in Dokploy.", ex);
+        }
+        catch (OperationCanceledException ex) when (!cancellationToken.IsCancellationRequested)
+        {
+            throw new InvalidOperationException(
+                "Supabase Storage did not respond within 20 seconds. The self-hosted Storage service may be down or unreachable from the API container - check SUPABASE_URL and that the Storage service is running.", ex);
         }
         using (response)
         {
