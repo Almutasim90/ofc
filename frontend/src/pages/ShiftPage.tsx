@@ -7,6 +7,7 @@ import type { BranchDto, SaleDto, ShiftDto } from '../api/types'
 import Money from '../components/Money'
 import AppIcon from '../components/AppIcon'
 import Receipt from '../components/Receipt'
+import { IconAction, SearchBox } from '../components/TableTools'
 
 export default function ShiftPage() {
   const { t, i18n } = useTranslation()
@@ -23,6 +24,7 @@ export default function ShiftPage() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [sales, setSales] = useState<SaleDto[]>([])
+  const [salesSearch, setSalesSearch] = useState('')
   const [receiptHeader, setReceiptHeader] = useState<string | null>(null)
   const [printSale, setPrintSale] = useState<SaleDto | null>(null)
 
@@ -119,6 +121,11 @@ export default function ShiftPage() {
   const selectedBranch = branches.find((branch) => branch.id === branchId)
   const printSaleBranch = branches.find((branch) => branch.id === printSale?.branchId)
   const printBranchName = printSaleBranch ? branchName(printSaleBranch) : ''
+  const paymentLabel = (method: string) => method === 'Cash' ? t('cashier.cash') : t('cashier.card')
+  const filteredSales = sales
+    .filter((sale) => `${sale.saleNumber} ${paymentLabel(sale.paymentMethod)} ${sale.items.map((item) => item.productNameSnapshot).join(' ')}`.toLowerCase().includes(salesSearch.trim().toLowerCase()))
+    .slice()
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
   const countedTotal = denominations.reduce((sum, denomination) => sum + denomination * (cashCounts[denomination.toString()] ?? 0), 0)
   const changeCount = (denomination: number, delta: number) => setCashCounts((current) => ({
     ...current,
@@ -213,21 +220,33 @@ export default function ShiftPage() {
 
       {shift && (
         <div className="ui-card ui-stack">
-          <h2>{t('shifts.salesTitle')}</h2>
+          <div className="table-toolbar">
+            <h2>{t('shifts.salesTitle')}</h2>
+            {sales.length > 0 && <SearchBox value={salesSearch} onChange={(event) => setSalesSearch(event.target.value)} placeholder={t('common.search')} />}
+          </div>
           {sales.length === 0 ? (
             <p className="text-sm text-muted">{t('shifts.salesEmpty')}</p>
           ) : (
-            <ul className="shift-sales-list">
-              {sales.map((sale) => <li key={sale.id} className="shift-sale-row">
-                <span className="shift-sale-number">#{sale.saleNumber}</span>
-                <span className="shift-sale-time">{new Date(sale.createdAt).toLocaleTimeString(i18n.language, { hour: '2-digit', minute: '2-digit' })}</span>
-                <span className="shift-sale-payment">{sale.paymentMethod === 'Cash' ? t('cashier.cash') : t('cashier.card')}</span>
-                <Money value={sale.totalAmount} />
-                <button type="button" className="shift-sale-print" onClick={() => setPrintSale(sale)} aria-label={t('receipt.print')} title={t('receipt.print')}>
-                  <AppIcon className="h-4 w-4" name="printer" />
-                </button>
-              </li>)}
-            </ul>
+            <div className="table-shell"><table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>{t('shifts.time')}</th>
+                  <th>{t('cashier.paymentMethod')}</th>
+                  <th>{t('cashier.total')}</th>
+                  <th>{t('branches.actions')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredSales.map((sale) => <tr key={sale.id}>
+                  <td>#{sale.saleNumber}</td>
+                  <td>{new Date(sale.createdAt).toLocaleTimeString(i18n.language, { hour: '2-digit', minute: '2-digit' })}</td>
+                  <td>{paymentLabel(sale.paymentMethod)}</td>
+                  <td><Money value={sale.totalAmount} /></td>
+                  <td><IconAction label={t('receipt.print')} onClick={() => setPrintSale(sale)}><AppIcon className="h-4 w-4" name="printer" /></IconAction></td>
+                </tr>)}
+              </tbody>
+            </table></div>
           )}
         </div>
       )}
