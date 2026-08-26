@@ -5,17 +5,18 @@ import { useAuth } from '../auth/AuthContext'
 import { useTheme } from '../theme/ThemeContext'
 import { Link } from 'react-router-dom'
 import AppIcon, { type AppIconName } from '../components/AppIcon'
+import { useToast } from '../components/ToastContext'
 
 export default function SettingsPage() {
   const { t, i18n } = useTranslation(); const { user, updatePreferences, hasPermission } = useAuth(); const { theme } = useTheme()
+  const toast = useToast()
   const [search, setSearch] = useState('')
   const [summaries, setSummaries] = useState<Record<string,string>>({})
   useEffect(()=>{const tasks:Promise<void>[]=[];if(hasPermission('closing.configure'))tasks.push(api.get<{defaultCloseTime:string;isActive:boolean}>('/api/closing-schedule/config').then(x=>setSummaries(s=>({...s,closing:`${x.defaultCloseTime.slice(0,5)} · ${x.isActive?t('common.active'):t('common.inactive')}`}))));if(hasPermission('users.manage'))tasks.push(api.get<unknown[]>('/api/users').then(x=>setSummaries(s=>({...s,users:t('settingsHub.count',{count:x.length})}))));if(hasPermission('branches.manage'))tasks.push(api.get<unknown[]>('/api/branches').then(x=>setSummaries(s=>({...s,branches:t('settingsHub.count',{count:x.length})}))));if(hasPermission('channels.manage'))tasks.push(api.get<unknown[]>('/api/channels').then(x=>setSummaries(s=>({...s,channels:t('settingsHub.count',{count:x.length})}))));if(hasPermission('ai.manage'))tasks.push(api.get<{provider:string;model:string;isActive:boolean}>('/api/ai/settings').then(x=>setSummaries(s=>({...s,ai:x.isActive?`${x.provider} · ${x.model}`:t('common.inactive')}))));if(hasPermission('receipt.manage'))tasks.push(api.get<{headerText:string|null}>('/api/receipt-settings').then(x=>setSummaries(s=>({...s,receipt:x.headerText?t('settingsHub.receiptConfigured'):t('settingsHub.receiptEmptySummary')}))));void Promise.allSettled(tasks)},[hasPermission,t])
   const [language, setLanguage] = useState(user?.preferredLanguage ?? i18n.language)
   const [currentPassword, setCurrentPassword] = useState(''); const [newPassword, setNewPassword] = useState(''); const [confirmPassword, setConfirmPassword] = useState('')
-  const [message, setMessage] = useState<string | null>(null); const [error, setError] = useState<string | null>(null)
-  const savePreferences = async (event: FormEvent) => { event.preventDefault(); setError(null); setMessage(null); try { await api.put('/api/me/preferences', { preferredLanguage: language, preferredTheme: theme }); await i18n.changeLanguage(language); updatePreferences(language, theme); setMessage(t('settings.saved')) } catch { setError(t('settings.saveError')) } }
-  const changePassword = async (event: FormEvent) => { event.preventDefault(); setError(null); setMessage(null); if (newPassword !== confirmPassword) { setError(t('settings.passwordMismatch')); return } try { await api.put('/api/me/password', { currentPassword, newPassword }); setCurrentPassword(''); setNewPassword(''); setConfirmPassword(''); setMessage(t('settings.passwordChanged')) } catch (err) { setError(err instanceof ApiError ? err.message : t('settings.saveError')) } }
+  const savePreferences = async (event: FormEvent) => { event.preventDefault(); try { await api.put('/api/me/preferences', { preferredLanguage: language, preferredTheme: theme }); await i18n.changeLanguage(language); updatePreferences(language, theme); toast.success(t('settings.saved')) } catch { toast.error(t('settings.saveError')) } }
+  const changePassword = async (event: FormEvent) => { event.preventDefault(); if (newPassword !== confirmPassword) { toast.error(t('settings.passwordMismatch')); return } try { await api.put('/api/me/password', { currentPassword, newPassword }); setCurrentPassword(''); setNewPassword(''); setConfirmPassword(''); toast.success(t('settings.passwordChanged')) } catch (err) { toast.error(err instanceof ApiError ? err.message : t('settings.saveError')) } }
   const allCards=[
     {to:'/branches',title:t('nav.branches'),summary:summaries.branches??t('settingsHub.branchesSummary'),permission:'branches.manage',group:'operations' as const,icon:'branches' as AppIconName},
     {to:'/users',title:t('nav.users'),summary:summaries.users??t('settingsHub.usersSummary'),permission:'users.manage',group:'operations' as const,icon:'users' as AppIconName},
@@ -28,7 +29,7 @@ export default function SettingsPage() {
   const operationsCards=allCards.filter(c=>c.group==='operations')
   const integrationsCards=allCards.filter(c=>c.group==='integrations')
   const cardGrid=(items:typeof allCards)=><div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{items.map(c=><Link key={c.to} to={c.to} className="ui-card ui-card-interactive settings-hub-card"><span className="settings-hub-card-icon"><AppIcon className="h-5 w-5" name={c.icon} /></span><span className="min-w-0"><h2 className="truncate">{c.title}</h2><p className="line-clamp-2">{c.summary}</p></span></Link>)}</div>
-  return <section><h1>{t('settings.hubTitle')}</h1>{message && <p className="text-primary">{message}</p>}{error && <p className="error-text">{error}</p>}
+  return <section><h1>{t('settings.hubTitle')}</h1>
     <div className="ui-stack">
       <input className="w-full max-w-md" placeholder={t('settingsHub.search')} value={search} onChange={e=>setSearch(e.target.value)}/>
       {operationsCards.length>0 && <div className="ui-stack"><h2>{t('settingsHub.groupOperations')}</h2>{cardGrid(operationsCards)}</div>}

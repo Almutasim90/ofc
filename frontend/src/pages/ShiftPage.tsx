@@ -8,10 +8,12 @@ import Money from '../components/Money'
 import AppIcon from '../components/AppIcon'
 import Receipt from '../components/Receipt'
 import { IconAction, SearchBox } from '../components/TableTools'
+import { useToast } from '../components/ToastContext'
 
 export default function ShiftPage() {
   const { t, i18n } = useTranslation()
   const { user, hasPermission } = useAuth()
+  const toast = useToast()
   const [shift, setShift] = useState<ShiftDto | null>(null)
   const [lastClosed, setLastClosed] = useState<ShiftDto | null>(null)
   const [branches, setBranches] = useState<BranchDto[]>([])
@@ -72,13 +74,13 @@ export default function ShiftPage() {
   const openShift = async (event: FormEvent) => {
     event.preventDefault()
     setSubmitting(true)
-    setError(null)
     try {
       const opened = await api.post<ShiftDto>('/api/shifts/open', { branchId, openingCash: customizeOpening ? Number(openingCash) : null })
       setShift(opened)
       setLastClosed(null)
+      toast.success(t('shifts.opened'))
     } catch (err) {
-      setError(err instanceof ApiError && (err.status === 401 || err.status === 403) ? t('shifts.sessionExpired') : t('shifts.openError'))
+      toast.error(err instanceof ApiError && (err.status === 401 || err.status === 403) ? t('shifts.sessionExpired') : t('shifts.openError'))
     } finally {
       setSubmitting(false)
     }
@@ -88,7 +90,6 @@ export default function ShiftPage() {
     event.preventDefault()
     if (!shift) return
     setSubmitting(true)
-    setError(null)
     try {
       const closed = await api.post<ShiftDto>(`/api/shifts/${shift.id}/close`, {
         counts: denominations.map((denomination) => ({ denomination, quantity: cashCounts[denomination.toString()] ?? 0 })),
@@ -96,8 +97,9 @@ export default function ShiftPage() {
       setLastClosed(closed)
       setShift(null)
       setCashCounts(Object.fromEntries(denominations.map((value) => [value.toString(), 0])))
+      toast.success(t('shifts.closed'))
     } catch (err) {
-      setError(err instanceof ApiError && (err.status === 401 || err.status === 403) ? t('shifts.sessionExpired') : t('shifts.closeError'))
+      const message = err instanceof ApiError && (err.status === 401 || err.status === 403) ? t('shifts.sessionExpired') : t('shifts.closeError')
       // The same shift may have been closed from another device. Refresh the
       // state so a desktop left open does not keep showing a stale close form.
       try {
@@ -107,9 +109,10 @@ export default function ShiftPage() {
         ])
         setShift(current ?? null)
         setLastClosed(latestClosed ?? null)
-        if (!current) setError(null)
+        if (!current) toast.success(t('shifts.closed'))
+        else toast.error(message)
       } catch {
-        // Keep the original close error if refreshing also fails.
+        toast.error(message)
       }
     } finally {
       setSubmitting(false)
@@ -173,7 +176,6 @@ export default function ShiftPage() {
             </div>
             <div className="shift-close-actions">
               <div className="cash-count-total"><span>{t('shifts.countedTotal')}</span><Money value={countedTotal} /></div>
-              {error && <p className="error-text" role="alert">{error}</p>}
               <button type="submit" disabled={submitting}>
                 {submitting ? t('shifts.closingSubmit') : t('shifts.closeSubmit')}
               </button>

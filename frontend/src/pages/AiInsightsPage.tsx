@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { api, ApiError } from '../api/client'
 import { useAuth } from '../auth/AuthContext'
+import { useToast } from '../components/ToastContext'
 import type { BranchDto } from '../api/types'
 
 interface AiInsightDto { id: string; requestType: string; result: string; createdAt: string }
@@ -27,6 +28,7 @@ const presets: { requestType: string; labelKey: string }[] = [
 export default function AiInsightsPage() {
   const { t, i18n } = useTranslation()
   const { user, hasPermission } = useAuth()
+  const toast = useToast()
   const [branches, setBranches] = useState<BranchDto[]>([])
   const [branchId, setBranchId] = useState(user?.branchId ?? '')
   const [from, setFrom] = useState(isoMonthStart)
@@ -35,21 +37,20 @@ export default function AiInsightsPage() {
   const [busyType, setBusyType] = useState<string | null>(null)
   const [result, setResult] = useState<AiInsightDto | null>(null)
   const [recent, setRecent] = useState<AiInsightDto[]>([])
-  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => { api.get<BranchDto[]>('/api/branches').then((rows) => setBranches(rows.filter((b) => b.isActive))).catch(() => {}) }, [])
   const loadRecent = () => { api.get<AiInsightDto[]>('/api/ai/insights?take=10').then(setRecent).catch(() => {}) }
   useEffect(loadRecent, [])
 
   const generate = async (requestType: string, customQuestion?: string) => {
-    setBusyType(requestType); setError(null)
+    setBusyType(requestType)
     try {
       const insight = await api.post<AiInsightDto>('/api/ai/insights', { requestType, from, to, branchId: branchId || null, question: customQuestion })
       setResult(insight)
       loadRecent()
       if (customQuestion) setQuestion('')
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : t('aiInsights.error'))
+      toast.error(err instanceof ApiError ? err.message : t('aiInsights.error'))
     } finally {
       setBusyType(null)
     }
@@ -83,8 +84,6 @@ export default function AiInsightsPage() {
       </label>
       <button disabled={busyType !== null} className="justify-self-start">{busyType === 'Custom' ? t('common.loading') : t('aiInsights.ask')}</button>
     </form>
-
-    {error && <p className="error-text" role="alert">{error}</p>}
 
     {result && <div className="ui-card ui-stack">
       <h2>{result.requestType}</h2>

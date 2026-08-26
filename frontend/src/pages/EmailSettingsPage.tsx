@@ -1,16 +1,17 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { api, ApiError } from '../api/client'
+import { useToast } from '../components/ToastContext'
 
 interface EmailSettingsDto { smtpHost:string; smtpPort:number; useSsl:boolean; username:string; hasPassword:boolean; fromEmail:string; fromName:string; recipients:string; isActive:boolean }
 
 export default function EmailSettingsPage() {
   const { t } = useTranslation()
+  const toast = useToast()
   const [form, setForm] = useState({ smtpHost:'', smtpPort:587, useSsl:true, username:'', password:'', fromEmail:'', fromName:'', recipients:'', isActive:false })
   const [hasPassword, setHasPassword] = useState(false)
   const [testRecipient, setTestRecipient] = useState('')
   const [busy, setBusy] = useState(false)
-  const [message, setMessage] = useState<string|null>(null)
   const [error, setError] = useState<string|null>(null)
 
   useEffect(() => { api.get<EmailSettingsDto>('/api/email-settings').then(x => {
@@ -19,13 +20,13 @@ export default function EmailSettingsPage() {
     setTestRecipient(x.fromEmail)
   }).catch(err => setError(err instanceof ApiError ? err.message : t('email.loadError'))) }, [t])
 
-  const save = async (event: FormEvent) => { event.preventDefault(); setBusy(true); setError(null); setMessage(null); try {
+  const save = async (event: FormEvent) => { event.preventDefault(); setBusy(true); try {
     const x = await api.put<EmailSettingsDto>('/api/email-settings', form)
-    setHasPassword(x.hasPassword); setForm(current => ({...current, password:''})); setMessage(t('email.saved'))
-  } catch(err) { setError(err instanceof ApiError ? err.message : t('email.saveError')) } finally { setBusy(false) } }
-  const test = async () => { setBusy(true); setError(null); setMessage(null); try { await api.post('/api/email-settings/test', {recipient:testRecipient}); setMessage(t('email.testSent')) } catch(err) { setError(err instanceof ApiError ? err.message : t('email.testError')) } finally { setBusy(false) } }
+    setHasPassword(x.hasPassword); setForm(current => ({...current, password:''})); toast.success(t('email.saved'))
+  } catch(err) { toast.error(err instanceof ApiError ? err.message : t('email.saveError')) } finally { setBusy(false) } }
+  const test = async () => { setBusy(true); try { await api.post('/api/email-settings/test', {recipient:testRecipient}); toast.success(t('email.testSent')) } catch(err) { toast.error(err instanceof ApiError ? err.message : t('email.testError')) } finally { setBusy(false) } }
 
-  return <section><h1>{t('email.title')}</h1><p>{t('email.description')}</p>{message&&<p className="text-primary">{message}</p>}{error&&<p className="error-text" role="alert">{error}</p>}
+  return <section><h1>{t('email.title')}</h1><p>{t('email.description')}</p>{error&&<p className="error-text" role="alert">{error}</p>}
     <form className="ui-card ui-stack" onSubmit={save}>
       <label className="checkbox-field"><input type="checkbox" checked={form.isActive} onChange={e=>setForm({...form,isActive:e.target.checked})}/><span>{t('email.active')}</span></label>
       <div className="settings-form-grid">

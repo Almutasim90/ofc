@@ -2,6 +2,7 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import { lazy, Suspense } from 'react'
 import { AuthProvider } from './auth/AuthContext'
 import { ThemeProvider } from './theme/ThemeContext'
+import { ToastProvider } from './components/ToastContext'
 import ProtectedRoute from './auth/ProtectedRoute'
 import HomeRedirect from './auth/HomeRedirect'
 import Layout from './components/Layout'
@@ -28,6 +29,7 @@ const ReportsPage = lazy(() => import('./pages/ReportsPage'))
 
 function App() {
   return (
+    <ToastProvider>
     <ThemeProvider>
       <AuthProvider>
         <BrowserRouter>
@@ -123,6 +125,7 @@ function App() {
         </BrowserRouter>
       </AuthProvider>
     </ThemeProvider>
+    </ToastProvider>
   )
 }
 

@@ -129,6 +129,8 @@
     ,"salesTitle": "This shift's sales"
     ,"salesEmpty": "No sales yet in this shift."
     ,"time": "Time"
+    ,"opened": "Shift opened."
+    ,"closed": "Shift closed."
   },
   "notifications": {
     "title": "Notifications",
@@ -170,7 +172,10 @@
     "actions": "Actions",
     "confirmDelete": "Delete this closing exception?",
     "loadError": "Could not load the closing schedule.",
-    "saveError": "Could not save the closing schedule."
+    "saveError": "Could not save the closing schedule.",
+    "savedConfig": "Closing schedule saved.",
+    "savedException": "Exception saved.",
+    "deletedException": "Exception deleted."
   },
   "reports": {
     "title": "Reports",
@@ -385,12 +390,21 @@
   "common": {
     "save": "Save",
     "saved": "Saved",
+    "update": "Update",
+    "edit": "Edit",
+    "delete": "Delete",
+    "actions": "Actions",
     "active": "Active",
     "inactive": "Inactive",
     "showPassword": "Show password",
     "hidePassword": "Hide password",
     "loading": "Loading...",
     "search": "Search table...",
-    "unauthorized": "You do not have access to this page","previous":"Previous","next":"Next","cancel":"Cancel"
+    "unauthorized": "You do not have access to this page","previous":"Previous","next":"Next","cancel":"Cancel",
+    "created": "Created successfully.",
+    "updated": "Updated successfully.",
+    "deleted": "Deleted successfully.",
+    "saveError": "Could not save. Please try again.",
+    "deleteError": "Could not delete. Please try again."
   }
 }

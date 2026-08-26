@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { api } from '../api/client'
+import { api, ApiError } from '../api/client'
 import { useAuth } from '../auth/AuthContext'
 import type { BranchDto, StockStatusDto } from '../api/types'
 import { EditIcon, IconAction, SearchBox } from '../components/TableTools'
+import { useToast } from '../components/ToastContext'
 
 export default function InventoryPage() {
   const { t, i18n } = useTranslation()
@@ -107,10 +108,10 @@ export default function InventoryPage() {
 }
 
 function CreateInventoryItemWizard({branchId,onClose,onSaved}:{branchId:string;onClose:()=>void;onSaved:()=>void}) {
-  const {t}=useTranslation(); const [step,setStep]=useState(1); const [busy,setBusy]=useState(false)
+  const {t}=useTranslation(); const toast=useToast(); const [step,setStep]=useState(1); const [busy,setBusy]=useState(false)
   const [form,setForm]=useState({nameAr:'',nameEn:'',measurementType:'Count',packageNameAr:'',packageNameEn:'',baseQuantityPerPackage:'1',initialPackageCount:'0',lowStockThreshold:'0',note:''})
   const unit=form.measurementType==='Weight'?'kg':form.measurementType==='Volume'?'ml':'piece'; const total=Number(form.baseQuantityPerPackage||0)*Number(form.initialPackageCount||0)
-  const submit=async()=>{setBusy(true);try{await api.post('/api/inventory/items',{branchId,...form,baseQuantityPerPackage:Number(form.baseQuantityPerPackage),initialPackageCount:Number(form.initialPackageCount),lowStockThreshold:Number(form.lowStockThreshold),note:form.note||null});onSaved()}finally{setBusy(false)}}
+  const submit=async()=>{setBusy(true);try{await api.post('/api/inventory/items',{branchId,...form,baseQuantityPerPackage:Number(form.baseQuantityPerPackage),initialPackageCount:Number(form.initialPackageCount),lowStockThreshold:Number(form.lowStockThreshold),note:form.note||null});toast.success(t('common.created'));onSaved()}catch(err){toast.error(err instanceof ApiError?err.message:t('common.saveError'))}finally{setBusy(false)}}
   return <div className="modal-backdrop"><div className="modal product-modal"><div className="product-modal-header"><div><span className="section-kicker">{t('inventory.stepOf',{step,total:3})}</span><h2>{t(`inventory.createStep${step}`)}</h2></div><button className="modal-close" onClick={onClose}>×</button></div>
     <div className="pagination-controls"><span className={step>=1?'text-primary':''}>1</span><span>—</span><span className={step>=2?'text-primary':''}>2</span><span>—</span><span className={step>=3?'text-primary':''}>3</span></div>
     {step===1&&<div className="product-form-grid"><label>{t('rawMaterials.nameAr')}<input autoFocus value={form.nameAr} onChange={e=>setForm({...form,nameAr:e.target.value})}/></label><label>{t('rawMaterials.nameEn')}<input value={form.nameEn} onChange={e=>setForm({...form,nameEn:e.target.value})}/></label><label>{t('inventory.measurementType')}<select value={form.measurementType} onChange={e=>setForm({...form,measurementType:e.target.value})}><option value="Count">{t('inventory.measureCount')}</option><option value="Weight">{t('inventory.measureWeight')}</option><option value="Volume">{t('inventory.measureVolume')}</option></select><small>{t('inventory.baseUnit')}: {unit}</small></label></div>}
@@ -121,11 +122,11 @@ function CreateInventoryItemWizard({branchId,onClose,onSaved}:{branchId:string;o
 }
 
 function ReceiveModal({stock,branchId,onClose,onSaved}:{stock:StockStatusDto[];branchId:string;onClose:()=>void;onSaved:()=>void}) {
-  const {t,i18n}=useTranslation(); const configuredStock=stock.filter(x=>x.supplyPackageId); const [materialId,setMaterialId]=useState(configuredStock[0]?.rawMaterialId??'')
+  const {t,i18n}=useTranslation(); const toast=useToast(); const configuredStock=stock.filter(x=>x.supplyPackageId); const [materialId,setMaterialId]=useState(configuredStock[0]?.rawMaterialId??'')
   const now=new Date(); const today=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`
   const [count,setCount]=useState('1'); const [receivedDate,setReceivedDate]=useState(today); const [note,setNote]=useState(''); const [submitting,setSubmitting]=useState(false)
   const material=stock.find(x=>x.rawMaterialId===materialId)
-  const receive=async()=>{if(!material?.supplyPackageId)return;setSubmitting(true);try{await api.post('/api/inventory/receipts',{branchId,supplyPackageId:material.supplyPackageId,packageCount:Number(count),receivedDate,note:note||null});onSaved()}finally{setSubmitting(false)}}
+  const receive=async()=>{if(!material?.supplyPackageId)return;setSubmitting(true);try{await api.post('/api/inventory/receipts',{branchId,supplyPackageId:material.supplyPackageId,packageCount:Number(count),receivedDate,note:note||null});toast.success(t('common.created'));onSaved()}catch(err){toast.error(err instanceof ApiError?err.message:t('common.saveError'))}finally{setSubmitting(false)}}
   const total=(material?.baseQuantityPerPackage??0)*Number(count||0)
   return <div className="modal-backdrop"><div className="modal product-modal"><div className="product-modal-header"><h2>{t('inventory.receiveGoods')}</h2><button className="modal-close" onClick={onClose}>×</button></div><div className="product-form-grid">
     <label>{t('inventory.rawMaterial')}<select value={materialId} onChange={e=>setMaterialId(e.target.value)}>{configuredStock.map(x=><option key={x.rawMaterialId} value={x.rawMaterialId}>{i18n.language==='ar'?x.nameAr:x.nameEn}</option>)}</select></label>
@@ -149,6 +150,7 @@ function AdjustModal({
   onSaved: () => void
 }) {
   const { t } = useTranslation()
+  const toast = useToast()
   const [quantityChange, setQuantityChange] = useState('0')
   const [reason, setReason] = useState('')
   const [threshold, setThreshold] = useState(item.lowStockThreshold.toString())
@@ -163,7 +165,10 @@ function AdjustModal({
         quantityChange: Number(quantityChange),
         reason,
       })
+      toast.success(t('common.updated'))
       onSaved()
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : t('common.saveError'))
     } finally {
       setSubmitting(false)
     }
@@ -177,7 +182,10 @@ function AdjustModal({
         rawMaterialId: item.rawMaterialId,
         threshold: Number(threshold),
       })
+      toast.success(t('common.updated'))
       onSaved()
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : t('common.saveError'))
     } finally {
       setSubmitting(false)
     }
