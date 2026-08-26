@@ -9,8 +9,8 @@ using POS.Domain.Constants;
 using POS.Domain.Entities;
 
 namespace POS.Application.AI;
-public record AiSettingsDto(Guid? Id, string Provider, string Model, string? ApiKeyLast4, bool IsActive);
-public record UpdateAiSettingsRequest(string Provider, string Model, string? ApiKey, bool IsActive);
+public record AiSettingsDto(Guid? Id, string Provider, string Model, string? BaseUrl, string? ApiKeyLast4, bool IsActive);
+public record UpdateAiSettingsRequest(string Provider, string Model, string? BaseUrl, string? ApiKey, bool IsActive);
 public record GenerateInsightRequest(string RequestType, DateOnly From, DateOnly To, Guid? BranchId);
 public record AiInsightDto(Guid Id, string RequestType, string Result, DateTime CreatedAt);
 
@@ -20,19 +20,26 @@ public class AiInsightService(IAppDbContext db, ICurrentUserService currentUser,
     public async Task<AiSettingsDto> GetSettingsAsync(CancellationToken ct = default)
     {
         var s = await db.AiProviderSettings.AsNoTracking().FirstOrDefaultAsync(x => x.IsActive, ct);
-        if (s is null) return new(null, "OpenAI", "gpt-4.1-mini", null, false);
-        var key = protector.Unprotect(s.ApiKeyEncrypted); return new(s.Id, s.Provider, s.Model, key.Length <= 4 ? key : key[^4..], s.IsActive);
+        if (s is null) return new(null, "OpenAI", "gpt-4.1-mini", null, null, false);
+        var key = protector.Unprotect(s.ApiKeyEncrypted); return new(s.Id, s.Provider, s.Model, s.BaseUrl, key.Length <= 4 ? key : key[^4..], s.IsActive);
     }
     public async Task<AiSettingsDto> SaveSettingsAsync(UpdateAiSettingsRequest r, CancellationToken ct = default)
     {
         var provider = r.Provider.Trim();
         var model = r.Model.Trim();
-        if (provider is not ("OpenAI" or "Anthropic")) throw new ValidationException("Supported AI providers are OpenAI and Anthropic.");
+        if (provider is not ("OpenAI" or "Anthropic" or "Custom")) throw new ValidationException("Supported AI providers are OpenAI, Anthropic, or Custom.");
         if (string.IsNullOrWhiteSpace(model) || model.Length > 100) throw new ValidationException("A valid AI model name is required.");
+        string? baseUrl = null;
+        if (provider == "Custom")
+        {
+            baseUrl = r.BaseUrl?.Trim();
+            if (string.IsNullOrWhiteSpace(baseUrl) || !Uri.TryCreate(baseUrl, UriKind.Absolute, out var uri) || uri.Scheme is not ("http" or "https"))
+                throw new ValidationException("A valid API base URL (http/https) is required for a custom provider.");
+        }
         var all = await db.AiProviderSettings.ToListAsync(ct); foreach (var item in all) item.IsActive = false;
         var current = all.FirstOrDefault(x => x.Provider == provider && x.Model == model) ?? new AiProviderSetting { Id = Guid.NewGuid() };
         if (!all.Contains(current)) db.AiProviderSettings.Add(current);
-        current.Provider = provider; current.Model = model; current.IsActive = r.IsActive;
+        current.Provider = provider; current.Model = model; current.BaseUrl = baseUrl; current.IsActive = r.IsActive;
         if (!string.IsNullOrWhiteSpace(r.ApiKey)) current.ApiKeyEncrypted = protector.Protect(r.ApiKey);
         if (string.IsNullOrWhiteSpace(current.ApiKeyEncrypted)) throw new ValidationException("API key is required.");
         await db.SaveChangesAsync(ct); return await GetSettingsAsync(ct);
@@ -52,8 +59,11 @@ public class AiInsightService(IAppDbContext db, ICurrentUserService currentUser,
         }
         else
         {
+            var endpoint = settings.Provider.Equals("OpenAI", StringComparison.OrdinalIgnoreCase)
+                ? "https://api.openai.com/v1/chat/completions"
+                : settings.BaseUrl ?? throw new ValidationException("Configure an AI provider first.");
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
-            response = await client.PostAsJsonAsync("https://api.openai.com/v1/chat/completions", new { model = settings.Model, messages = new[] { new { role = "user", content = prompt } } }, ct);
+            response = await client.PostAsJsonAsync(endpoint, new { model = settings.Model, messages = new[] { new { role = "user", content = prompt } } }, ct);
         }
         if (!response.IsSuccessStatusCode) throw new ValidationException("AI provider request failed.");
         using var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync(ct));

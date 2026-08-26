@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using POS.Application.Abstractions;
 using POS.Application.Common;
+using POS.Application.Notifications;
 using POS.Domain.Entities;
 
 namespace POS.Application.Settings;
@@ -52,40 +53,13 @@ public class EmailSettingsService(IAppDbContext db, IDataProtectionProvider prot
     {
         if (string.IsNullOrWhiteSpace(recipient) || !IsValidEmail(recipient))
             throw new ValidationException("Enter a valid test email address.");
-        var sentAt = POS.Application.Closing.MuscatClock.ToLocal(DateTime.UtcNow);
-        var html = $$"""
-            <!doctype html>
-            <html lang="ar">
-            <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-            <body style="margin:0;padding:24px;font-family:Tahoma,Arial,sans-serif;line-height:1.7">
-              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:640px;margin:0 auto;border:1px solid;border-radius:14px;overflow:hidden">
-                <tr><td style="padding:28px;text-align:center;border-bottom:1px solid">
-                  <div style="font-size:28px;font-weight:700">لولاة السويق</div>
-                  <div style="font-size:14px">Lolat Al Suwaiq POS</div>
-                </td></tr>
-                <tr><td style="padding:28px">
-                  <section dir="rtl" style="text-align:right">
-                    <h1 style="margin:0 0 10px;font-size:22px">تم إعداد البريد الإلكتروني بنجاح</h1>
-                    <p style="margin:0">هذه رسالة اختبار للتأكد من أن نظام نقاط البيع يستطيع إرسال التنبيهات التلقائية بصورة صحيحة.</p>
-                  </section>
-                  <hr style="margin:24px 0;border:0;border-top:1px solid">
-                  <section dir="ltr" style="text-align:left">
-                    <h2 style="margin:0 0 10px;font-size:20px">Email notifications are ready</h2>
-                    <p style="margin:0">This test confirms that the point-of-sale system can deliver automatic notifications successfully.</p>
-                  </section>
-                  <table role="presentation" width="100%" cellspacing="0" cellpadding="10" style="margin-top:24px;border:1px solid;border-radius:10px">
-                    <tr><td dir="rtl" style="text-align:right"><strong>الحالة / Status</strong></td><td style="text-align:left">Connected</td></tr>
-                    <tr><td dir="rtl" style="text-align:right"><strong>وقت الإرسال / Sent at</strong></td><td style="text-align:left">{{sentAt:yyyy-MM-dd HH:mm}} Server local time</td></tr>
-                  </table>
-                </td></tr>
-                <tr><td dir="rtl" style="padding:18px;text-align:center;border-top:1px solid;font-size:12px">
-                  رسالة آلية من نظام لولاة السويق · Automated message from Lolat Al Suwaiq POS
-                </td></tr>
-              </table>
-            </body>
-            </html>
-            """;
-        await sender.SendAsync("اختبار تنبيهات لولاة السويق | Lolat POS notification test", html, recipient.Trim(), isHtml: true, cancellationToken: ct);
+        var html = LowStockEmailTemplate.Build(new LowStockEmailData(
+            "فرع تجريبي", "Demo Branch", "حليب — بيانات تجريبية", "Milk — Demo Data", "liter",
+            CurrentQuantity: 2m, LowStockThreshold: 10m, TriggeredAt: DateTime.UtcNow));
+
+        await sender.SendAsync(
+            "[اختبار] تنبيه انخفاض المخزون — لولاة السويق",
+            html, recipient.Trim(), isHtml: true, cancellationToken: ct);
     }
 
     private static void Validate(UpdateEmailSettingsRequest request)

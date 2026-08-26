@@ -328,7 +328,7 @@ public class AppDbContext : DbContext, IAppDbContext
             entity.HasIndex(n => new { n.BranchId, n.RawMaterialId }).IsUnique().HasFilter("\"ResolvedAt\" IS NULL");
             entity.HasQueryFilter(n => _currentUser == null || _currentUser.BypassBranchFilter || n.BranchId == _currentUser.BranchId);
         });
-        modelBuilder.Entity<AiProviderSetting>(entity => { entity.HasKey(x => x.Id); entity.Property(x => x.Provider).HasMaxLength(50); entity.Property(x => x.Model).HasMaxLength(100); });
+        modelBuilder.Entity<AiProviderSetting>(entity => { entity.HasKey(x => x.Id); entity.Property(x => x.Provider).HasMaxLength(50); entity.Property(x => x.Model).HasMaxLength(100); entity.Property(x => x.BaseUrl).HasMaxLength(500); });
         modelBuilder.Entity<AiInsightRequest>(entity => { entity.HasKey(x => x.Id); entity.Property(x => x.RequestType).HasMaxLength(50); entity.Property(x => x.ResultSummary).HasMaxLength(8000); entity.HasIndex(x => x.CreatedAt); });
         modelBuilder.Entity<EmailSettings>(entity =>
         {

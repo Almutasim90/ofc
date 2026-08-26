@@ -32,16 +32,18 @@ public class LowStockMonitoringService(IServiceScopeFactory scopes, ILogger<LowS
             if (stock.CurrentQuantity <= stock.LowStockThreshold && existing is null)
             {
                 db.LowStockNotifications.Add(new LowStockNotification { Id = Guid.NewGuid(), BranchId = stock.BranchId, RawMaterialId = stock.RawMaterialId, TriggeredAt = DateTime.UtcNow });
-                var branchName = await db.Branches.IgnoreQueryFilters().Where(x => x.Id == stock.BranchId).Select(x => x.NameAr).SingleAsync(ct);
+                var branch = await db.Branches.IgnoreQueryFilters().Where(x => x.Id == stock.BranchId)
+                    .Select(x => new { x.NameAr, x.NameEn }).SingleAsync(ct);
                 var material = await db.RawMaterials.Where(x => x.Id == stock.RawMaterialId)
-                    .Select(x => new { x.NameAr, x.Unit }).SingleAsync(ct);
+                    .Select(x => new { x.NameAr, x.NameEn, x.Unit }).SingleAsync(ct);
                 try
                 {
                     var body = LowStockEmailTemplate.Build(new LowStockEmailData(
-                        branchName, material.NameAr, material.Unit, stock.CurrentQuantity,
+                        branch.NameAr, branch.NameEn, material.NameAr, material.NameEn,
+                        material.Unit, stock.CurrentQuantity,
                         stock.LowStockThreshold, DateTime.UtcNow));
                     await emailSender.SendAsync(
-                        $"تنبيه مخزون: {material.NameAr} — {branchName}", body,
+                        $"تنبيه انخفاض المخزون | Low Stock Alert: {material.NameAr} — {branch.NameAr}", body,
                         isHtml: true, cancellationToken: ct);
                 }
                 catch (Exception ex) { logger.LogWarning(ex, "Low-stock email could not be sent for branch {BranchId} material {MaterialId}.", stock.BranchId, stock.RawMaterialId); }

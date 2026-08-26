@@ -29,13 +29,16 @@ public class LowStockTests
     public void Alert_is_an_html_invoice_with_branch_item_current_and_replenishment()
     {
         var html = LowStockEmailTemplate.Build(new LowStockEmailData(
-            "فرع السويق", "حليب", "لتر", 2m, 10m,
+            "فرع السويق", "Suwaiq Branch", "حليب", "Milk", "liter", 2m, 10m,
             new DateTime(2026, 8, 26, 8, 30, 0, DateTimeKind.Utc)));
 
         Assert.Contains("فرع السويق", html);
         Assert.Contains("حليب", html);
-        Assert.Contains("2.000 لتر", html);
-        Assert.Contains("8.000 لتر", html);
+        Assert.Contains("Suwaiq Branch", html);
+        Assert.Contains("Milk", html);
+        Assert.Contains("2.000 liter", html);
+        Assert.Contains("8.000 liter", html);
         Assert.Contains("dir=\"rtl\"", html);
+        Assert.Contains("dir=\"ltr\"", html);
     }
 }
