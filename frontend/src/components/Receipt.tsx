@@ -24,9 +24,9 @@ export default function Receipt({ sale, headerText, branchName, cashierName }: R
       </div>
       <div className="receipt-divider" />
       <div className="receipt-items">
-        {sale.items.map((item) => <div className="receipt-item" key={item.productId}>
-          <div className="receipt-item-name">{item.productNameSnapshot}</div>
-          <div className="receipt-item-line"><span>{item.quantity} × <Money value={item.unitPriceSnapshot} /></span><Money value={item.lineTotal} /></div>
+        {sale.items.map((item) => <div className="receipt-item-line" key={item.productId}>
+          <span>{item.quantity} × {item.productNameSnapshot}</span>
+          <Money value={item.lineTotal} />
         </div>)}
       </div>
       <div className="receipt-divider" />

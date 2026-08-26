@@ -668,9 +668,7 @@ body {
 }
 .receipt-header { margin-bottom: 2mm; text-align: center; font-weight: 700; white-space: pre-wrap; }
 .receipt-divider { margin: 2mm 0; border-top: 1px dashed #000; }
-.receipt-meta > div, .receipt-totals > div, .receipt-item-line { display: flex; justify-content: space-between; gap: 2mm; }
-.receipt-item { margin-bottom: 1.5mm; }
-.receipt-item-name { font-weight: 600; }
+.receipt-meta > div, .receipt-totals > div, .receipt-item-line { display: flex; justify-content: space-between; gap: 2mm; margin-bottom: 1mm; }
 .receipt-total-line { margin-top: 1mm; font-size: 13px; font-weight: 800; }
 .settings-card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr)); gap: var(--space-3); padding: var(--space-4); border: 1px solid rgb(var(--color-border)); border-radius: var(--radius-card); background: rgb(var(--color-surface)); }
 .settings-card-grid label { display: grid; gap: var(--space-1); }
