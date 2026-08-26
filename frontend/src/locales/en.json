@@ -48,7 +48,9 @@
     "closeMenu": "Close navigation",
     "expandMenu": "Expand navigation",
     "collapseMenu": "Collapse navigation",
-    "logout": "Log out"
+    "logout": "Log out",
+    "home": "Home",
+    "breadcrumb": "Breadcrumb"
   },
   "cashier": {
     "allCategories": "All",

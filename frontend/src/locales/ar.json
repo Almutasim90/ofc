@@ -48,7 +48,9 @@
     "closeMenu": "إغلاق القائمة",
     "expandMenu": "توسيع القائمة",
     "collapseMenu": "تصغير القائمة",
-    "logout": "تسجيل الخروج"
+    "logout": "تسجيل الخروج",
+    "home": "الرئيسية",
+    "breadcrumb": "مسار التنقل"
   },
   "cashier": {
     "allCategories": "الكل",
