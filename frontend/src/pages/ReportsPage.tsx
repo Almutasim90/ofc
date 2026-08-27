@@ -167,7 +167,7 @@ export default function ReportsPage() {
     {error && <p className="error-text">{error}</p>}
     {loading && <ReportsSkeleton />}
     {data && !loading && <>
-      <div className="report-stat-grid grid gap-4 md:grid-cols-3">
+      <div className="report-stat-grid grid gap-4 md:grid-cols-3 report-content-enter">
         <StatCard tone="primary" label={t('reports.totalSales')} value={<Money value={data.totalSales} />} icon={<SalesIcon className="h-5 w-5" />} />
         <StatCard tone="accent" label={t('reports.invoices')} value={data.invoiceCount.toLocaleString()} icon={<InvoiceIcon className="h-5 w-5" />} />
         <StatCard tone="primary" label={t('reports.itemsSold')} value={data.itemsSold.toLocaleString()} icon={<ItemsIcon className="h-5 w-5" />} />
@@ -178,16 +178,16 @@ export default function ReportsPage() {
         <StatCard tone={lowStockCount ? 'danger' : 'primary'} label={t('reports.lowStockAlerts')} value={lowStockCount.toLocaleString()} icon={<ItemsIcon className="h-5 w-5" />} />
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-2 report-content-enter" style={{ animationDelay: '80ms' }}>
       <ChartCard title={t('reports.channelDistribution')}>
           <div className="relative h-full min-h-0">
             <ChartCanvas>
               <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie data={channelChart} dataKey="totalSales" nameKey="name" innerRadius="32%" outerRadius="92%" paddingAngle={channelChart.length > 1 ? 2 : 0} strokeWidth={2} stroke="rgb(var(--color-surface))" label={renderPieSliceLabel} labelLine={false}>
+                <PieChart margin={{ top: 20, right: 64, bottom: 20, left: 64 }}>
+                  <Pie data={channelChart} dataKey="totalSales" nameKey="name" innerRadius="34%" outerRadius="60%" paddingAngle={channelChart.length > 1 ? 2 : 0} strokeWidth={2} stroke="rgb(var(--color-surface))" label={renderPieOuterLabel} labelLine={false}>
                     {channelChart.map((c, i) => <Cell key={i} fill={c.color} />)}
                   </Pie>
-                  <Tooltip {...tooltipBase} formatter={(value) => Number(value).toFixed(3)} />
+                  <Tooltip {...tooltipBase} formatter={(value, itemName, item) => [`${Number(value).toFixed(3)} (${Number(item.payload?.percentage ?? 0).toFixed(1)}%)`, itemName]} />
                 </PieChart>
               </ResponsiveContainer>
             </ChartCanvas>
@@ -253,11 +253,11 @@ export default function ReportsPage() {
             <div className="relative h-full min-h-0">
               <ChartCanvas>
                 <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie data={payment} dataKey="totalAmount" nameKey="name" innerRadius="32%" outerRadius="92%" paddingAngle={payment.length > 1 ? 2 : 0} strokeWidth={2} stroke="rgb(var(--color-surface))" label={renderPieSliceLabel} labelLine={false}>
+                  <PieChart margin={{ top: 20, right: 64, bottom: 20, left: 64 }}>
+                    <Pie data={payment} dataKey="totalAmount" nameKey="name" innerRadius="34%" outerRadius="60%" paddingAngle={payment.length > 1 ? 2 : 0} strokeWidth={2} stroke="rgb(var(--color-surface))" label={renderPieOuterLabel} labelLine={false}>
                       {payment.map((p, i) => <Cell key={i} fill={p.color} />)}
                     </Pie>
-                    <Tooltip {...tooltipBase} formatter={(value) => Number(value).toFixed(3)} />
+                    <Tooltip {...tooltipBase} formatter={(value, itemName, item) => [`${Number(value).toFixed(3)} (${Number(item.payload?.percentage ?? 0).toFixed(1)}%)`, itemName]} />
                   </PieChart>
                 </ResponsiveContainer>
               </ChartCanvas>
@@ -306,7 +306,7 @@ export default function ReportsPage() {
       </div>
 
       <button type="button" onClick={()=>setShowTable(value=>!value)}>{showTable?t('reports.hideTable'):t('reports.showTable')}</button>
-      {showTable && <div className="rounded-xl border border-border bg-surface p-4">
+      {showTable && <div className="rounded-xl border border-border bg-surface p-4 report-content-enter">
         <div className="table-toolbar">
           <h2>{t('reports.productDetails')}</h2>
           <div className="flex flex-wrap gap-2">
@@ -379,19 +379,33 @@ function ChartCard({ title, children, className = 'h-96' }: { title: string; chi
   </div>
 }
 
-function renderPieSliceLabel({ cx, cy, midAngle, innerRadius, outerRadius, name, percent }: PieLabelRenderProps) {
+// Labels sit outside the ring on a leader line color-matched to their slice, instead of
+// crowding inside thin/small slices where text used to get clipped or unreadable.
+function renderPieOuterLabel({ cx, cy, midAngle, outerRadius, name, percent, fill }: PieLabelRenderProps) {
   const share = Number(percent ?? 0)
-  if (share < 0.055) return null
-  const radius = Number(innerRadius) + (Number(outerRadius) - Number(innerRadius)) * 0.58
-  const angle = -Number(midAngle) * Math.PI / 180
-  const x = Number(cx) + radius * Math.cos(angle)
-  const y = Number(cy) + radius * Math.sin(angle)
+  if (share < 0.02) return null
+  const RADIAN = Math.PI / 180
+  const angle = -Number(midAngle) * RADIAN
+  const sin = Math.sin(angle)
+  const cos = Math.cos(angle)
+  const cxN = Number(cx)
+  const cyN = Number(cy)
+  const outerR = Number(outerRadius)
+  const sx = cxN + (outerR + 4) * cos
+  const sy = cyN + (outerR + 4) * sin
+  const mx = cxN + (outerR + 18) * cos
+  const my = cyN + (outerR + 18) * sin
+  const side = cos >= 0 ? 1 : -1
+  const ex = mx + side * 12
+  const color = String(fill ?? MUTED)
   const label = String(name ?? '')
-  const shortLabel = label.length > 13 ? `${label.slice(0, 12)}…` : label
-  return <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central" className="report-pie-label">
-    <tspan x={x} dy="-0.45em">{shortLabel}</tspan>
-    <tspan x={x} dy="1.25em">{(share * 100).toFixed(0)}%</tspan>
-  </text>
+  const shortLabel = label.length > 14 ? `${label.slice(0, 13)}…` : label
+  return <g>
+    <path d={`M${sx},${sy}L${mx},${my}L${ex},${my}`} stroke={color} strokeWidth={1.5} fill="none" />
+    <circle cx={sx} cy={sy} r={2.5} fill={color} stroke="none" />
+    <text x={ex + side * 4} y={my - 3} textAnchor={side > 0 ? 'start' : 'end'} className="report-pie-label-outer">{shortLabel}</text>
+    <text x={ex + side * 4} y={my + 13} textAnchor={side > 0 ? 'start' : 'end'} className="report-pie-label-outer-pct" fill={color}>{(share * 100).toFixed(0)}%</text>
+  </g>
 }
 function ReportsSkeleton() {
   return <div className="reports-skeleton grid gap-6">

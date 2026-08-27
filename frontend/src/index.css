@@ -127,6 +127,14 @@ select:disabled {
 @media (prefers-reduced-motion: reduce) {
   .reports-skeleton-block { animation: none; }
 }
+@keyframes report-fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.report-content-enter { animation: report-fade-in 0.45s ease-out both; }
+@media (prefers-reduced-motion: reduce) {
+  .report-content-enter { animation: none; }
+}
 
 :root {
   /* Shared typography */
@@ -244,6 +252,8 @@ html.dark {
 .report-filter select { min-height: var(--control-height); color: rgb(var(--color-text)); font-size: var(--text-sm); font-weight: 500; }
 .report-chart-card { grid-template-rows: auto minmax(0, 1fr); }
 .report-pie-label { font-family: var(--font-heading); font-size: 0.7rem; font-weight: 700; paint-order: stroke; stroke: rgb(0 0 0 / .28); stroke-width: 2px; stroke-linejoin: round; }
+.report-pie-label-outer { font-family: var(--font-body); font-size: 0.72rem; font-weight: 600; fill: rgb(var(--color-text)); }
+.report-pie-label-outer-pct { font-family: var(--font-heading); font-size: 0.72rem; font-weight: 800; }
 .report-sort-button { display: inline-flex; min-width: 0 !important; min-height: 0 !important; align-items: center; gap: var(--space-2); padding: 0; border: 0; background: transparent; color: inherit; font: inherit; }
 .report-sort-button span:last-child { color: rgb(var(--color-muted)); opacity: .45; }
 .report-sort-button span:last-child.is-active { color: rgb(var(--color-primary)); opacity: 1; }
