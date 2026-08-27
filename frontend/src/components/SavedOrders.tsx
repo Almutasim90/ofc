@@ -26,7 +26,7 @@ export default function SavedOrders({ branchId, products, onClose }: { branchId:
   const [message, setMessage] = useState('')
   useEffect(() => {
     let active = true
-    api.get<SaleDto[]>(`/api/sales?branchId=${branchId}`).then(rows => { if (active) setSales(rows) })
+    api.get<SaleDto[]>(`/api/sales/editable?branchId=${branchId}`).then(rows => { if (active) setSales(rows) })
       .catch(() => { if (active) setError(t('orders.loadError')) }).finally(() => { if (active) setBusy(false) })
     return () => { active = false }
   }, [branchId, t])
@@ -83,7 +83,7 @@ export default function SavedOrders({ branchId, products, onClose }: { branchId:
       <button type="button" disabled={busy} onClick={() => setHistory(null)}>{t('orders.back')}</button>
     </> : <>
       <p>{t('orders.listHint')}</p>{!busy && !sales.length && <p>{t('orders.empty')}</p>}
-      {sales.map(sale => <article className="saved-order" key={sale.id}><div><strong>#{sale.id.slice(0, 8)}</strong><time>{new Date(sale.createdAt).toLocaleString(i18n.language)}</time><Money value={sale.totalAmount} /><span>{t(`cashier.${sale.paymentMethod.toLowerCase()}`)}</span></div>
+      {sales.map(sale => <article className="saved-order" key={sale.id}><div><strong>#{sale.saleNumber}</strong><time>{new Date(sale.createdAt).toLocaleString(i18n.language)}</time><Money value={sale.totalAmount} /><span>{t(`cashier.${sale.paymentMethod.toLowerCase()}`)}</span></div>
         <div><button type="button" disabled={busy || !sale.canEdit} onClick={() => startEdit(sale)}>{t('orders.edit')}</button><button type="button" disabled={busy} onClick={() => showHistory(sale)}>{t('orders.history')}</button></div></article>)}
     </>}
   </dialog>

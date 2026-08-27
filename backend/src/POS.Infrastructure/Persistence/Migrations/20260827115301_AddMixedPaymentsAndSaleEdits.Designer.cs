@@ -12,7 +12,7 @@ using POS.Infrastructure.Persistence;
 namespace POS.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260827113523_AddMixedPaymentsAndSaleEdits")]
+    [Migration("20260827115301_AddMixedPaymentsAndSaleEdits")]
     partial class AddMixedPaymentsAndSaleEdits
     {
         /// <inheritdoc />
@@ -116,6 +116,9 @@ namespace POS.Infrastructure.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
+
+                    b.Property<int>("NextSaleNumber")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -420,6 +423,21 @@ namespace POS.Infrastructure.Persistence.Migrations
                     b.ToTable("RawMaterials");
                 });
 
+            modelBuilder.Entity("POS.Domain.Entities.ReceiptSettings", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("HeaderText")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ReceiptSettings");
+                });
+
             modelBuilder.Entity("POS.Domain.Entities.Role", b =>
                 {
                     b.Property<Guid>("Id")
@@ -508,6 +526,9 @@ namespace POS.Infrastructure.Persistence.Migrations
                         .IsConcurrencyToken()
                         .HasColumnType("integer");
 
+                    b.Property<int>("SaleNumber")
+                        .HasColumnType("integer");
+
                     b.Property<Guid>("ShiftId")
                         .HasColumnType("uuid");
 
@@ -527,6 +548,9 @@ namespace POS.Infrastructure.Persistence.Migrations
                     b.HasIndex("ShiftId");
 
                     b.HasIndex("BranchId", "BusinessDate");
+
+                    b.HasIndex("BranchId", "SaleNumber")
+                        .IsUnique();
 
                     b.ToTable("Sales");
                 });

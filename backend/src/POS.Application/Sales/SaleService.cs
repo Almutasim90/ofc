@@ -141,6 +141,7 @@ public class SaleService(IAppDbContext db, IDomainEventPublisher eventPublisher,
         var sale = existing ?? new Sale
         {
             Id = Guid.NewGuid(),
+            SaleNumber = await db.ClaimNextSaleNumberAsync(request.BranchId, cancellationToken),
             BranchId = request.BranchId,
             ChannelId = channel.Id,
             ShiftId = shift.Id,
@@ -239,13 +240,27 @@ public class SaleService(IAppDbContext db, IDomainEventPublisher eventPublisher,
     }
 
     private SaleDto ToDto(Sale sale) => new(
-        sale.Id, sale.BranchId, sale.ChannelId, sale.ShiftId, sale.CashierUserId, sale.BusinessDate, sale.CreatedAt, sale.TotalAmount,
+        sale.Id, sale.SaleNumber, sale.BranchId, sale.ChannelId, sale.ShiftId, sale.CashierUserId, sale.BusinessDate, sale.CreatedAt, sale.TotalAmount,
         sale.DiscountType, sale.DiscountValue, sale.DiscountAmount, sale.PaymentMethod, sale.Status,
         sale.Items.Select(i => new SaleItemDto(i.ProductId, i.ProductNameSnapshot, i.UnitPriceSnapshot, i.Quantity,
             i.LineTotal, i.DiscountType, i.DiscountValue)).ToList(),
         sale.CashAmount ?? (sale.PaymentMethod == PaymentMethods.Cash ? sale.TotalAmount : 0),
         sale.CardAmount ?? (sale.PaymentMethod == PaymentMethods.Card ? sale.TotalAmount : 0), sale.Revision,
         sale.Status == SaleStatus.Completed && sale.Shift.Status == ShiftStatus.Open && CanManage(sale) && currentUser.Permissions.Contains(PermissionKeys.SalesEdit));
+
+    public async Task<IReadOnlyList<SaleDto>> ListForShiftAsync(Guid shiftId, CancellationToken cancellationToken = default)
+    {
+        var userId = currentUser.UserId ?? throw new UnauthorizedException("Missing user context.");
+        var shift = await db.Shifts.AsNoTracking().FirstOrDefaultAsync(s => s.Id == shiftId, cancellationToken)
+            ?? throw new NotFoundException("Shift not found.");
+        EnsureBranchScope(shift.BranchId);
+        if (currentUser.RoleName == RoleNames.Cashier && shift.CashierUserId != userId)
+            throw new ForbiddenException("You do not have access to this shift.");
+        var rows = await db.Sales.AsNoTracking().Include(s => s.Items).Include(s => s.Shift)
+            .Where(s => s.ShiftId == shiftId && s.Status == SaleStatus.Completed)
+            .OrderByDescending(s => s.CreatedAt).ToListAsync(cancellationToken);
+        return rows.Select(ToDto).ToList();
+    }
 
     private static string NormalizeDiscountType(string? type) => string.IsNullOrWhiteSpace(type) ? "None" : type;
 

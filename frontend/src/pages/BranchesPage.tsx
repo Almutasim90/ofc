@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { api } from '../api/client'
+import { api, ApiError } from '../api/client'
 import type { BranchDto, CreateBranchRequest, UpdateBranchRequest } from '../api/types'
 import { EditIcon, IconAction, SearchBox } from '../components/TableTools'
 import Money from '../components/Money'
+import { useToast } from '../components/ToastContext'
 
 type EditingState = { mode: 'create' } | { mode: 'edit'; branch: BranchDto } | null
 
@@ -84,6 +85,7 @@ function BranchForm({
   onSaved: () => void
 }) {
   const { t } = useTranslation()
+  const toast = useToast()
   const existing = editing.mode === 'edit' ? editing.branch : null
 
   const [nameAr, setNameAr] = useState(existing?.nameAr ?? '')
@@ -103,7 +105,10 @@ function BranchForm({
         const request: UpdateBranchRequest = { nameAr, nameEn, code, defaultOpeningFloat: Number(defaultOpeningFloat), isActive }
         await api.put(`/api/branches/${editing.branch.id}`, request)
       }
+      toast.success(editing.mode === 'create' ? t('common.created') : t('common.updated'))
       onSaved()
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : t('common.saveError'))
     } finally {
       setSubmitting(false)
     }

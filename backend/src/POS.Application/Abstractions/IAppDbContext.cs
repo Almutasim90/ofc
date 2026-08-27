@@ -35,6 +35,8 @@ public interface IAppDbContext
     DbSet<AiProviderSetting> AiProviderSettings { get; }
     DbSet<AiInsightRequest> AiInsightRequests { get; }
     DbSet<EmailSettings> EmailSettings { get; }
+    DbSet<ReceiptSettings> ReceiptSettings { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
+    Task<int> ClaimNextSaleNumberAsync(Guid branchId, CancellationToken cancellationToken = default);
 }

@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
-import { api } from '../api/client'
+import { api, ApiError } from '../api/client'
 import { useAuth } from '../auth/AuthContext'
 import type { BranchDto, CreateUserRequest, RoleDto, UpdateUserRequest, UserDto } from '../api/types'
 import { DetailsIcon, EditIcon, IconAction, SearchBox } from '../components/TableTools'
 import PasswordField from '../components/PasswordField'
+import { useToast } from '../components/ToastContext'
 
 type EditingState = { mode: 'create' } | { mode: 'edit'; user: UserDto } | null
 
@@ -109,6 +110,7 @@ function UserForm({
   onSaved: () => void
 }) {
   const { t } = useTranslation()
+  const toast = useToast()
   const existing = editing.mode === 'edit' ? editing.user : null
 
   const [fullName, setFullName] = useState(existing?.fullName ?? '')
@@ -145,7 +147,10 @@ function UserForm({
         }
         await api.put(`/api/users/${editing.user.id}`, request)
       }
+      toast.success(editing.mode === 'create' ? t('common.created') : t('common.updated'))
       onSaved()
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : t('common.saveError'))
     } finally {
       setSubmitting(false)
     }

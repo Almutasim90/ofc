@@ -2,6 +2,7 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import { lazy, Suspense } from 'react'
 import { AuthProvider } from './auth/AuthContext'
 import { ThemeProvider } from './theme/ThemeContext'
+import { ToastProvider } from './components/ToastContext'
 import ProtectedRoute from './auth/ProtectedRoute'
 import HomeRedirect from './auth/HomeRedirect'
 import Layout from './components/Layout'
@@ -19,13 +20,16 @@ import ClosingSchedulePage from './pages/ClosingSchedulePage'
 import SettingsPage from './pages/SettingsPage'
 import ChannelsPage from './pages/ChannelsPage'
 import AiSettingsPage from './pages/AiSettingsPage'
+import AiInsightsPage from './pages/AiInsightsPage'
 import NotificationsPage from './pages/NotificationsPage'
 import EmailSettingsPage from './pages/EmailSettingsPage'
+import ReceiptSettingsPage from './pages/ReceiptSettingsPage'
 
 const ReportsPage = lazy(() => import('./pages/ReportsPage'))
 
 function App() {
   return (
+    <ToastProvider>
     <ThemeProvider>
       <AuthProvider>
         <BrowserRouter>
@@ -52,10 +56,12 @@ function App() {
                   <Suspense fallback={null}><ReportsPage /></Suspense>
                 </ProtectedRoute>
               } />
+              <Route path="/ai-insights" element={<ProtectedRoute permission="reports.branch.view"><AiInsightsPage /></ProtectedRoute>} />
               <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
               <Route path="/channels" element={<ProtectedRoute permission="channels.manage"><ChannelsPage /></ProtectedRoute>} />
               <Route path="/ai-settings" element={<ProtectedRoute permission="ai.manage"><AiSettingsPage /></ProtectedRoute>} />
               <Route path="/email-settings" element={<ProtectedRoute permission="email.manage"><EmailSettingsPage /></ProtectedRoute>} />
+              <Route path="/receipt-settings" element={<ProtectedRoute permission="receipt.manage"><ReceiptSettingsPage /></ProtectedRoute>} />
               <Route path="/notifications" element={<ProtectedRoute permission="inventory.adjust"><NotificationsPage /></ProtectedRoute>} />
               <Route
                 path="/users"
@@ -119,6 +125,7 @@ function App() {
         </BrowserRouter>
       </AuthProvider>
     </ThemeProvider>
+    </ToastProvider>
   )
 }
 

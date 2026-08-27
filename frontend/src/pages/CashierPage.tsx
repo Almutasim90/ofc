@@ -9,6 +9,8 @@ import { useAuth } from '../auth/AuthContext'
 import Money from '../components/Money'
 import BottomSheet from '../components/BottomSheet'
 import AppIcon from '../components/AppIcon'
+import Receipt from '../components/Receipt'
+import { useToast } from '../components/ToastContext'
 import type { BranchDto, CreateSaleRequest, ProductChannelPriceDto, ProductDto, SaleDto, SalesChannelDto, ShiftDto, UpcomingClosingDto } from '../api/types'
 
 interface CartLine {
@@ -56,6 +58,7 @@ function StoreIcon() {
 export default function CashierPage() {
   const { t, i18n } = useTranslation()
   const { user, hasPermission } = useAuth()
+  const toast = useToast()
 
   const [branches, setBranches] = useState<BranchDto[]>([])
   const [branchId, setBranchId] = useState('')
@@ -77,6 +80,7 @@ export default function CashierPage() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [successSale, setSuccessSale] = useState<SaleDto | null>(null)
+  const [receiptHeader, setReceiptHeader] = useState<string | null>(null)
   const [currentShift, setCurrentShift] = useState<ShiftDto | null>(null)
   const [closingWarning, setClosingWarning] = useState<UpcomingClosingDto | null>(null)
 
@@ -103,6 +107,10 @@ export default function CashierPage() {
     }
     init()
   }, [t, user])
+
+  useEffect(() => {
+    api.get<{ headerText: string | null }>('/api/receipt-settings').then((x) => setReceiptHeader(x.headerText)).catch(() => {})
+  }, [])
 
   useEffect(() => {
     if (!currentShift) { setClosingWarning(null); return }
@@ -192,7 +200,6 @@ export default function CashierPage() {
   const checkout = async () => {
     if (cart.length === 0 || !branchId || submitting || !validPayment(paymentMethod, total, cashAmount)) return
     setSubmitting(true)
-    setError(null)
     try {
       const request: CreateSaleRequest = {
         branchId,
@@ -212,16 +219,19 @@ export default function CashierPage() {
       setCartOpen(false)
     } catch (err) {
       if (err instanceof ApiError && err.message.startsWith('Insufficient stock')) {
-        setError(t('cashier.insufficientStock'))
+        toast.error(t('cashier.insufficientStock'))
       } else if (err instanceof ApiError && err.status === 400) {
-        setError(t('cashier.saleRejected'))
+        toast.error(t('cashier.saleRejected'))
       } else {
-        setError(t('cashier.saleError'))
+        toast.error(t('cashier.saleError'))
       }
     } finally {
       setSubmitting(false)
     }
   }
+
+  const successBranch = branches.find((branch) => branch.id === successSale?.branchId)
+  const successBranchName = successBranch ? (i18n.language === 'ar' ? successBranch.nameAr : successBranch.nameEn) : ''
 
   if (loading) return <p className="p-6 text-muted">{t('common.loading')}</p>
 
@@ -471,10 +481,12 @@ export default function CashierPage() {
           <div className="flex flex-col gap-4 rounded-3xl bg-surface p-6 text-center" onClick={(e) => e.stopPropagation()}>
             <p className="font-cairo text-xl font-bold text-primary">{t('cashier.saleSuccess')}</p>
             <p className="text-2xl text-accent"><Money value={successSale.totalAmount} /></p><p>{t('cashier.cash')}: <Money value={successSale.cashAmount} /> · {t('cashier.card')}: <Money value={successSale.cardAmount} /></p>
+            <button type="button" className="min-h-14" onClick={() => window.print()}>{t('receipt.print')}</button>
             <button type="button" className="text-on-primary min-h-14 border-0 bg-primary" onClick={() => setSuccessSale(null)}>
               {t('cashier.close')}
             </button>
           </div>
+          <Receipt sale={successSale} headerText={receiptHeader} branchName={successBranchName} cashierName={user?.fullName ?? ''} />
         </div>
       )}
     </div>

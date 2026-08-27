@@ -46,6 +46,7 @@ public class SaleEditingTests
         await f.Db.SaveChangesAsync();
         var updated = await f.Service.UpdateAsync(original.Id, new(f.Request(3, "Mixed", 4, 26), "Correct quantity", original.Revision));
         Assert.Equal(original.Id, updated.Id);
+        Assert.Equal(original.SaleNumber, updated.SaleNumber);
         Assert.Equal(original.CreatedAt, updated.CreatedAt);
         Assert.Equal(original.CashierUserId, updated.CashierUserId);
         Assert.Equal(30, updated.TotalAmount);
@@ -175,6 +176,14 @@ public class SaleEditingTests
     {
         public Task PublishAsync<T>(T domainEvent, CancellationToken cancellationToken = default) where T : IDomainEvent => Task.CompletedTask;
     }
+    private sealed class TestDb(DbContextOptions<AppDbContext> options, ICurrentUserService user)
+        : AppDbContext(options, user), IAppDbContext
+    {
+        private int nextNumber = 1;
+        Task<int> IAppDbContext.ClaimNextSaleNumberAsync(Guid branchId, CancellationToken cancellationToken)
+            => Task.FromResult(nextNumber++);
+    }
+
     private sealed class Fixture : IAsyncDisposable
     {
         public TestUser User { get; } = new();
@@ -188,7 +197,7 @@ public class SaleEditingTests
         private Fixture()
         {
             BranchId = User.BranchId!.Value;
-            Db = new(new DbContextOptionsBuilder<AppDbContext>().UseInMemoryDatabase(Guid.NewGuid().ToString()).Options, User);
+            Db = new TestDb(new DbContextOptionsBuilder<AppDbContext>().UseInMemoryDatabase(Guid.NewGuid().ToString()).Options, User);
             Service = new(Db, new Events(), User);
             Shift = new() { Id = Guid.NewGuid(), BranchId = BranchId, CashierUserId = User.UserId!.Value, OpeningCash = 50, OpenedAt = DateTime.UtcNow };
             var materialId = Guid.NewGuid();

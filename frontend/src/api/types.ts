@@ -186,6 +186,7 @@ export interface SaleItemDto {
 
 export interface SaleDto {
   id: string
+  saleNumber: number
   branchId: string
   channelId: string
   shiftId: string

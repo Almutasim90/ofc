@@ -10,7 +10,7 @@ namespace POS.API.Controllers;
 [RequirePermission(PermissionKeys.SalesCreate)]
 public class SalesController(SaleService saleService) : ControllerBase
 {
-    [HttpGet]
+    [HttpGet("editable")]
     [RequirePermission(PermissionKeys.SalesEdit)]
     public async Task<ActionResult<List<SaleDto>>> List([FromQuery] Guid branchId, CancellationToken cancellationToken)
         => Ok(await saleService.ListAsync(branchId, cancellationToken));
@@ -31,4 +31,8 @@ public class SalesController(SaleService saleService) : ControllerBase
         var sale = await saleService.CreateAsync(request, cancellationToken);
         return CreatedAtAction(nameof(Create), new { id = sale.Id }, sale);
     }
+
+    [HttpGet]
+    public async Task<ActionResult<IReadOnlyList<SaleDto>>> ListForShift([FromQuery] Guid shiftId, CancellationToken cancellationToken) =>
+        Ok(await saleService.ListForShiftAsync(shiftId, cancellationToken));
 }

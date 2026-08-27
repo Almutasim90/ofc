@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using POS.Infrastructure.Persistence;
@@ -11,9 +12,11 @@ using POS.Infrastructure.Persistence;
 namespace POS.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260826170119_AddSaleNumbering")]
+    partial class AddSaleNumbering
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -140,12 +143,6 @@ namespace POS.Infrastructure.Persistence.Migrations
                     b.Property<decimal>("LowStockThreshold")
                         .HasPrecision(18, 3)
                         .HasColumnType("numeric(18,3)");
-
-                    b.Property<uint>("Version")
-                        .IsConcurrencyToken()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("xid")
-                        .HasColumnName("xmin");
 
                     b.HasKey("BranchId", "RawMaterialId");
 
@@ -484,14 +481,6 @@ namespace POS.Infrastructure.Persistence.Migrations
                     b.Property<DateOnly>("BusinessDate")
                         .HasColumnType("date");
 
-                    b.Property<decimal?>("CardAmount")
-                        .HasPrecision(18, 3)
-                        .HasColumnType("numeric(18,3)");
-
-                    b.Property<decimal?>("CashAmount")
-                        .HasPrecision(18, 3)
-                        .HasColumnType("numeric(18,3)");
-
                     b.Property<Guid>("CashierUserId")
                         .HasColumnType("uuid");
 
@@ -518,10 +507,6 @@ namespace POS.Infrastructure.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
-
-                    b.Property<int>("Revision")
-                        .IsConcurrencyToken()
-                        .HasColumnType("integer");
 
                     b.Property<int>("SaleNumber")
                         .HasColumnType("integer");
@@ -550,46 +535,6 @@ namespace POS.Infrastructure.Persistence.Migrations
                         .IsUnique();
 
                     b.ToTable("Sales");
-                });
-
-            modelBuilder.Entity("POS.Domain.Entities.SaleEdit", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("AfterJson")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("BeforeJson")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("EditedByName")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<Guid>("EditedByUserId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Reason")
-                        .IsRequired()
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
-
-                    b.Property<Guid>("SaleId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("SaleId", "CreatedAt");
-
-                    b.ToTable("SaleEdits");
                 });
 
             modelBuilder.Entity("POS.Domain.Entities.SaleInventoryConsumption", b =>
@@ -647,9 +592,6 @@ namespace POS.Infrastructure.Persistence.Migrations
                     b.Property<decimal>("Quantity")
                         .HasPrecision(18, 3)
                         .HasColumnType("numeric(18,3)");
-
-                    b.Property<string>("RecipeSnapshotJson")
-                        .HasColumnType("text");
 
                     b.Property<Guid>("SaleId")
                         .HasColumnType("uuid");
@@ -734,9 +676,6 @@ namespace POS.Infrastructure.Persistence.Migrations
                     b.Property<decimal>("OpeningCash")
                         .HasPrecision(18, 3)
                         .HasColumnType("numeric(18,3)");
-
-                    b.Property<int>("SalesRevision")
-                        .HasColumnType("integer");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -1120,17 +1059,6 @@ namespace POS.Infrastructure.Persistence.Migrations
                     b.Navigation("Channel");
 
                     b.Navigation("Shift");
-                });
-
-            modelBuilder.Entity("POS.Domain.Entities.SaleEdit", b =>
-                {
-                    b.HasOne("POS.Domain.Entities.Sale", "Sale")
-                        .WithMany()
-                        .HasForeignKey("SaleId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Sale");
                 });
 
             modelBuilder.Entity("POS.Domain.Entities.SaleInventoryConsumption", b =>

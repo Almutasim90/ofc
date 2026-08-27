@@ -1,13 +1,19 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Link } from 'react-router-dom'
 import { api, ApiError } from '../api/client'
 import { useAuth } from '../auth/AuthContext'
-import type { BranchDto, ShiftDto } from '../api/types'
+import type { BranchDto, SaleDto, ShiftDto } from '../api/types'
 import Money from '../components/Money'
+import AppIcon from '../components/AppIcon'
+import Receipt from '../components/Receipt'
+import { IconAction, SearchBox } from '../components/TableTools'
+import { useToast } from '../components/ToastContext'
 
 export default function ShiftPage() {
   const { t, i18n } = useTranslation()
-  const { user } = useAuth()
+  const { user, hasPermission } = useAuth()
+  const toast = useToast()
   const [shift, setShift] = useState<ShiftDto | null>(null)
   const [lastClosed, setLastClosed] = useState<ShiftDto | null>(null)
   const [branches, setBranches] = useState<BranchDto[]>([])
@@ -19,6 +25,10 @@ export default function ShiftPage() {
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [sales, setSales] = useState<SaleDto[]>([])
+  const [salesSearch, setSalesSearch] = useState('')
+  const [receiptHeader, setReceiptHeader] = useState<string | null>(null)
+  const [printSale, setPrintSale] = useState<SaleDto | null>(null)
 
   useEffect(() => {
     const load = async () => {
@@ -44,16 +54,33 @@ export default function ShiftPage() {
     load()
   }, [t, user?.branchId])
 
+  useEffect(() => {
+    api.get<{ headerText: string | null }>('/api/receipt-settings').then((x) => setReceiptHeader(x.headerText)).catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    if (!shift) { setSales([]); return }
+    api.get<SaleDto[]>(`/api/sales?shiftId=${shift.id}`).then(setSales).catch(() => {})
+  }, [shift])
+
+  useEffect(() => {
+    if (!printSale) return
+    window.print()
+    const reset = () => setPrintSale(null)
+    window.addEventListener('afterprint', reset)
+    return () => window.removeEventListener('afterprint', reset)
+  }, [printSale])
+
   const openShift = async (event: FormEvent) => {
     event.preventDefault()
     setSubmitting(true)
-    setError(null)
     try {
       const opened = await api.post<ShiftDto>('/api/shifts/open', { branchId, openingCash: customizeOpening ? Number(openingCash) : null })
       setShift(opened)
       setLastClosed(null)
+      toast.success(t('shifts.opened'))
     } catch (err) {
-      setError(err instanceof ApiError && (err.status === 401 || err.status === 403) ? t('shifts.sessionExpired') : t('shifts.openError'))
+      toast.error(err instanceof ApiError && (err.status === 401 || err.status === 403) ? t('shifts.sessionExpired') : t('shifts.openError'))
     } finally {
       setSubmitting(false)
     }
@@ -63,7 +90,6 @@ export default function ShiftPage() {
     event.preventDefault()
     if (!shift) return
     setSubmitting(true)
-    setError(null)
     try {
       const closed = await api.post<ShiftDto>(`/api/shifts/${shift.id}/close`, {
         counts: denominations.map((denomination) => ({ denomination, quantity: cashCounts[denomination.toString()] ?? 0 })),
@@ -71,8 +97,9 @@ export default function ShiftPage() {
       setLastClosed(closed)
       setShift(null)
       setCashCounts(Object.fromEntries(denominations.map((value) => [value.toString(), 0])))
+      toast.success(t('shifts.closed'))
     } catch (err) {
-      setError(err instanceof ApiError && (err.status === 401 || err.status === 403) ? t('shifts.sessionExpired') : t('shifts.closeError'))
+      const message = err instanceof ApiError && (err.status === 401 || err.status === 403) ? t('shifts.sessionExpired') : t('shifts.closeError')
       // The same shift may have been closed from another device. Refresh the
       // state so a desktop left open does not keep showing a stale close form.
       try {
@@ -82,9 +109,10 @@ export default function ShiftPage() {
         ])
         setShift(current ?? null)
         setLastClosed(latestClosed ?? null)
-        if (!current) setError(null)
+        if (!current) toast.success(t('shifts.closed'))
+        else toast.error(message)
       } catch {
-        // Keep the original close error if refreshing also fails.
+        toast.error(message)
       }
     } finally {
       setSubmitting(false)
@@ -94,6 +122,13 @@ export default function ShiftPage() {
   if (loading) return <p>{t('common.loading')}</p>
   const branchName = (branch: BranchDto) => i18n.language === 'ar' ? branch.nameAr : branch.nameEn
   const selectedBranch = branches.find((branch) => branch.id === branchId)
+  const printSaleBranch = branches.find((branch) => branch.id === printSale?.branchId)
+  const printBranchName = printSaleBranch ? branchName(printSaleBranch) : ''
+  const paymentLabel = (method: string) => t(`cashier.${method.toLowerCase()}`)
+  const filteredSales = sales
+    .filter((sale) => `${sale.saleNumber} ${paymentLabel(sale.paymentMethod)} ${sale.items.map((item) => item.productNameSnapshot).join(' ')}`.toLowerCase().includes(salesSearch.trim().toLowerCase()))
+    .slice()
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
   const countedTotal = denominations.reduce((sum, denomination) => sum + denomination * (cashCounts[denomination.toString()] ?? 0), 0)
   const changeCount = (denomination: number, delta: number) => setCashCounts((current) => ({
     ...current,
@@ -141,7 +176,6 @@ export default function ShiftPage() {
             </div>
             <div className="shift-close-actions">
               <div className="cash-count-total"><span>{t('shifts.countedTotal')}</span><Money value={countedTotal} /></div>
-              {error && <p className="error-text" role="alert">{error}</p>}
               <button type="submit" disabled={submitting}>
                 {submitting ? t('shifts.closingSubmit') : t('shifts.closeSubmit')}
               </button>
@@ -151,26 +185,75 @@ export default function ShiftPage() {
       ) : (
         <form className="ui-card ui-stack max-w-md" onSubmit={openShift}>
           <h2>{t('shifts.open')}</h2>
-          {!user?.branchId && (
-            <label className="flex flex-col gap-1 text-muted">
-              {t('shifts.branch')}
-              <select required value={branchId} onChange={(event) => setBranchId(event.target.value)}>
-                {branches.map((branch) => <option key={branch.id} value={branch.id}>{branchName(branch)}</option>)}
-              </select>
-            </label>
+          {!user?.branchId && branches.length === 0 ? (
+            <p className="error-text" role="alert">
+              {hasPermission('branches.manage') ? (
+                <>
+                  {t('shifts.noBranchesAdmin')} <Link to="/branches">{t('nav.branches')}</Link>
+                </>
+              ) : (
+                t('shifts.noBranches')
+              )}
+            </p>
+          ) : (
+            <>
+              {!user?.branchId && (
+                <label className="flex flex-col gap-1 text-muted">
+                  {t('shifts.branch')}
+                  <select required value={branchId} onChange={(event) => setBranchId(event.target.value)}>
+                    {branches.map((branch) => <option key={branch.id} value={branch.id}>{branchName(branch)}</option>)}
+                  </select>
+                </label>
+              )}
+              <div className="shift-opening-float">
+                <span>{t('shifts.defaultOpening')}</span>
+                <strong><Money value={customizeOpening ? Number(openingCash) : selectedBranch?.defaultOpeningFloat ?? 0} /></strong>
+              </div>
+              <button type="button" className="shift-edit-opening" onClick={() => setCustomizeOpening((value) => !value)}>{customizeOpening ? t('shifts.useDefault') : t('shifts.editOpening')}</button>
+              {customizeOpening && <label className="flex flex-col gap-1 text-muted">
+                  {t('shifts.openingCash')}
+                  <input type="number" min="0" step="0.001" required value={openingCash} onChange={(event) => setOpeningCash(event.target.value)} />
+              </label>}
+              <button disabled={submitting || !branchId}>{t('shifts.openSubmit')}</button>
+            </>
           )}
-          <div className="shift-opening-float">
-            <span>{t('shifts.defaultOpening')}</span>
-            <strong><Money value={customizeOpening ? Number(openingCash) : selectedBranch?.defaultOpeningFloat ?? 0} /></strong>
-          </div>
-          <button type="button" className="shift-edit-opening" onClick={() => setCustomizeOpening((value) => !value)}>{customizeOpening ? t('shifts.useDefault') : t('shifts.editOpening')}</button>
-          {customizeOpening && <label className="flex flex-col gap-1 text-muted">
-              {t('shifts.openingCash')}
-              <input type="number" min="0" step="0.001" required value={openingCash} onChange={(event) => setOpeningCash(event.target.value)} />
-          </label>}
-          <button disabled={submitting || !branchId}>{t('shifts.openSubmit')}</button>
         </form>
       )}
+
+      {shift && (
+        <div className="ui-card ui-stack">
+          <div className="table-toolbar">
+            <h2>{t('shifts.salesTitle')}</h2>
+            {sales.length > 0 && <SearchBox value={salesSearch} onChange={(event) => setSalesSearch(event.target.value)} placeholder={t('common.search')} />}
+          </div>
+          {sales.length === 0 ? (
+            <p className="text-sm text-muted">{t('shifts.salesEmpty')}</p>
+          ) : (
+            <div className="table-shell"><table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>{t('shifts.time')}</th>
+                  <th>{t('cashier.paymentMethod')}</th>
+                  <th>{t('cashier.total')}</th>
+                  <th>{t('branches.actions')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredSales.map((sale) => <tr key={sale.id}>
+                  <td>#{sale.saleNumber}</td>
+                  <td>{new Date(sale.createdAt).toLocaleTimeString(i18n.language, { hour: '2-digit', minute: '2-digit' })}</td>
+                  <td>{paymentLabel(sale.paymentMethod)}</td>
+                  <td><Money value={sale.totalAmount} /></td>
+                  <td><IconAction label={t('receipt.print')} onClick={() => setPrintSale(sale)}><AppIcon className="h-4 w-4" name="printer" /></IconAction></td>
+                </tr>)}
+              </tbody>
+            </table></div>
+          )}
+        </div>
+      )}
+
+      {printSale && <Receipt sale={printSale} headerText={receiptHeader} branchName={printBranchName} cashierName={user?.fullName ?? ''} />}
 
       {lastClosed && (
         <div className="ui-card ui-stack">

@@ -11,8 +11,9 @@ using POS.Domain.Entities;
 namespace POS.Application.AI;
 public record AiSettingsDto(Guid? Id, string Provider, string Model, string? BaseUrl, string? ApiKeyLast4, bool IsActive);
 public record UpdateAiSettingsRequest(string Provider, string Model, string? BaseUrl, string? ApiKey, bool IsActive);
-public record GenerateInsightRequest(string RequestType, DateOnly From, DateOnly To, Guid? BranchId);
+public record GenerateInsightRequest(string RequestType, DateOnly From, DateOnly To, Guid? BranchId, string? Question = null);
 public record AiInsightDto(Guid Id, string RequestType, string Result, DateTime CreatedAt);
+public record AiTestResultDto(string Reply);
 
 public class AiInsightService(IAppDbContext db, ICurrentUserService currentUser, IDataProtectionProvider protection, IHttpClientFactory clients)
 {
@@ -46,16 +47,49 @@ public class AiInsightService(IAppDbContext db, ICurrentUserService currentUser,
     }
     public async Task<AiInsightDto> GenerateAsync(GenerateInsightRequest r, CancellationToken ct = default)
     {
+        var isCustom = r.RequestType.Equals("Custom", StringComparison.OrdinalIgnoreCase);
+        var question = r.Question?.Trim();
+        if (isCustom && string.IsNullOrWhiteSpace(question)) throw new ValidationException("Write a question to analyze.");
         var branchId = currentUser.BypassBranchFilter ? r.BranchId : currentUser.BranchId;
         var sales = await db.Sales.AsNoTracking().Where(s => s.BusinessDate >= r.From && s.BusinessDate <= r.To && s.Status == SaleStatus.Completed && (!branchId.HasValue || s.BranchId == branchId)).Select(s => new { s.BusinessDate, s.TotalAmount, s.DiscountAmount }).ToListAsync(ct);
         var shifts = await db.Shifts.AsNoTracking().Where(s => !branchId.HasValue || s.BranchId == branchId).OrderByDescending(s => s.OpenedAt).Take(30).Select(s => new { s.VarianceAmount, s.OpenedAt }).ToListAsync(ct);
         var settings = await db.AiProviderSettings.AsNoTracking().FirstOrDefaultAsync(x => x.IsActive, ct) ?? throw new ValidationException("Configure an AI provider first.");
-        var prompt = $"Return a concise Arabic POS {r.RequestType} insight. Data: sales={JsonSerializer.Serialize(sales)}, shifts={JsonSerializer.Serialize(shifts)}. Clearly label forecasts as estimates based on sales history.";
+        var instruction = isCustom ? question! : $"a concise {r.RequestType} insight";
+        var prompt = $"You are a POS analytics assistant. Respond in Arabic only. Given this data: sales={JsonSerializer.Serialize(sales)}, shifts={JsonSerializer.Serialize(shifts)} — {instruction}. Clearly label any forecasts as estimates based on sales history.";
+        var result = await CallProviderAsync(settings, prompt, 1200, ct);
+        var label = isCustom ? question![..Math.Min(question!.Length, 50)] : r.RequestType;
+        var audit = new AiInsightRequest { Id = Guid.NewGuid(), RequestedByUserId = currentUser.UserId!.Value, BranchId = branchId, RequestType = label, CreatedAt = DateTime.UtcNow, ResultSummary = result[..Math.Min(result.Length, 8000)] };
+        db.AiInsightRequests.Add(audit); await db.SaveChangesAsync(ct); return new(audit.Id, audit.RequestType, result, audit.CreatedAt);
+    }
+
+    public async Task<IReadOnlyList<AiInsightDto>> ListRecentAsync(int take, CancellationToken ct = default)
+    {
+        var branchId = currentUser.BypassBranchFilter ? null : currentUser.BranchId;
+        return await db.AiInsightRequests.AsNoTracking()
+            .Where(x => !branchId.HasValue || x.BranchId == branchId)
+            .OrderByDescending(x => x.CreatedAt)
+            .Take(Math.Clamp(take, 1, 50))
+            .Select(x => new AiInsightDto(x.Id, x.RequestType, x.ResultSummary, x.CreatedAt))
+            .ToListAsync(ct);
+    }
+
+    // Lets the settings page verify a saved provider actually works, without spending a full
+    // insight prompt or writing to the insight history.
+    public async Task<AiTestResultDto> TestConnectionAsync(CancellationToken ct = default)
+    {
+        var settings = await db.AiProviderSettings.AsNoTracking().FirstOrDefaultAsync(x => x.IsActive, ct)
+            ?? throw new ValidationException("Save an AI provider configuration first.");
+        var reply = await CallProviderAsync(settings, "Reply with exactly one word: OK", 16, ct);
+        return new AiTestResultDto(reply.Trim());
+    }
+
+    private async Task<string> CallProviderAsync(AiProviderSetting settings, string prompt, int maxTokens, CancellationToken ct)
+    {
         var client = clients.CreateClient(); var key = protector.Unprotect(settings.ApiKeyEncrypted); HttpResponseMessage response;
         if (settings.Provider.Equals("Anthropic", StringComparison.OrdinalIgnoreCase))
         {
             client.DefaultRequestHeaders.Add("x-api-key", key); client.DefaultRequestHeaders.Add("anthropic-version", "2023-06-01");
-            response = await client.PostAsJsonAsync("https://api.anthropic.com/v1/messages", new { model = settings.Model, max_tokens = 1200, messages = new[] { new { role = "user", content = prompt } } }, ct);
+            response = await client.PostAsJsonAsync("https://api.anthropic.com/v1/messages", new { model = settings.Model, max_tokens = maxTokens, messages = new[] { new { role = "user", content = prompt } } }, ct);
         }
         else
         {
@@ -63,14 +97,18 @@ public class AiInsightService(IAppDbContext db, ICurrentUserService currentUser,
                 ? "https://api.openai.com/v1/chat/completions"
                 : settings.BaseUrl ?? throw new ValidationException("Configure an AI provider first.");
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
-            response = await client.PostAsJsonAsync(endpoint, new { model = settings.Model, messages = new[] { new { role = "user", content = prompt } } }, ct);
+            response = await client.PostAsJsonAsync(endpoint, new { model = settings.Model, max_tokens = maxTokens, messages = new[] { new { role = "user", content = prompt } } }, ct);
         }
-        if (!response.IsSuccessStatusCode) throw new ValidationException("AI provider request failed.");
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new ValidationException($"AI provider request failed ({(int)response.StatusCode} {response.ReasonPhrase}): {Truncate(body, 300)}");
+        }
         using var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync(ct));
-        var result = settings.Provider.Equals("Anthropic", StringComparison.OrdinalIgnoreCase)
+        return settings.Provider.Equals("Anthropic", StringComparison.OrdinalIgnoreCase)
             ? json.RootElement.GetProperty("content")[0].GetProperty("text").GetString() ?? string.Empty
             : json.RootElement.GetProperty("choices")[0].GetProperty("message").GetProperty("content").GetString() ?? string.Empty;
-        var audit = new AiInsightRequest { Id = Guid.NewGuid(), RequestedByUserId = currentUser.UserId!.Value, BranchId = branchId, RequestType = r.RequestType, CreatedAt = DateTime.UtcNow, ResultSummary = result[..Math.Min(result.Length, 8000)] };
-        db.AiInsightRequests.Add(audit); await db.SaveChangesAsync(ct); return new(audit.Id, audit.RequestType, result, audit.CreatedAt);
     }
+
+    private static string Truncate(string value, int maxLength) => value.Length <= maxLength ? value : value[..maxLength] + "...";
 }

@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router-dom'
-import { api } from '../api/client'
+import { api, ApiError } from '../api/client'
 import type { PermissionOverrideDto } from '../api/types'
 import { SearchBox } from '../components/TableTools'
+import { useToast } from '../components/ToastContext'
 
 export default function UserPermissionsPage() {
   const { t } = useTranslation()
+  const toast = useToast()
   const { id } = useParams<{ id: string }>()
   const [overrides, setOverrides] = useState<PermissionOverrideDto[]>([])
   const [loading, setLoading] = useState(true)
@@ -26,8 +28,12 @@ export default function UserPermissionsPage() {
 
   const setOverride = async (permissionId: string, isGranted: boolean | null) => {
     if (!id) return
-    await api.put(`/api/users/${id}/permission-overrides`, { permissionId, isGranted })
-    await load()
+    try {
+      await api.put(`/api/users/${id}/permission-overrides`, { permissionId, isGranted })
+      await load()
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : t('common.saveError'))
+    }
   }
 
   if (loading) return <p>{t('common.loading')}</p>

@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router-dom'
-import { api, resolveApiAssetUrl } from '../api/client'
+import { api, ApiError, resolveApiAssetUrl } from '../api/client'
 import { useAuth } from '../auth/AuthContext'
 import type { BranchDto, ProductDto, RawMaterialDto, RecipeLineDto } from '../api/types'
 import { DeleteIcon, IconAction, SearchBox } from '../components/TableTools'
+import { useToast } from '../components/ToastContext'
 
 interface EditableLine {
   rawMaterialId: string
@@ -14,6 +15,7 @@ interface EditableLine {
 export default function ProductRecipePage() {
   const { t } = useTranslation()
   const { user } = useAuth()
+  const toast = useToast()
   const { id } = useParams<{ id: string }>()
 
   const [branches, setBranches] = useState<BranchDto[]>([])
@@ -73,6 +75,9 @@ export default function ProductRecipePage() {
         branchId,
         lines: lines.map((l) => ({ rawMaterialId: l.rawMaterialId, quantityRequired: Number(l.quantityRequired) })),
       })
+      toast.success(t('common.updated'))
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : t('common.saveError'))
     } finally {
       setSaving(false)
     }

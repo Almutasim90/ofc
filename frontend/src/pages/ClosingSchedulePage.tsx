@@ -3,11 +3,13 @@ import { useTranslation } from 'react-i18next'
 import { api, ApiError } from '../api/client'
 import type { BranchDto, ClosingScheduleConfigDto, ClosingScheduleExceptionDto } from '../api/types'
 import { DeleteIcon, EditIcon, IconAction, SearchBox } from '../components/TableTools'
+import { useToast } from '../components/ToastContext'
 
 const emptyForm = { date: '', overrideCloseTime: '01:00', branchId: '', reason: '' }
 
 export default function ClosingSchedulePage() {
   const { t, i18n } = useTranslation()
+  const toast = useToast()
   const [config, setConfig] = useState<ClosingScheduleConfigDto | null>(null)
   const [exceptions, setExceptions] = useState<ClosingScheduleExceptionDto[]>([])
   const [branches, setBranches] = useState<BranchDto[]>([])
@@ -35,18 +37,19 @@ export default function ClosingSchedulePage() {
   useEffect(() => { load().catch(() => setError(t('closing.loadError'))) }, [t])
 
   const saveConfig = async (event: FormEvent) => {
-    event.preventDefault(); setSaving(true); setError(null)
+    event.preventDefault(); setSaving(true)
     try {
       const result = await api.put<ClosingScheduleConfigDto>('/api/closing-schedule/config', {
         defaultCloseTime: `${defaultTime}:00`, isActive: active,
       })
       setConfig(result)
-    } catch (err) { setError(err instanceof ApiError ? err.message : t('closing.saveError')) }
+      toast.success(t('closing.savedConfig'))
+    } catch (err) { toast.error(err instanceof ApiError ? err.message : t('closing.saveError')) }
     finally { setSaving(false) }
   }
 
   const saveException = async (event: FormEvent) => {
-    event.preventDefault(); setSaving(true); setError(null)
+    event.preventDefault(); setSaving(true)
     const payload = {
       date: form.date, overrideCloseTime: `${form.overrideCloseTime}:00`,
       branchId: form.branchId || null, reason: form.reason,
@@ -55,7 +58,8 @@ export default function ClosingSchedulePage() {
       if (editingId) await api.put(`/api/closing-schedule/exceptions/${editingId}`, payload)
       else await api.post('/api/closing-schedule/exceptions', payload)
       setEditingId(null); setForm(emptyForm); await load()
-    } catch (err) { setError(err instanceof ApiError ? err.message : t('closing.saveError')) }
+      toast.success(t('closing.savedException'))
+    } catch (err) { toast.error(err instanceof ApiError ? err.message : t('closing.saveError')) }
     finally { setSaving(false) }
   }
 
@@ -66,8 +70,8 @@ export default function ClosingSchedulePage() {
 
   const deleteException = async (id: string) => {
     if (!window.confirm(t('closing.confirmDelete'))) return
-    try { await api.delete(`/api/closing-schedule/exceptions/${id}`); await load() }
-    catch { setError(t('closing.saveError')) }
+    try { await api.delete(`/api/closing-schedule/exceptions/${id}`); await load(); toast.success(t('closing.deletedException')) }
+    catch { toast.error(t('closing.saveError')) }
   }
 
   const branchName = (id: string | null) => {

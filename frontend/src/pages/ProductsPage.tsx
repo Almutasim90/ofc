@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState, type ChangeEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
-import { api, resolveApiAssetUrl } from '../api/client'
+import { api, ApiError, resolveApiAssetUrl } from '../api/client'
 import type { CreateProductRequest, ProductDto, UpdateProductRequest } from '../api/types'
 import Money from '../components/Money'
 import { DetailsIcon, EditIcon, IconAction, SearchBox } from '../components/TableTools'
+import { useToast } from '../components/ToastContext'
 
 type EditingState = { mode: 'create' } | { mode: 'edit'; product: ProductDto } | null
 
@@ -128,6 +129,7 @@ function ProductForm({
   onSaved: () => void
 }) {
   const { t } = useTranslation()
+  const toast = useToast()
   const existing = editing.mode === 'edit' ? editing.product : null
 
   const [nameAr, setNameAr] = useState(existing?.nameAr ?? '')
@@ -149,6 +151,8 @@ function ProductForm({
       body.append('file', file)
       const result = await api.upload<{ url: string }>('/api/uploads/product-image', body)
       setIconOrImageUrl(result.url)
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : t('common.saveError'))
     } finally {
       setUploading(false)
       event.target.value = ''
@@ -178,7 +182,10 @@ function ProductForm({
         }
         await api.put(`/api/products/${editing.product.id}`, request)
       }
+      toast.success(editing.mode === 'create' ? t('common.created') : t('common.updated'))
       onSaved()
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : t('common.saveError'))
     } finally {
       setSubmitting(false)
     }

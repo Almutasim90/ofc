@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { api } from '../api/client'
+import { api, ApiError } from '../api/client'
 import type { CreateRawMaterialRequest, RawMaterialDto, UpdateRawMaterialRequest } from '../api/types'
 import { EditIcon, IconAction, SearchBox } from '../components/TableTools'
+import { useToast } from '../components/ToastContext'
 
 type EditingState = { mode: 'create' } | { mode: 'edit'; material: RawMaterialDto } | null
 
@@ -79,6 +80,7 @@ function MaterialForm({
   onSaved: () => void
 }) {
   const { t } = useTranslation()
+  const toast = useToast()
   const existing = editing.mode === 'edit' ? editing.material : null
 
   const [nameAr, setNameAr] = useState(existing?.nameAr ?? '')
@@ -96,7 +98,10 @@ function MaterialForm({
       } else {
         await api.put(`/api/raw-materials/${editing.material.id}`, request)
       }
+      toast.success(editing.mode === 'create' ? t('common.created') : t('common.updated'))
       onSaved()
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : t('common.saveError'))
     } finally {
       setSubmitting(false)
     }

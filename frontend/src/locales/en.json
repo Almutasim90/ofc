@@ -39,16 +39,20 @@
     "shift": "Shift",
     "closingSchedule": "Closing schedule",
     "reports": "Reports",
+    "aiInsights": "AI Insights",
     "settings": "Settings",
     "channels": "Sales channels",
     "aiSettings": "AI settings",
     "emailSettings": "Email",
+    "receiptSettings": "Receipt",
     "notifications": "Notifications",
     "more": "More",
     "closeMenu": "Close navigation",
     "expandMenu": "Expand navigation",
     "collapseMenu": "Collapse navigation",
-    "logout": "Log out"
+    "logout": "Log out",
+    "home": "Home",
+    "breadcrumb": "Breadcrumb"
   },
   "cashier": {
     "mixed": "Cash + card",
@@ -121,6 +125,13 @@
     ,"denominationQuantity": "Quantity of denomination {{denomination}}"
     ,"increaseQuantity": "Increase quantity"
     ,"decreaseQuantity": "Decrease quantity"
+    ,"noBranches": "No active branches are available yet. Ask an administrator to add a branch before opening a shift."
+    ,"noBranchesAdmin": "No active branches are available yet. Add or activate a branch on the"
+    ,"salesTitle": "This shift's sales"
+    ,"salesEmpty": "No sales yet in this shift."
+    ,"time": "Time"
+    ,"opened": "Shift opened."
+    ,"closed": "Shift closed."
   },
   "notifications": {
     "title": "Notifications",
@@ -134,8 +145,10 @@
     ,"viewAll": "View all notifications"
   },
   "channels": {"title":"Sales channels","description":"Add online ordering companies and manage their logos, prices, and availability.","nameAr":"Arabic name","nameEn":"English name","logoUrl":"Logo URL","uploadLogo":"Upload logo","uploading":"Uploading...","logoHint":"PNG, JPG, WebP, or SVG — up to 5 MB","logoTooLarge":"The logo is larger than 5 MB.","uploadError":"Could not upload the logo","logoSaved":"The logo was uploaded and saved to the channel.","logoUploaded":"The logo was uploaded. Save the channel to finish.","pricing":"Product pricing","logo":"Logo","channel":"Company","status":"Status","active":"Active","inactive":"Stopped","stop":"Stop","enable":"Enable"},
-  "ai": {"title":"AI settings","description":"Choose the provider and model used for insights. The API key is encrypted and is never shown in full after saving.","active":"Enable AI insights","provider":"Provider","providerCustom":"Custom provider...","baseUrl":"API base URL","baseUrlHint":"Must be an OpenAI-compatible chat/completions endpoint.","model":"Model","modelHint":"Type any model name you want, or pick a suggestion.","apiKey":"API key","keyHint":"Leave blank to keep the saved key.","saved":"AI settings saved.","loadError":"Could not load AI settings.","saveError":"Could not save AI settings.","analyze":"AI insight","summary":"Summary","anomaly":"Anomaly detection","forecast":"Demand forecast"},
+  "ai": {"title":"AI settings","description":"Choose the provider and model used for insights. The API key is encrypted and is never shown in full after saving.","active":"Enable AI insights","provider":"Provider","providerCustom":"Custom provider...","baseUrl":"API base URL","baseUrlHint":"Must be an OpenAI-compatible chat/completions endpoint.","model":"Model","modelHint":"Type any model name you want, or pick a suggestion.","apiKey":"API key","keyHint":"Leave blank to keep the saved key.","saved":"AI settings saved.","loadError":"Could not load AI settings.","saveError":"Could not save AI settings.","analyze":"AI insight","summary":"Summary","anomaly":"Anomaly detection","forecast":"Demand forecast","test":"Test connection","testSuccess":"Connection works — the provider replied: \"{{reply}}\"","testError":"Connection test failed."},
+  "aiInsights": {"title":"AI Insights","description":"Ask the configured AI provider to analyze sales and shift data for the selected period, either with a quick preset or your own question.","presetsTitle":"Quick analysis","customTitle":"Ask a question","questionLabel":"Your question","questionPlaceholder":"e.g. Why did tea sales drop last week?","ask":"Analyze","recentTitle":"Recent insights","error":"Could not generate the insight. Configure and test the AI provider first."},
   "email": {"title":"Email settings","description":"Configure the SMTP account used to send system alerts automatically. The password is stored encrypted.","active":"Enable email notifications","smtpHost":"SMTP server","smtpPort":"Port","username":"Username","password":"Email password or app password","fromEmail":"Sender email","fromName":"Sender name","recipients":"Alert recipients","recipientsHint":"Separate addresses with commas or semicolons.","useSsl":"Use secure SSL/TLS connection","saved":"Email settings saved.","loadError":"Could not load email settings.","saveError":"Could not save email settings.","testTitle":"Test delivery","testRecipient":"Send a test message to","sendTest":"Send test","testSent":"Test email sent successfully.","testError":"Test email delivery failed."},
+  "receipt": {"settingsTitle":"Receipt settings","settingsDescription":"This text prints at the top of every receipt, above the sale details. No logo — text only.","headerLabel":"Receipt header text","headerPlaceholder":"e.g.\nLolat Al-Suwaiq\nTel: 9XXXXXXX","headerHint":"Up to 500 characters. A new line starts a new line on the printed receipt. Leave blank to print without a header.","saved":"Receipt settings saved.","loadError":"Could not load receipt settings.","saveError":"Could not save receipt settings.","print":"Print receipt","number":"Receipt #{{number}}","date":"Date","cashier":"Cashier","item":"Item","qty":"Qty","subtotal":"Subtotal"},
   "closing": {
     "title": "Automatic closing schedule",
     "timezoneHint": "All closing times use Muscat time (Asia/Muscat). Cashiers may open shifts at any time.",
@@ -160,7 +173,10 @@
     "actions": "Actions",
     "confirmDelete": "Delete this closing exception?",
     "loadError": "Could not load the closing schedule.",
-    "saveError": "Could not save the closing schedule."
+    "saveError": "Could not save the closing schedule.",
+    "savedConfig": "Closing schedule saved.",
+    "savedException": "Exception saved.",
+    "deletedException": "Exception deleted."
   },
   "reports": {
     "title": "Reports",
@@ -226,7 +242,7 @@
     "passwordMismatch": "The new passwords do not match.",
     "saveError": "Could not save your settings."
   },
-  "settingsHub": {"search":"Search settings...","myAccount":"My account","groupOperations":"Operations","groupIntegrations":"Sales & integrations","closingSummary":"Automatic closing and exceptions","usersSummary":"Users and permissions","branchesSummary":"Manage branches and status","channelsSummary":"Order channels and pricing","aiSummary":"Provider, model, and API key","emailSummary":"Sender account and alert recipients","count":"{{count}} items"},
+  "settingsHub": {"search":"Search settings...","myAccount":"My account","groupOperations":"Operations","groupIntegrations":"Sales & integrations","closingSummary":"Automatic closing and exceptions","usersSummary":"Users and permissions","branchesSummary":"Manage branches and status","channelsSummary":"Order channels and pricing","aiSummary":"Provider, model, and API key","emailSummary":"Sender account and alert recipients","receiptSummary":"Header text printed on receipts","receiptEmptySummary":"No header text set","receiptConfigured":"Header text set","count":"{{count}} items"},
   "users": {
     "title": "User Management",
     "fullName": "Full name",
@@ -376,13 +392,22 @@
   "common": {
     "save": "Save",
     "saved": "Saved",
+    "update": "Update",
+    "edit": "Edit",
+    "delete": "Delete",
+    "actions": "Actions",
     "active": "Active",
     "inactive": "Inactive",
     "showPassword": "Show password",
     "hidePassword": "Hide password",
     "loading": "Loading...",
     "search": "Search table...",
-    "unauthorized": "You do not have access to this page","previous":"Previous","next":"Next","cancel":"Cancel"
+    "unauthorized": "You do not have access to this page","previous":"Previous","next":"Next","cancel":"Cancel",
+    "created": "Created successfully.",
+    "updated": "Updated successfully.",
+    "deleted": "Deleted successfully.",
+    "saveError": "Could not save. Please try again.",
+    "deleteError": "Could not delete. Please try again."
   },
   "orders": {
     "title": "Saved orders",
