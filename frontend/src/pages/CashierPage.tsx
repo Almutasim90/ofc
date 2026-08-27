@@ -99,7 +99,9 @@ export default function CashierPage() {
         setBranchId(shiftData?.branchId ?? user?.branchId ?? branchesData.find((branch) => branch.isActive)?.id ?? '')
         setCurrentShift(shiftData ?? null)
         setChannels(channelData)
-        setChannelId(channelData.find((channel) => channel.isInStore)?.id ?? '')
+        const defaultChannel = channelData.find((channel) => channel.isInStore)
+        setChannelId(defaultChannel?.id ?? '')
+        if (defaultChannel) await loadChannelPrices(defaultChannel.id)
       } catch {
         setError(t('cashier.loadError'))
       } finally {
@@ -147,9 +149,12 @@ export default function CashierPage() {
   const selectedChannel = channels.find((channel) => channel.id === channelId)
   const onlineChannels = channels.filter((channel) => !channel.isInStore)
   const storeChannel = channels.find((channel) => channel.isInStore)
-  const selectChannel = async (channel: SalesChannelDto) => {
-    const prices = channel.isInStore ? [] : await api.get<ProductChannelPriceDto[]>(`/api/channels/${channel.id}/catalog-prices`)
+  const loadChannelPrices = async (id: string) => {
+    const prices = await api.get<ProductChannelPriceDto[]>(`/api/channels/${id}/catalog-prices`)
     setChannelPrices(Object.fromEntries(prices.filter((price) => price.price != null).map((price) => [price.productId, price.price!])))
+  }
+  const selectChannel = async (channel: SalesChannelDto) => {
+    await loadChannelPrices(channel.id)
     setChannelId(channel.id)
     setSelectedCategory(null)
     setCart([])
