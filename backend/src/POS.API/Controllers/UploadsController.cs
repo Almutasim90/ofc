@@ -6,7 +6,7 @@ using POS.Domain.Constants;
 namespace POS.API.Controllers;
 
 [ApiController, Route("api/uploads")]
-public class UploadsController(IFileStorageService storage) : ControllerBase
+public class UploadsController(IFileStorageService storage, ILogger<UploadsController> logger) : ControllerBase
 {
     private static readonly HashSet<string> AllowedContentTypes =
     [
@@ -72,6 +72,10 @@ public class UploadsController(IFileStorageService storage) : ControllerBase
             // Storage failures are actionable configuration/upstream errors,
             // not unknown application crashes. The storage response contains
             // no credentials and helps administrators fix Dokploy variables.
+            // Logged (with the inner exception, which carries the raw upstream
+            // detail) so this is diagnosable from the api service's own logs
+            // without needing browser devtools.
+            logger.LogWarning(ex, "Channel/product image upload to Supabase Storage failed: {Message}", ex.Message);
             return StatusCode(StatusCodes.Status502BadGateway, new { error = ex.Message });
         }
 
