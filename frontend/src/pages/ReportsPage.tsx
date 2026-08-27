@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode, type SVGProps } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Area, Bar, BarChart, CartesianGrid, Cell, ComposedChart, LabelList, Legend, Line, Pie, PieChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis, type PieLabelRenderProps } from 'recharts'
+import { Area, Bar, BarChart, CartesianGrid, Cell, ComposedChart, LabelList, Legend, Line, Pie, PieChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis, type LegendPayload, type PieLabelRenderProps } from 'recharts'
 import { api } from '../api/client'
 import type { BranchDto, ChannelSalesDto, ManagerDashboardDto } from '../api/types'
 import { useAuth } from '../auth/AuthContext'
@@ -15,10 +15,6 @@ const formatLocalDate = (date: Date) => {
 }
 
 const isoToday = formatLocalDate(new Date())
-const isoMonthStart = (() => {
-  const today = new Date()
-  return formatLocalDate(new Date(today.getFullYear(), today.getMonth(), 1))
-})()
 const CHART_1 = 'rgb(var(--chart-1))'
 const CHART_2 = 'rgb(var(--chart-2))'
 const CHART_3 = 'rgb(var(--chart-3))'
@@ -59,7 +55,7 @@ const tooltipBase = {
 export default function ReportsPage() {
   const { t, i18n } = useTranslation()
   const { user, hasPermission } = useAuth()
-  const [from, setFrom] = useState(isoMonthStart)
+  const [from, setFrom] = useState(isoToday)
   const [to, setTo] = useState(isoToday)
   const [branchId, setBranchId] = useState(user?.branchId ?? '')
   const [branches, setBranches] = useState<BranchDto[]>([])
@@ -183,11 +179,12 @@ export default function ReportsPage() {
           <div className="relative h-full min-h-0">
             <ChartCanvas>
               <ResponsiveContainer width="100%" height="100%">
-                <PieChart margin={{ top: 20, right: 64, bottom: 20, left: 64 }}>
-                  <Pie data={channelChart} dataKey="totalSales" nameKey="name" innerRadius="34%" outerRadius="60%" paddingAngle={channelChart.length > 1 ? 2 : 0} strokeWidth={2} stroke="rgb(var(--color-surface))" label={renderPieOuterLabel} labelLine={false}>
+                <PieChart margin={{ top: 12, right: 64, bottom: 4, left: 64 }}>
+                  <Pie data={channelChart} dataKey="totalSales" nameKey="name" innerRadius="34%" outerRadius="56%" paddingAngle={channelChart.length > 1 ? 2 : 0} strokeWidth={2} stroke="rgb(var(--color-surface))" label={renderPieOuterLabel} labelLine={false}>
                     {channelChart.map((c, i) => <Cell key={i} fill={c.color} />)}
                   </Pie>
                   <Tooltip {...tooltipBase} formatter={(value, itemName, item) => [`${Number(value).toFixed(3)} (${Number(item.payload?.percentage ?? 0).toFixed(1)}%)`, itemName]} />
+                  <Legend verticalAlign="bottom" height={30} iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 12 }} formatter={renderPieLegendLabel} />
                 </PieChart>
               </ResponsiveContainer>
             </ChartCanvas>
@@ -253,11 +250,12 @@ export default function ReportsPage() {
             <div className="relative h-full min-h-0">
               <ChartCanvas>
                 <ResponsiveContainer width="100%" height="100%">
-                  <PieChart margin={{ top: 20, right: 64, bottom: 20, left: 64 }}>
-                    <Pie data={payment} dataKey="totalAmount" nameKey="name" innerRadius="34%" outerRadius="60%" paddingAngle={payment.length > 1 ? 2 : 0} strokeWidth={2} stroke="rgb(var(--color-surface))" label={renderPieOuterLabel} labelLine={false}>
+                  <PieChart margin={{ top: 12, right: 64, bottom: 4, left: 64 }}>
+                    <Pie data={payment} dataKey="totalAmount" nameKey="name" innerRadius="34%" outerRadius="56%" paddingAngle={payment.length > 1 ? 2 : 0} strokeWidth={2} stroke="rgb(var(--color-surface))" label={renderPieOuterLabel} labelLine={false}>
                       {payment.map((p, i) => <Cell key={i} fill={p.color} />)}
                     </Pie>
                     <Tooltip {...tooltipBase} formatter={(value, itemName, item) => [`${Number(value).toFixed(3)} (${Number(item.payload?.percentage ?? 0).toFixed(1)}%)`, itemName]} />
+                    <Legend verticalAlign="bottom" height={30} iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 12 }} formatter={renderPieLegendLabel} />
                   </PieChart>
                 </ResponsiveContainer>
               </ChartCanvas>
@@ -406,6 +404,10 @@ function renderPieOuterLabel({ cx, cy, midAngle, outerRadius, name, percent, fil
     <text x={ex + side * 4} y={my - 3} textAnchor={side > 0 ? 'start' : 'end'} className="report-pie-label-outer">{shortLabel}</text>
     <text x={ex + side * 4} y={my + 13} textAnchor={side > 0 ? 'start' : 'end'} className="report-pie-label-outer-pct" fill={color}>{(share * 100).toFixed(0)}%</text>
   </g>
+}
+function renderPieLegendLabel(value: string, entry: LegendPayload) {
+  const pct = Number((entry.payload as { percentage?: number } | undefined)?.percentage ?? NaN)
+  return Number.isFinite(pct) ? `${value} — ${pct.toFixed(0)}%` : value
 }
 function ReportsSkeleton() {
   return <div className="reports-skeleton grid gap-6">
