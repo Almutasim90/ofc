@@ -69,6 +69,7 @@
     "card": "Card",
     "confirm": "Complete sale",
     "discount": "Discount",
+    "addDiscount": "Add discount",
     "discountType": "Discount type",
     "discountValue": "Discount value",
     "noDiscount": "No discount",

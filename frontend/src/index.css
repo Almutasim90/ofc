@@ -82,6 +82,13 @@ select:disabled {
 .cashier-remove:hover { background: rgb(var(--color-danger) / .1); color: rgb(var(--color-danger)); }
 .cashier-cart-fab { min-height: 3.5rem; box-shadow: 0 16px 35px rgb(var(--color-primary) / .35); }
 .cashier-cart-fab:hover { background: rgb(var(--color-primary-dim)); }
+.cashier-cart-items { min-height: 12rem; scrollbar-width: thin; scrollbar-color: rgb(var(--color-muted) / .4) transparent; }
+.cashier-cart-items::-webkit-scrollbar { width: 6px; }
+.cashier-cart-items::-webkit-scrollbar-thumb { background: rgb(var(--color-muted) / .4); border-radius: 999px; }
+.cashier-cart-items::-webkit-scrollbar-track { background: transparent; }
+.cashier-cart-summary { background: rgb(var(--color-surface) / .92); backdrop-filter: blur(4px); box-shadow: 0 1px 0 rgb(var(--color-border)); }
+.cashier-discount-toggle { min-height: 2.75rem; padding: var(--space-2); }
+.cashier-discount-toggle:hover { border-color: rgb(var(--color-primary)); color: rgb(var(--color-primary)); }
 
 @media (min-width: 768px) and (max-width: 1279px) {
   .cashier-products-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-3); }

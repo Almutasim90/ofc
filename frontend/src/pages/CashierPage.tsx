@@ -77,6 +77,7 @@ export default function CashierPage() {
   const [ordersOpen, setOrdersOpen] = useState(false)
   const [discountType, setDiscountType] = useState<'None' | 'Percentage' | 'FixedAmount'>('None')
   const [discountValue, setDiscountValue] = useState(0)
+  const [discountOpen, setDiscountOpen] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [successSale, setSuccessSale] = useState<SaleDto | null>(null)
@@ -216,6 +217,7 @@ export default function CashierPage() {
       setCashAmount('')
       setDiscountType('None')
       setDiscountValue(0)
+      setDiscountOpen(false)
       setCartOpen(false)
     } catch (err) {
       if (err instanceof ApiError && err.message.startsWith('Insufficient stock')) {
@@ -249,8 +251,14 @@ export default function CashierPage() {
         </button>
       </div>
 
-      <div className="flex flex-1 flex-col gap-2 overflow-y-auto p-3">
+      <div className="cashier-cart-items flex flex-1 flex-col gap-2 overflow-y-auto p-3">
         {cart.length === 0 && <p className="text-sm text-muted">{t('cashier.cartEmpty')}</p>}
+        {cart.length > 0 && (
+          <div className="cashier-cart-summary sticky top-0 z-10 flex items-center justify-between rounded-lg px-2.5 py-1.5 text-xs font-semibold text-muted">
+            <span>{itemCount} {t('cashier.items')}</span>
+            <Money value={subtotal} />
+          </div>
+        )}
         {cart.map((line) => (
           <div key={line.productId} className="cashier-cart-line rounded-xl bg-surface2 p-2.5">
             <div className="cashier-cart-line-heading">
@@ -288,18 +296,33 @@ export default function CashierPage() {
       </div>
 
       <div className="flex flex-col gap-2.5 border-t border-border p-3">
-        <div className="cashier-discount-control">
-          <label>{t('cashier.discountType')}
-            <select value={discountType} onChange={(event) => { setDiscountType(event.target.value as typeof discountType); setDiscountValue(0) }}>
-              <option value="None">{t('cashier.noDiscount')}</option>
-              <option value="Percentage">{t('cashier.percentageDiscount')}</option>
-              <option value="FixedAmount">{t('cashier.fixedDiscount')}</option>
-            </select>
-          </label>
-          {discountType !== 'None' && <label>{t('cashier.discountValue')}
-            <input type="number" min="0" max={discountType === 'Percentage' ? 100 : subtotal} step="0.001" value={discountValue} onChange={(event) => setDiscountValue(Math.max(0, Number(event.target.value) || 0))} />
-          </label>}
-        </div>
+        {discountType === 'None' && !discountOpen ? (
+          <button type="button" className="cashier-discount-toggle flex items-center justify-center gap-1.5 rounded-xl border border-dashed border-border bg-transparent p-0 text-sm font-semibold text-muted" onClick={() => setDiscountOpen(true)}>
+            <AppIcon className="h-4 w-4" name="plus" />
+            {t('cashier.addDiscount')}
+          </button>
+        ) : (
+          <div className="cashier-discount-control">
+            <label>{t('cashier.discountType')}
+              <select
+                value={discountType}
+                onChange={(event) => {
+                  const value = event.target.value as typeof discountType
+                  setDiscountType(value)
+                  setDiscountValue(0)
+                  if (value === 'None') setDiscountOpen(false)
+                }}
+              >
+                <option value="None">{t('cashier.noDiscount')}</option>
+                <option value="Percentage">{t('cashier.percentageDiscount')}</option>
+                <option value="FixedAmount">{t('cashier.fixedDiscount')}</option>
+              </select>
+            </label>
+            {discountType !== 'None' && <label>{t('cashier.discountValue')}
+              <input type="number" min="0" max={discountType === 'Percentage' ? 100 : subtotal} step="0.001" value={discountValue} onChange={(event) => setDiscountValue(Math.max(0, Number(event.target.value) || 0))} />
+            </label>}
+          </div>
+        )}
         {discountAmount > 0 && <div className="flex items-center justify-between text-sm text-muted"><span>{t('cashier.discount')}</span><Money value={discountAmount} /></div>}
         <PaymentSelector method={paymentMethod} cash={cashAmount} total={total} onMethod={setPaymentMethod} onCash={setCashAmount} />
 
