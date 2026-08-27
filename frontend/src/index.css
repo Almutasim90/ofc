@@ -66,8 +66,8 @@ select:disabled {
 .cashier-toolbar { box-shadow: var(--shadow-card); }
 .cashier-products-count { display: flex; align-items: center; gap: var(--space-2); color: rgb(var(--color-muted)); font-size: var(--text-sm); }
 .cashier-products-count strong { display: grid; min-width: 3rem; height: 3rem; padding-inline: var(--space-2); place-items: center; border-radius: var(--radius-control); background: rgb(var(--color-primary) / .12); color: rgb(var(--color-primary)); font-size: var(--text-lg); }
-.cashier-products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 9.25rem), 1fr)); gap: var(--space-3); }
-.cashier-cart-panel { flex-basis: 25%; width: 25%; max-width: 25%; box-shadow: var(--shadow-card); }
+.cashier-products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 7.5rem), 1fr)); gap: var(--space-3); }
+.cashier-cart-panel { flex-basis: 30%; width: 30%; max-width: 30%; box-shadow: var(--shadow-card); }
 [dir="rtl"] .cashier-cart-panel { box-shadow: var(--shadow-card); }
 .cashier-cart-header { background: linear-gradient(135deg, rgb(var(--color-surface)), rgb(var(--color-primary) / .08)); }
 .cashier-cart-line { display: grid; gap: var(--space-2); border: 1px solid transparent; }
@@ -91,12 +91,12 @@ select:disabled {
 .cashier-discount-toggle:hover { border-color: rgb(var(--color-primary)); color: rgb(var(--color-primary)); }
 
 @media (min-width: 768px) and (max-width: 1279px) {
-  .cashier-products-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-3); }
+  .cashier-products-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-3); }
   .cashier-cart-panel .cashier-cart-header,
   .cashier-cart-panel > .cashier-cart > div { padding-inline: var(--space-3); }
 }
 @media (min-width: 1536px) {
-  .cashier-products-grid { grid-template-columns: repeat(auto-fill, minmax(10.75rem, 1fr)); gap: var(--space-4); }
+  .cashier-products-grid { grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr)); gap: var(--space-4); }
 }
 @media (max-width: 767px) {
   .cashier-categories { min-height: 5.75rem; }
