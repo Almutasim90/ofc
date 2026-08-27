@@ -250,6 +250,20 @@ html.dark {
 @media (min-width: 768px) and (max-width: 1279px) {
   .report-chart-card { height: 32rem; }
 }
+.ui-card.report-stat-card-cash { background: rgb(var(--color-primary)); border-color: rgb(var(--color-primary)); }
+.ui-card.report-stat-card-cash, .ui-card.report-stat-card-cash strong { color: #fff; }
+.ui-card.report-stat-card-cash .text-sm { color: rgb(255 255 255 / .8); }
+.ui-card.report-stat-card-cash .report-stat-icon { background: rgb(255 255 255 / .18); color: #fff; }
+.ui-card.report-stat-card-card { background: rgb(var(--chart-1) / .08); border-color: rgb(var(--chart-1) / .35); }
+.ui-card.report-stat-card-card, .ui-card.report-stat-card-card strong, .ui-card.report-stat-card-card .text-sm { color: rgb(var(--chart-1)); }
+.ui-card.report-stat-card-card .report-stat-icon { background: rgb(var(--chart-1) / .16); color: rgb(var(--chart-1)); }
+.report-product-card { border: 1px solid rgb(var(--color-border)); border-radius: var(--radius-card); background: rgb(var(--color-surface)); padding: var(--space-3) var(--space-4); }
+.report-product-card summary { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); cursor: pointer; list-style: none; }
+.report-product-card summary::-webkit-details-marker { display: none; }
+.report-product-card dl { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-2); margin: var(--space-3) 0 0; padding-top: var(--space-3); border-top: 1px dashed rgb(var(--color-border)); }
+.report-product-card dl div { display: grid; gap: 2px; }
+.report-product-card dt { color: rgb(var(--color-muted)); font-size: 0.7rem; font-weight: 600; }
+.report-product-card dd { margin: 0; font-weight: 700; }
 
 :root {
   font-family: var(--font-body);

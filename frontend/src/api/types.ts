@@ -293,9 +293,11 @@ export interface ShiftInventoryReportDto {
   branchId: string
   materials: InventoryConsumptionDto[]
 }
-export interface SalesTrendPointDto { date: string; totalSales: number; invoiceCount: number; itemsSold: number }
+export interface SalesTrendPointDto { date: string; totalSales: number; invoiceCount: number; itemsSold: number; cashSales: number; cardSales: number }
 export interface ProductSalesSummaryDto {
   productId: string; nameAr: string; nameEn: string; quantitySold: number; totalSales: number; invoiceCount: number
+  cashQuantitySold: number; cashTotalSales: number; cashInvoiceCount: number
+  cardQuantitySold: number; cardTotalSales: number; cardInvoiceCount: number
 }
 export interface ManagerDashboardDto {
   from: string; to: string; totalSales: number; totalDiscounts: number; invoiceCount: number; itemsSold: number; averageTicket: number
