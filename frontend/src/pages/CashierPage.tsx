@@ -1,3 +1,6 @@
+import PaymentSelector from '../components/PaymentSelector'
+import { paymentAmounts, roundMoney, validPayment, type PaymentMethod } from '../utils/payments'
+import SavedOrders from '../components/SavedOrders'
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
@@ -42,14 +45,6 @@ function CategoryIcon({ category }: { category: string | null }) {
   }
 }
 
-function CashIcon() {
-  return <svg className="h-5 w-5" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75"><rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M7 9H6v1M17 15h1v-1"/></svg>
-}
-
-function CardIcon() {
-  return <svg className="h-5 w-5" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18M7 15h4"/></svg>
-}
-
 function OnlineOrdersIcon() {
   return <svg className="h-5 w-5" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75"><path d="M4 8h16l-1 12H5L4 8Z"/><path d="M8 8a4 4 0 0 1 8 0M8 13h.01M16 13h.01"/></svg>
 }
@@ -60,7 +55,7 @@ function StoreIcon() {
 
 export default function CashierPage() {
   const { t, i18n } = useTranslation()
-  const { user } = useAuth()
+  const { user, hasPermission } = useAuth()
 
   const [branches, setBranches] = useState<BranchDto[]>([])
   const [branchId, setBranchId] = useState('')
@@ -74,7 +69,9 @@ export default function CashierPage() {
   const [cart, setCart] = useState<CartLine[]>([])
   const [cartOpen, setCartOpen] = useState(false)
   const [justAdded, setJustAdded] = useState<string | null>(null)
-  const [paymentMethod, setPaymentMethod] = useState<'Cash' | 'Card'>('Cash')
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('Cash')
+  const [cashAmount, setCashAmount] = useState('')
+  const [ordersOpen, setOrdersOpen] = useState(false)
   const [discountType, setDiscountType] = useState<'None' | 'Percentage' | 'FixedAmount'>('None')
   const [discountValue, setDiscountValue] = useState(0)
   const [submitting, setSubmitting] = useState(false)
@@ -189,17 +186,18 @@ export default function CashierPage() {
   const discountAmount = discountType === 'Percentage'
     ? Math.min(subtotal, subtotal * discountValue / 100)
     : discountType === 'FixedAmount' ? Math.min(subtotal, discountValue) : 0
-  const total = Math.max(0, subtotal - discountAmount)
+  const total = roundMoney(Math.max(0, subtotal - discountAmount))
   const itemCount = cart.reduce((sum, l) => sum + l.quantity, 0)
 
   const checkout = async () => {
-    if (cart.length === 0 || !branchId) return
+    if (cart.length === 0 || !branchId || submitting || !validPayment(paymentMethod, total, cashAmount)) return
     setSubmitting(true)
     setError(null)
     try {
       const request: CreateSaleRequest = {
         branchId,
         paymentMethod,
+        ...paymentAmounts(paymentMethod, total, cashAmount),
         discountType,
         discountValue,
         channelId,
@@ -208,6 +206,7 @@ export default function CashierPage() {
       const sale = await api.post<SaleDto>('/api/sales', request)
       setSuccessSale(sale)
       setCart([])
+      setCashAmount('')
       setDiscountType('None')
       setDiscountValue(0)
       setCartOpen(false)
@@ -292,35 +291,7 @@ export default function CashierPage() {
           </label>}
         </div>
         {discountAmount > 0 && <div className="flex items-center justify-between text-sm text-muted"><span>{t('cashier.discount')}</span><Money value={discountAmount} /></div>}
-        <div className="flex flex-col gap-2 text-sm text-muted">
-          {t('cashier.paymentMethod')}
-          <div className="flex gap-2">
-            <button
-              type="button"
-              className={
-                paymentMethod === 'Cash'
-                  ? 'text-on-primary inline-flex min-h-14 flex-1 items-center justify-center gap-2 border-0 bg-primary active:scale-[0.98]'
-                  : 'inline-flex min-h-14 flex-1 items-center justify-center gap-2 border border-border bg-surface2 text-text active:scale-[0.98]'
-              }
-              onClick={() => setPaymentMethod('Cash')}
-            >
-              <CashIcon />
-              <span>{t('cashier.cash')}</span>
-            </button>
-            <button
-              type="button"
-              className={
-                paymentMethod === 'Card'
-                  ? 'text-on-primary inline-flex min-h-14 flex-1 items-center justify-center gap-2 border-0 bg-primary active:scale-[0.98]'
-                  : 'inline-flex min-h-14 flex-1 items-center justify-center gap-2 border border-border bg-surface2 text-text active:scale-[0.98]'
-              }
-              onClick={() => setPaymentMethod('Card')}
-            >
-              <CardIcon />
-              <span>{t('cashier.card')}</span>
-            </button>
-          </div>
-        </div>
+        <PaymentSelector method={paymentMethod} cash={cashAmount} total={total} onMethod={setPaymentMethod} onCash={setCashAmount} />
 
         <div className="flex items-center justify-between font-cairo text-lg font-bold text-text">
           <span>{t('cashier.total')}</span>
@@ -332,7 +303,7 @@ export default function CashierPage() {
         <button
           type="button"
           className="text-on-primary min-h-14 w-full border-0 bg-primary active:scale-[0.98]"
-          disabled={cart.length === 0 || submitting}
+          disabled={cart.length === 0 || submitting || !validPayment(paymentMethod, total, cashAmount)}
           onClick={checkout}
         >
           {submitting ? t('cashier.submitting') : t('cashier.confirm')}
@@ -343,7 +314,9 @@ export default function CashierPage() {
 
   return (
     <div className="cashier-theme flex h-full min-h-0 w-full flex-col overflow-hidden text-text md:flex-row">
+      {ordersOpen && <SavedOrders branchId={branchId} products={products} onClose={() => setOrdersOpen(false)} />}
       <aside className="cashier-categories flex flex-shrink-0 items-center gap-2 overflow-x-auto border-b border-border bg-surface px-3 py-2 md:w-24 md:flex-col md:overflow-x-hidden md:overflow-y-auto md:border-b-0 md:border-e md:px-2 md:py-4">
+        {hasPermission('sales.edit') && <button type="button" className="cashier-category-button saved-orders-entry" onClick={() => setOrdersOpen(true)}><AppIcon name="shift" className="h-5 w-5" /><span>{t('orders.title')}</span></button>}
         {sidebarView === 'store' ? (
           <div key="store" className="cashier-sidebar-panel flex items-center gap-2 md:flex-col md:items-stretch">
             <button
@@ -497,7 +470,7 @@ export default function CashierPage() {
         <div className="app-scrim fixed inset-0 z-50 flex items-center justify-center" onClick={() => setSuccessSale(null)}>
           <div className="flex flex-col gap-4 rounded-3xl bg-surface p-6 text-center" onClick={(e) => e.stopPropagation()}>
             <p className="font-cairo text-xl font-bold text-primary">{t('cashier.saleSuccess')}</p>
-            <p className="text-2xl text-accent"><Money value={successSale.totalAmount} /></p>
+            <p className="text-2xl text-accent"><Money value={successSale.totalAmount} /></p><p>{t('cashier.cash')}: <Money value={successSale.cashAmount} /> · {t('cashier.card')}: <Money value={successSale.cardAmount} /></p>
             <button type="button" className="text-on-primary min-h-14 border-0 bg-primary" onClick={() => setSuccessSale(null)}>
               {t('cashier.close')}
             </button>

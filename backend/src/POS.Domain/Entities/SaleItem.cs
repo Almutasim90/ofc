@@ -2,6 +2,7 @@ namespace POS.Domain.Entities;
 
 public class SaleItem
 {
+    public string? RecipeSnapshotJson { get; set; }
     public Guid Id { get; set; }
 
     public Guid SaleId { get; set; }

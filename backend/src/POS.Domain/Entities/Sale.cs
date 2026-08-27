@@ -24,6 +24,9 @@ public class Sale
     public decimal DiscountValue { get; set; }
     public decimal DiscountAmount { get; set; }
     public string PaymentMethod { get; set; } = string.Empty;
+    public decimal? CashAmount { get; set; }
+    public decimal? CardAmount { get; set; }
+    public int Revision { get; set; }
     public string Status { get; set; } = SaleStatus.Completed;
 
     public ICollection<SaleItem> Items { get; set; } = new List<SaleItem>();

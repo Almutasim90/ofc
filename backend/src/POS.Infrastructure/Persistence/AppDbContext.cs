@@ -31,6 +31,7 @@ public class AppDbContext : DbContext, IAppDbContext
     public DbSet<SupplyPackage> SupplyPackages => Set<SupplyPackage>();
     public DbSet<StockReceipt> StockReceipts => Set<StockReceipt>();
 
+    public DbSet<SaleEdit> SaleEdits => Set<SaleEdit>();
     public DbSet<Sale> Sales => Set<Sale>();
     public DbSet<SaleItem> SaleItems => Set<SaleItem>();
     public DbSet<SaleInventoryConsumption> SaleInventoryConsumptions => Set<SaleInventoryConsumption>();
@@ -147,6 +148,7 @@ public class AppDbContext : DbContext, IAppDbContext
 
         modelBuilder.Entity<BranchRawMaterialStock>(entity =>
         {
+            entity.Property(s => s.Version).IsRowVersion();
             entity.HasKey(s => new { s.BranchId, s.RawMaterialId });
             entity.HasOne(s => s.RawMaterial).WithMany().HasForeignKey(s => s.RawMaterialId).OnDelete(DeleteBehavior.Restrict);
             entity.Property(s => s.CurrentQuantity).HasPrecision(18, 3);
@@ -211,6 +213,9 @@ public class AppDbContext : DbContext, IAppDbContext
         modelBuilder.Entity<Sale>(entity =>
         {
             entity.HasKey(s => s.Id);
+            entity.Property(s => s.Revision).IsConcurrencyToken();
+            entity.Property(s => s.CashAmount).HasPrecision(18, 3);
+            entity.Property(s => s.CardAmount).HasPrecision(18, 3);
             entity.Property(s => s.TotalAmount).HasPrecision(18, 3);
             entity.Property(s => s.DiscountValue).HasPrecision(18, 3);
             entity.Property(s => s.DiscountAmount).HasPrecision(18, 3);
@@ -225,6 +230,16 @@ public class AppDbContext : DbContext, IAppDbContext
                 _currentUser == null
                 || _currentUser.BypassBranchFilter
                 || s.BranchId == _currentUser.BranchId);
+        });
+
+        modelBuilder.Entity<SaleEdit>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasOne(e => e.Sale).WithMany().HasForeignKey(e => e.SaleId).OnDelete(DeleteBehavior.Restrict);
+            entity.Property(e => e.Reason).HasMaxLength(1000);
+            entity.Property(e => e.EditedByName).HasMaxLength(200);
+            entity.HasIndex(e => new { e.SaleId, e.CreatedAt });
+            entity.HasQueryFilter(e => _currentUser == null || _currentUser.BypassBranchFilter || e.Sale.BranchId == _currentUser.BranchId);
         });
 
         modelBuilder.Entity<SaleItem>(entity =>

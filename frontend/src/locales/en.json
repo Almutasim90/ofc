@@ -51,6 +51,7 @@
     "logout": "Log out"
   },
   "cashier": {
+    "mixed": "Cash + card",
     "allCategories": "All",
     "branch": "Branch",
     "cart": "Cart",
@@ -267,6 +268,7 @@
     "GeneralManager": "General manager"
   },
   "permissionKeys": {
+    "sales.edit": "Edit orders",
     "sales.create": "Create sales",
     "sales.void": "Void sales",
     "inventory.adjust": "Adjust inventory",
@@ -381,5 +383,33 @@
     "loading": "Loading...",
     "search": "Search table...",
     "unauthorized": "You do not have access to this page","previous":"Previous","next":"Next","cancel":"Cancel"
+  },
+  "orders": {
+    "title": "Saved orders",
+    "edit": "Edit order",
+    "close": "Close",
+    "quantity": "Quantity",
+    "remove": "Remove item",
+    "addProduct": "Choose a product to add",
+    "add": "Add",
+    "difference": "Amount difference",
+    "reason": "Reason for edit (required)",
+    "save": "Save changes",
+    "back": "Back",
+    "history": "Change history",
+    "noHistory": "No changes to this order.",
+    "before": "Before",
+    "after": "After",
+    "empty": "No saved orders.",
+    "listHint": "Latest 100 orders. Only completed orders in an open shift can be edited.",
+    "editHint": "Existing item prices and original discounts are preserved. New items use current channel prices.",
+    "settlementHint": "Check the difference and payment allocation before saving. Collect or return the difference through the till or card terminal; this system only records the change.",
+    "cashAmount": "Cash amount",
+    "cardAmount": "Visa / card amount",
+    "invalidSplit": "Enter cash greater than zero and less than the total, with up to 3 decimal places. The remainder is allocated to card.",
+    "loadError": "Could not load orders. Close this window and try again.",
+    "saveError": "Could not save changes. Check the values and that the shift is still open.",
+    "conflict": "The order, stock or shift changed. Close this window and reopen the order before editing.",
+    "saved": "Order updated and changes recorded."
   }
 }

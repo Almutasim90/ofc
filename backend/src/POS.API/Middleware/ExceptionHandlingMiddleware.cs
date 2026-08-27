@@ -16,6 +16,7 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
             logger.LogError(ex, "Unhandled exception while processing {Method} {Path}", context.Request.Method, context.Request.Path);
             var statusCode = ex switch
             {
+                Microsoft.EntityFrameworkCore.DbUpdateConcurrencyException => StatusCodes.Status409Conflict,
                 NotFoundException => StatusCodes.Status404NotFound,
                 ValidationException => StatusCodes.Status400BadRequest,
                 UnauthorizedException => StatusCodes.Status401Unauthorized,
@@ -28,7 +29,7 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
 
             var message = statusCode == StatusCodes.Status500InternalServerError
                 ? "An unexpected error occurred."
-                : ex.Message;
+                : statusCode == 409 ? "This order, stock or shift changed. Reload and try again." : ex.Message;
 
             await context.Response.WriteAsync(JsonSerializer.Serialize(new { error = message }));
         }

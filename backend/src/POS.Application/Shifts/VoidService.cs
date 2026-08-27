@@ -58,6 +58,8 @@ public class VoidService(IAppDbContext db, ICurrentUserService currentUser)
             }
         }
 
+        sale.Revision++;
+        sale.Shift.SalesRevision++;
         sale.Status = SaleStatus.Voided;
         var voidRequest = new VoidRequest
         {

@@ -33,10 +33,7 @@ public class ReportService(IAppDbContext db, ICurrentUserService currentUser)
         var branchIds = branchRows.Select(x => x.BranchId).ToList();
         var branchLookup = await db.Branches.AsNoTracking().Where(b => branchIds.Contains(b.Id))
             .ToDictionaryAsync(b => b.Id, cancellationToken);
-        var paymentRows = await sales.GroupBy(s => s.PaymentMethod).Select(g => new
-        {
-            Method = g.Key, Total = g.Sum(s => s.TotalAmount), Count = g.Count(),
-        }).ToListAsync(cancellationToken);
+        var paymentRows = await PaymentBreakdownAsync(sales, cancellationToken);
         var productRows = await db.SaleItems.AsNoTracking().Where(i =>
             i.Sale.BusinessDate >= from && i.Sale.BusinessDate <= to && i.Sale.Status == SaleStatus.Completed
             && (!branchId.HasValue || i.Sale.BranchId == branchId.Value))
@@ -58,7 +55,7 @@ public class ReportService(IAppDbContext db, ICurrentUserService currentUser)
             dailyRows.Select(x => new SalesTrendPointDto(x.Date, x.Total, x.Count, x.Items)).ToList(),
             branchRows.Select(x => new BranchSalesSummaryDto(x.BranchId, branchLookup[x.BranchId].NameAr,
                 branchLookup[x.BranchId].NameEn, x.Total, x.Count)).ToList(),
-            paymentRows.Select(x => new PaymentBreakdownDto(x.Method, x.Total, x.Count)).ToList(),
+            paymentRows,
             productRows.Select(x => new ProductSalesSummaryDto(x.ProductId, x.NameAr, x.NameEn,
                 x.Quantity, x.Total, x.Invoices)).ToList(), varianceRows);
     }
@@ -96,12 +93,19 @@ public class ReportService(IAppDbContext db, ICurrentUserService currentUser)
             ?? throw new NotFoundException("Branch not found.");
         var sales = db.Sales.AsNoTracking().Where(s =>
             s.BranchId == branchId && s.BusinessDate == date && s.Status == SaleStatus.Completed);
-        var paymentRows = await sales.GroupBy(s => s.PaymentMethod)
-            .Select(g => new { PaymentMethod = g.Key, TotalAmount = g.Sum(s => s.TotalAmount), InvoiceCount = g.Count() })
-            .OrderBy(x => x.PaymentMethod).ToListAsync(cancellationToken);
-        var breakdown = paymentRows.Select(x => new PaymentBreakdownDto(x.PaymentMethod, x.TotalAmount, x.InvoiceCount)).ToList();
+        var breakdown = await PaymentBreakdownAsync(sales, cancellationToken);
         return new(branch.Id, branch.NameAr, branch.NameEn, date,
-            breakdown.Sum(x => x.TotalAmount), breakdown.Sum(x => x.InvoiceCount), breakdown);
+            await sales.SumAsync(s => s.TotalAmount, cancellationToken), await sales.CountAsync(cancellationToken), breakdown);
+    }
+
+    private static async Task<List<PaymentBreakdownDto>> PaymentBreakdownAsync(IQueryable<POS.Domain.Entities.Sale> sales, CancellationToken cancellationToken)
+    {
+        var cash = sales.Where(s => s.PaymentMethod == PaymentMethods.Cash || s.PaymentMethod == PaymentMethods.Mixed);
+        var card = sales.Where(s => s.PaymentMethod == PaymentMethods.Card || s.PaymentMethod == PaymentMethods.Mixed);
+        return [
+            new(PaymentMethods.Cash, await cash.SumAsync(s => s.CashAmount ?? s.TotalAmount, cancellationToken), await cash.CountAsync(cancellationToken)),
+            new(PaymentMethods.Card, await card.SumAsync(s => s.CardAmount ?? s.TotalAmount, cancellationToken), await card.CountAsync(cancellationToken)),
+        ];
     }
 
     public async Task<GlobalSalesReportDto> GetGlobalAsync(DateOnly date, CancellationToken cancellationToken = default)

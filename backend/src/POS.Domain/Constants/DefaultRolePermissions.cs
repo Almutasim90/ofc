@@ -8,10 +8,12 @@ public static class DefaultRolePermissions
             [RoleNames.Cashier] =
             [
                 PermissionKeys.SalesCreate,
+                PermissionKeys.SalesEdit,
             ],
             [RoleNames.BranchManager] =
             [
                 PermissionKeys.SalesCreate,
+                PermissionKeys.SalesEdit,
                 PermissionKeys.SalesVoid,
                 PermissionKeys.InventoryAdjust,
                 PermissionKeys.ReportsBranchView,

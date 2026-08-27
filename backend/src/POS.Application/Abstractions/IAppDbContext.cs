@@ -22,6 +22,7 @@ public interface IAppDbContext
     DbSet<SupplyPackage> SupplyPackages { get; }
     DbSet<StockReceipt> StockReceipts { get; }
 
+    DbSet<SaleEdit> SaleEdits { get; }
     DbSet<Sale> Sales { get; }
     DbSet<SaleItem> SaleItems { get; }
     DbSet<SaleInventoryConsumption> SaleInventoryConsumptions { get; }

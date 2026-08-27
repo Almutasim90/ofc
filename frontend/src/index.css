@@ -676,6 +676,48 @@ body {
 @keyframes login-card-in { from { opacity: 0; transform: translateY(14px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
 @media (prefers-reduced-motion: reduce) { .login-minimal-card { animation: none; } }
 
+/* Reserve navigation space on every screen, including landscape kiosk displays. */
+:root { --bottom-navigation-height: calc(4rem + env(safe-area-inset-bottom, 0px)); }
+.admin-bottom-nav { display: grid; padding-bottom: env(safe-area-inset-bottom, 0px); }
+.admin-bottom-nav :where(a,button) { min-height: 4rem; }
+.admin-main-shell { padding-bottom: calc(var(--bottom-navigation-height) + 1rem); }
+.operational-shell { height: 100vh; height: 100dvh; padding-bottom: var(--bottom-navigation-height); }
+.app-sidebar { padding-bottom: var(--bottom-navigation-height); }
+.cashier-cart-fab { bottom: calc(var(--bottom-navigation-height) + 1rem); }
+.cashier-cart { overflow-y: auto; }
+.cashier-cart > :last-child { flex-shrink: 0; }
+.bottom-sheet-panel { padding-bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px)); }
+.payment-selector { display: grid; gap: .5rem; min-width: 0; margin: 0; padding: 0; border: 0; }
+.payment-selector legend { margin-bottom: .5rem; color: rgb(var(--color-muted)); }
+.payment-options { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .4rem; }
+.payment-options button { min-width: 0; min-height: 3rem; padding: .5rem; background: rgb(var(--color-surface2)); color: rgb(var(--color-text)); border: 1px solid rgb(var(--color-border)); }
+.payment-options button.selected { background: rgb(var(--color-primary)); color: var(--sidebar-text); }
+.split-payment-fields { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; align-items: center; }
+.split-payment-fields > :where(label,div) { display: grid; gap: .35rem; min-width: 0; }
+.split-payment-fields input { width: 100%; min-width: 0; }
+.split-payment-fields .error-text { grid-column: 1 / -1; }
+.saved-orders-entry { display: flex; flex-direction: column; align-items: center; gap: .5rem; flex-shrink: 0; padding: .75rem .5rem; font-size: .75rem; background: rgb(var(--color-surface2)); color: rgb(var(--color-text)); border: 1px solid rgb(var(--color-border)); }
+.saved-orders-dialog::backdrop { background: rgb(0 0 0 / .55); }
+.saved-orders-dialog { display: grid; gap: 1rem; width: min(52rem, calc(100% - 2rem)); max-height: calc(100dvh - 2rem); overflow-y: auto; margin: auto; border: 0; padding: 1.5rem; background: rgb(var(--color-surface)); color: rgb(var(--color-text)); border-radius: 1.25rem; }
+.saved-orders-dialog header, .saved-orders-dialog footer, .order-add-line { display: flex; justify-content: space-between; align-items: center; gap: .75rem; }
+.saved-orders-dialog :where(button,input,select,textarea) { min-height: 2.75rem; }
+.saved-orders-dialog label { display: grid; gap: .4rem; }
+.saved-orders-dialog textarea { width: 100%; min-height: 5rem; padding: .75rem; border: 1px solid rgb(var(--color-border)); border-radius: .75rem; background: rgb(var(--color-surface2)); color: rgb(var(--color-text)); resize: vertical; }
+.saved-order, .order-history-entry { display: grid; gap: .75rem; border: 1px solid rgb(var(--color-border)); border-radius: .75rem; padding: 1rem; }
+.saved-order > div { display: flex; gap: .75rem; align-items: center; flex-wrap: wrap; }
+.saved-orders-dialog time { color: rgb(var(--color-muted)); font-size: .85rem; }
+.order-lines { display: grid; gap: .5rem; }
+.order-line { display: grid; grid-template-columns: 1fr 7rem auto; align-items: center; gap: .75rem; border-bottom: 1px solid rgb(var(--color-border)); padding: .75rem 0; }
+.order-line input { width: 100%; }
+.order-add-line select { flex: 1; min-width: 0; }
+.order-snapshot { padding: .75rem; background: rgb(var(--color-surface2)); border-radius: .5rem; }
+.order-snapshot ul { list-style: disc; padding-inline-start: 1.5rem; }
+@media (max-width: 520px) {
+  .saved-orders-dialog { padding: 1rem; }
+  .order-line { grid-template-columns: 1fr auto; }
+  .order-line > span { grid-column: 1 / -1; }
+}
+
 @media (max-width: 520px) {
   .login-simple-page { align-items: start; padding: var(--space-5); padding-top: max(var(--space-8), 8vh); }
   .login-simple-form { padding: var(--space-6); }

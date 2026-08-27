@@ -165,7 +165,9 @@ export interface SaleLineRequest {
 
 export interface CreateSaleRequest {
   branchId: string
-  paymentMethod: 'Cash' | 'Card'
+  paymentMethod: 'Cash' | 'Card' | 'Mixed'
+  cashAmount?: number
+  cardAmount?: number
   lines: SaleLineRequest[]
   discountType?: 'None' | 'Percentage' | 'FixedAmount'
   discountValue?: number
@@ -173,6 +175,8 @@ export interface CreateSaleRequest {
 }
 
 export interface SaleItemDto {
+  discountType: 'None' | 'Percentage' | 'FixedAmount'
+  discountValue: number
   productId: string
   productNameSnapshot: string
   unitPriceSnapshot: number
@@ -192,10 +196,16 @@ export interface SaleDto {
   discountType: 'None' | 'Percentage' | 'FixedAmount'
   discountValue: number
   discountAmount: number
-  paymentMethod: string
+  paymentMethod: 'Cash' | 'Card' | 'Mixed'
+  cashAmount: number
+  cardAmount: number
+  revision: number
+  canEdit: boolean
   status: string
   items: SaleItemDto[]
 }
+
+export interface SaleEditDto { id: string; editedByUserId: string; editedByName: string; createdAt: string; reason: string; before: SaleDto; after: SaleDto }
 
 export interface ShiftDto {
   id: string

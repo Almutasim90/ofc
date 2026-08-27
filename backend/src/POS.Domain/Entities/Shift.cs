@@ -15,6 +15,7 @@ public class Shift
     public DateTime? ClosedAt { get; set; }
     public string Status { get; set; } = ShiftStatus.Open;
     public bool AutoClosed { get; set; }
+    public int SalesRevision { get; set; }
     public uint Version { get; set; }
 
     public ICollection<Sale> Sales { get; set; } = new List<Sale>();

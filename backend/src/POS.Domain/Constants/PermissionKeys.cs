@@ -3,6 +3,7 @@ namespace POS.Domain.Constants;
 public static class PermissionKeys
 {
     public const string SalesCreate = "sales.create";
+    public const string SalesEdit = "sales.edit";
     public const string SalesVoid = "sales.void";
     public const string InventoryAdjust = "inventory.adjust";
     public const string ReportsBranchView = "reports.branch.view";
@@ -18,6 +19,7 @@ public static class PermissionKeys
     public static readonly IReadOnlyList<string> All =
     [
         SalesCreate,
+        SalesEdit,
         SalesVoid,
         InventoryAdjust,
         ReportsBranchView,

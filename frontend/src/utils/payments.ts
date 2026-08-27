@@ -1,0 +1,21 @@
+export type PaymentMethod = 'Cash' | 'Card' | 'Mixed'
+// Match decimal.Round(..., 3) on the API, including midpoint-to-even rounding.
+export const roundMoney = (value: number) => {
+  const scaled = value * 1000
+  const lower = Math.floor(scaled)
+  const rounded = Math.abs(scaled - lower - 0.5) < 1e-9
+    ? (lower % 2 === 0 ? lower : lower + 1)
+    : Math.round(scaled)
+  return rounded / 1000
+}
+export function paymentAmounts(method: PaymentMethod, total: number, cash: string) {
+  const cashAmount = method === 'Cash' ? total : method === 'Card' ? 0 : Number(cash)
+  return { cashAmount, cardAmount: roundMoney(total - cashAmount) }
+}
+export function validPayment(method: PaymentMethod, total: number, cash: string) {
+  const amounts = paymentAmounts(method, total, cash)
+  return Number.isFinite(amounts.cashAmount) && amounts.cashAmount >= 0 && amounts.cardAmount >= 0
+    && roundMoney(amounts.cashAmount) === amounts.cashAmount
+    && (method !== 'Mixed' || (amounts.cashAmount > 0 && amounts.cardAmount > 0))
+}
+

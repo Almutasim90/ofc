@@ -75,9 +75,9 @@ public class ShiftService(IAppDbContext db, ICurrentUserService currentUser)
             throw new ValidationException("This shift is already closed.");
 
         var cashSales = await db.Sales
-            .Where(s => s.ShiftId == shift.Id && s.Status == SaleStatus.Completed && s.PaymentMethod == PaymentMethods.Cash)
+            .Where(s => s.ShiftId == shift.Id && s.Status == SaleStatus.Completed)
             .Where(s => s.Channel.IsInStore)
-            .SumAsync(s => s.TotalAmount, cancellationToken);
+            .SumAsync(s => s.CashAmount ?? (s.PaymentMethod == PaymentMethods.Cash ? s.TotalAmount : 0m), cancellationToken);
         shift.ClosingCashExpected = ShiftCashCalculator.Expected(shift.OpeningCash, cashSales);
         var closingCashActual = ShiftCashCalculator.Actual(request.Counts);
         shift.ClosingCashActual = closingCashActual;
@@ -110,9 +110,9 @@ public class ShiftService(IAppDbContext db, ICurrentUserService currentUser)
     private async Task<ShiftDto> ToDtoAsync(Shift shift, CancellationToken cancellationToken)
     {
         var cashSales = await db.Sales
-            .Where(s => s.ShiftId == shift.Id && s.Status == SaleStatus.Completed && s.PaymentMethod == PaymentMethods.Cash)
+            .Where(s => s.ShiftId == shift.Id && s.Status == SaleStatus.Completed)
             .Where(s => s.Channel.IsInStore)
-            .SumAsync(s => s.TotalAmount, cancellationToken);
+            .SumAsync(s => s.CashAmount ?? (s.PaymentMethod == PaymentMethods.Cash ? s.TotalAmount : 0m), cancellationToken);
         return ToDto(shift, cashSales, await GetCashCountsAsync(shift.Id, cancellationToken));
     }
 
