@@ -2,6 +2,9 @@
 .env
 .env.local
 
+# Claude Code local settings (personal, not team-shared)
+.claude/settings.local.json
+
 # .NET
 backend/**/bin/
 backend/**/obj/

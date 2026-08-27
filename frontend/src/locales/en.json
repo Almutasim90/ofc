@@ -431,7 +431,7 @@
     "settlementHint": "Check the difference and payment allocation before saving. Collect or return the difference through the till or card terminal; this system only records the change.",
     "cashAmount": "Cash amount",
     "cardAmount": "Visa / card amount",
-    "invalidSplit": "Enter cash greater than zero and less than the total, with up to 3 decimal places. The remainder is allocated to card.",
+    "invalidSplit": "Cash and card must both be greater than zero and add up to the total, with at most 3 decimal places.",
     "loadError": "Could not load orders. Close this window and try again.",
     "saveError": "Could not save changes. Check the values and that the shift is still open.",
     "conflict": "The order, stock or shift changed. Close this window and reopen the order before editing.",
