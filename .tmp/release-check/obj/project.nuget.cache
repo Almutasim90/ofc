@@ -1,0 +1,30 @@
+{
+  "version": 2,
+  "dgSpecHash": "jhRzmuR5wyY=",
+  "success": true,
+  "projectFilePath": "C:\\Users\\almaz\\lolat\\.tmp\\release-check\\release-check.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\almaz\\.nuget\\packages\\microsoft.bcl.cryptography\\10.0.2\\microsoft.bcl.cryptography.10.0.2.nupkg.sha512",
+    "C:\\Users\\almaz\\.nuget\\packages\\microsoft.entityframeworkcore\\10.0.4\\microsoft.entityframeworkcore.10.0.4.nupkg.sha512",
+    "C:\\Users\\almaz\\.nuget\\packages\\microsoft.entityframeworkcore.abstractions\\10.0.4\\microsoft.entityframeworkcore.abstractions.10.0.4.nupkg.sha512",
+    "C:\\Users\\almaz\\.nuget\\packages\\microsoft.entityframeworkcore.analyzers\\10.0.4\\microsoft.entityframeworkcore.analyzers.10.0.4.nupkg.sha512",
+    "C:\\Users\\almaz\\.nuget\\packages\\microsoft.entityframeworkcore.relational\\10.0.4\\microsoft.entityframeworkcore.relational.10.0.4.nupkg.sha512",
+    "C:\\Users\\almaz\\.nuget\\packages\\microsoft.extensions.caching.abstractions\\10.0.4\\microsoft.extensions.caching.abstractions.10.0.4.nupkg.sha512",
+    "C:\\Users\\almaz\\.nuget\\packages\\microsoft.extensions.caching.memory\\10.0.4\\microsoft.extensions.caching.memory.10.0.4.nupkg.sha512",
+    "C:\\Users\\almaz\\.nuget\\packages\\microsoft.extensions.configuration.abstractions\\10.0.4\\microsoft.extensions.configuration.abstractions.10.0.4.nupkg.sha512",
+    "C:\\Users\\almaz\\.nuget\\packages\\microsoft.extensions.dependencyinjection\\10.0.4\\microsoft.extensions.dependencyinjection.10.0.4.nupkg.sha512",
+    "C:\\Users\\almaz\\.nuget\\packages\\microsoft.extensions.dependencyinjection.abstractions\\10.0.4\\microsoft.extensions.dependencyinjection.abstractions.10.0.4.nupkg.sha512",
+    "C:\\Users\\almaz\\.nuget\\packages\\microsoft.extensions.logging\\10.0.4\\microsoft.extensions.logging.10.0.4.nupkg.sha512",
+    "C:\\Users\\almaz\\.nuget\\packages\\microsoft.extensions.logging.abstractions\\10.0.4\\microsoft.extensions.logging.abstractions.10.0.4.nupkg.sha512",
+    "C:\\Users\\almaz\\.nuget\\packages\\microsoft.extensions.options\\10.0.4\\microsoft.extensions.options.10.0.4.nupkg.sha512",
+    "C:\\Users\\almaz\\.nuget\\packages\\microsoft.extensions.primitives\\10.0.4\\microsoft.extensions.primitives.10.0.4.nupkg.sha512",
+    "C:\\Users\\almaz\\.nuget\\packages\\microsoft.identitymodel.abstractions\\8.22.0\\microsoft.identitymodel.abstractions.8.22.0.nupkg.sha512",
+    "C:\\Users\\almaz\\.nuget\\packages\\microsoft.identitymodel.jsonwebtokens\\8.22.0\\microsoft.identitymodel.jsonwebtokens.8.22.0.nupkg.sha512",
+    "C:\\Users\\almaz\\.nuget\\packages\\microsoft.identitymodel.logging\\8.22.0\\microsoft.identitymodel.logging.8.22.0.nupkg.sha512",
+    "C:\\Users\\almaz\\.nuget\\packages\\microsoft.identitymodel.tokens\\8.22.0\\microsoft.identitymodel.tokens.8.22.0.nupkg.sha512",
+    "C:\\Users\\almaz\\.nuget\\packages\\npgsql\\10.0.3\\npgsql.10.0.3.nupkg.sha512",
+    "C:\\Users\\almaz\\.nuget\\packages\\npgsql.entityframeworkcore.postgresql\\10.0.3\\npgsql.entityframeworkcore.postgresql.10.0.3.nupkg.sha512",
+    "C:\\Users\\almaz\\.nuget\\packages\\system.identitymodel.tokens.jwt\\8.22.0\\system.identitymodel.tokens.jwt.8.22.0.nupkg.sha512"
+  ],
+  "logs": []
+}

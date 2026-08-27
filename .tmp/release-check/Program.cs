@@ -1,0 +1,12 @@
+using Npgsql;
+var env = File.ReadAllLines(Path.Combine(Directory.GetCurrentDirectory(), ".env"));
+var line = env.First(l => l.StartsWith("SUPABASE_DB_CONNECTION="));
+var connectionString = line[(line.IndexOf('=') + 1)..].Trim().Trim('"', '\'');
+await using var connection = new NpgsqlConnection(connectionString);
+await connection.OpenAsync();
+await using var command = new NpgsqlCommand("SELECT \"MigrationId\" FROM \"__EFMigrationsHistory\" ORDER BY \"MigrationId\" DESC LIMIT 4", connection);
+await using (var reader = await command.ExecuteReaderAsync()) while (await reader.ReadAsync()) Console.WriteLine(reader.GetString(0));
+await using var permission = new NpgsqlCommand("SELECT COUNT(*) FROM \"Permissions\" WHERE \"Key\" = 'sales.edit'", connection);
+Console.WriteLine("SalesEdit permission rows: " + await permission.ExecuteScalarAsync());
+await using var roles = new NpgsqlCommand("SELECT r.\"Name\" FROM \"Roles\" r JOIN \"RolePermissions\" rp ON rp.\"RoleId\"=r.\"Id\" JOIN \"Permissions\" p ON p.\"Id\"=rp.\"PermissionId\" WHERE p.\"Key\"='sales.edit' ORDER BY r.\"Name\"", connection);
+await using (var reader = await roles.ExecuteReaderAsync()) while (await reader.ReadAsync()) Console.WriteLine("Edit role: " + reader.GetString(0));
