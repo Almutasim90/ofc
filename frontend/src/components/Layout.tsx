@@ -40,11 +40,23 @@ export default function Layout({ children }: { children: ReactNode }) {
   // Kiosk mode: the cashier screen requests fullscreen; leaving it (via the
   // Shift link, the username, browser back, a typed URL) exits fullscreen
   // the same way, so there's no separate "exit" handler to wire.
+  // Printing (window.print()) forces the browser out of fullscreen; the
+  // fullscreenchange/click listeners below re-request it so kiosk mode
+  // survives a print instead of staying exited.
   useEffect(() => {
-    if (kiosk) {
-      document.documentElement.requestFullscreen?.().catch(() => {})
-    } else if (document.fullscreenElement) {
-      document.exitFullscreen().catch(() => {})
+    if (!kiosk) {
+      if (document.fullscreenElement) document.exitFullscreen().catch(() => {})
+      return
+    }
+    const enterFullscreen = () => {
+      if (!document.fullscreenElement) document.documentElement.requestFullscreen?.().catch(() => {})
+    }
+    enterFullscreen()
+    document.addEventListener('fullscreenchange', enterFullscreen)
+    document.addEventListener('click', enterFullscreen)
+    return () => {
+      document.removeEventListener('fullscreenchange', enterFullscreen)
+      document.removeEventListener('click', enterFullscreen)
     }
   }, [kiosk])
 

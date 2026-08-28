@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
+import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { api, ApiError } from '../api/client'
@@ -253,7 +254,10 @@ export default function ShiftPage() {
         </div>
       )}
 
-      {printSale && <Receipt sale={printSale} headerText={receiptHeader} branchName={printBranchName} cashierName={user?.fullName ?? ''} />}
+      {printSale && createPortal(
+        <Receipt sale={printSale} headerText={receiptHeader} branchName={printBranchName} cashierName={user?.fullName ?? ''} />,
+        document.body,
+      )}
 
       {lastClosed && (
         <div className="ui-card ui-stack">

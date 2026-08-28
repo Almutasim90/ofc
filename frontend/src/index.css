@@ -680,8 +680,11 @@ body {
     position: absolute;
     top: 0;
     left: 0;
+    box-sizing: border-box;
     width: 80mm;
+    max-width: 80mm;
     padding: 3mm;
+    overflow: hidden;
     font-family: var(--font-body);
     font-size: 11px;
     line-height: 1.5;
@@ -694,6 +697,7 @@ body {
 .receipt-number { margin-bottom: 1mm; text-align: center; font-weight: 700; }
 .receipt-divider { margin: 2mm 0; border-top: 1px dashed #000; }
 .receipt-meta > div, .receipt-totals > div, .receipt-item-line { display: flex; justify-content: space-between; gap: 2mm; margin-bottom: 1mm; }
+.receipt-meta > div > span:first-child, .receipt-totals > div > span:first-child, .receipt-item-line > span:first-child { min-width: 0; overflow-wrap: break-word; }
 .receipt-total-line { margin-top: 1mm; font-size: 13px; font-weight: 800; }
 .settings-card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr)); gap: var(--space-3); padding: var(--space-4); border: 1px solid rgb(var(--color-border)); border-radius: var(--radius-card); background: rgb(var(--color-surface)); }
 .settings-card-grid label { display: grid; gap: var(--space-1); }

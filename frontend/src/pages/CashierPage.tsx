@@ -2,6 +2,7 @@ import PaymentSelector from '../components/PaymentSelector'
 import { paymentAmounts, roundMoney, validPayment, type PaymentMethod } from '../utils/payments'
 import SavedOrders from '../components/SavedOrders'
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { api, ApiError, resolveApiAssetUrl } from '../api/client'
@@ -514,8 +515,11 @@ export default function CashierPage() {
               {t('cashier.close')}
             </button>
           </div>
-          <Receipt sale={successSale} headerText={receiptHeader} branchName={successBranchName} cashierName={user?.fullName ?? ''} />
         </div>
+      )}
+      {successSale && createPortal(
+        <Receipt sale={successSale} headerText={receiptHeader} branchName={successBranchName} cashierName={user?.fullName ?? ''} />,
+        document.body,
       )}
     </div>
   )
