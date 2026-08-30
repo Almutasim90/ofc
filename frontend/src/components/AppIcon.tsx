@@ -1,6 +1,6 @@
 import type { SVGProps } from 'react'
 
-export type AppIconName = 'cashier' | 'shift' | 'reports' | 'inventory' | 'products' | 'materials' | 'branches' | 'users' | 'schedule' | 'channels' | 'ai' | 'notifications' | 'settings' | 'logout' | 'menu' | 'more' | 'chevron' | 'close' | 'plus' | 'minus' | 'trash' | 'sun' | 'moon' | 'home' | 'email' | 'printer' | 'check' | 'alert' | 'fullscreen' | 'fullscreenExit'
+export type AppIconName = 'cashier' | 'shift' | 'reports' | 'inventory' | 'products' | 'materials' | 'branches' | 'users' | 'schedule' | 'channels' | 'ai' | 'notifications' | 'settings' | 'logout' | 'more' | 'chevron' | 'close' | 'plus' | 'minus' | 'trash' | 'sun' | 'moon' | 'home' | 'email' | 'printer' | 'check' | 'alert' | 'fullscreen' | 'fullscreenExit'
 
 const paths: Record<AppIconName, JSX.Element> = {
   cashier: <><path d="M4 5h16v14H4z"/><path d="M4 9h16M8 13h2M14 13h2M8 16h2"/></>,
@@ -17,7 +17,6 @@ const paths: Record<AppIconName, JSX.Element> = {
   notifications: <><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></>,
   settings: <><circle cx="12" cy="12" r="3"/><path d="M19 13.5v-3l-2-.7-.7-1.7.9-1.9-2.1-2.1-1.9.9-1.7-.7L10.5 2h-3l-.7 2-1.7.7-1.9-.9-2.1 2.1.9 1.9-.7 1.7-2 .7v3l2 .7.7 1.7-.9 1.9 2.1 2.1 1.9-.9 1.7.7.7 2h3l.7-2 1.7-.7 1.9.9 2.1-2.1-.9-1.9.7-1.7 2-.4Z" transform="translate(1.5 0) scale(.88)"/></>,
   logout: <><path d="m10 17 5-5-5-5M15 12H3M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/></>,
-  menu: <path d="M4 7h16M4 12h16M4 17h16"/>,
   more: <><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></>,
   chevron: <path d="m14 6-6 6 6 6"/>,
   close: <path d="M6 6l12 12M18 6 6 18"/>,

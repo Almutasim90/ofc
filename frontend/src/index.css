@@ -757,6 +757,7 @@ body {
 @media (prefers-reduced-motion: reduce) { .login-minimal-card { animation: none; } }
 
 .operational-shell { height: 100vh; height: 100dvh; padding-bottom: env(safe-area-inset-bottom, 0px); }
+.admin-bottom-nav { padding-bottom: env(safe-area-inset-bottom, 0px); }
 .cashier-cart { overflow-y: auto; }
 .cashier-cart > :last-child { flex-shrink: 0; }
 .bottom-sheet-panel { padding-bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px)); }

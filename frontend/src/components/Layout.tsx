@@ -7,6 +7,9 @@ import ThemeToggle from './ThemeToggle'
 import NotificationBell from './NotificationBell'
 import AppIcon, { type AppIconName } from './AppIcon'
 import Breadcrumb, { type BreadcrumbItem } from './Breadcrumb'
+import BottomSheet from './BottomSheet'
+
+const BOTTOM_NAV_PRIMARY_COUNT = 4
 
 interface NavItem { to: string; label: string; icon: AppIconName; permission?: string }
 
@@ -33,7 +36,7 @@ export default function Layout({ children }: { children: ReactNode }) {
   const { t } = useTranslation()
   const { pathname } = useLocation()
   const { user, logout, hasPermission } = useAuth()
-  const [mobileOpen, setMobileOpen] = useState(false)
+  const [moreOpen, setMoreOpen] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => localStorage.getItem('sidebar-collapsed') === 'true')
   const [kiosk, setKiosk] = useState(false)
   const kioskRequested = useRef(false)
@@ -129,14 +132,22 @@ export default function Layout({ children }: { children: ReactNode }) {
 
   if (operational) return <div className="operational-shell flex flex-col overflow-hidden bg-bg"><header className="top-bar h-16 flex-none"><Link className="hidden items-center gap-2 font-cairo text-xl font-extrabold text-primary xl:flex" to="/"><span className="brand-mark">ل</span>{t('app.title')}</Link><nav className="top-bar-nav">{navItems.slice(0, 2).map((item) => <NavLink key={item.to} to={item.to} aria-label={item.label} title={item.label}><AppIcon className="top-bar-nav-icon h-5 w-5" name={item.icon} /><span>{item.label}</span></NavLink>)}</nav><div className="top-bar-actions"><NotificationBell /><ThemeToggle />{kioskButton}<LanguageSwitcher /><UserSettingsLink fullName={user.fullName} roleName={user.roleName} /><button className="logout-button" onClick={handleLogout} aria-label={t('nav.logout')} title={t('nav.logout')}><LogoutIcon /></button></div></header><main className="min-h-0 flex-1 overflow-hidden">{children}</main></div>
 
+  const primaryNavItems = navItems.slice(0, BOTTOM_NAV_PRIMARY_COUNT)
+  const moreNavItems = navItems.slice(BOTTOM_NAV_PRIMARY_COUNT)
+
   return <div className="admin-shell min-h-screen bg-bg text-text">
-    {mobileOpen && <button aria-label={t('nav.closeMenu')} className="app-scrim fixed inset-0 z-30 rounded-none lg:hidden" onClick={() => setMobileOpen(false)} />}
-    <aside id="app-sidebar" className={`app-sidebar fixed inset-y-0 start-0 z-40 flex flex-none flex-col shadow-xl transition-all duration-300 lg:!translate-x-0 lg:shadow-none ${sidebarCollapsed ? 'lg:w-20' : 'w-64'} ${mobileOpen ? 'translate-x-0' : 'ltr:-translate-x-full rtl:translate-x-full'}`}>
+    <aside id="app-sidebar" className={`app-sidebar fixed inset-y-0 start-0 z-40 hidden flex-none flex-col transition-all duration-300 lg:flex ${sidebarCollapsed ? 'lg:w-20' : 'w-64'}`}>
       <div className="sidebar-brand flex h-16 items-center justify-between gap-2 border-b px-4"><div className={`min-w-0 items-center gap-2 ${sidebarCollapsed ? 'flex lg:hidden' : 'flex'}`}><span className="brand-mark">ل</span><div className="truncate font-cairo text-xl font-extrabold">{t('app.title')}</div></div><button className="sidebar-collapse hidden h-11 w-11 flex-none items-center justify-center p-0 lg:flex" onClick={() => setSidebarCollapsed((value) => { localStorage.setItem('sidebar-collapsed', String(!value)); return !value })} aria-label={sidebarCollapsed ? t('nav.expandMenu') : t('nav.collapseMenu')} title={sidebarCollapsed ? t('nav.expandMenu') : t('nav.collapseMenu')}><AppIcon className={`h-5 w-5 transition-transform ${sidebarCollapsed ? 'rotate-180' : ''}`} name="chevron" /></button></div>
-      <nav className="flex flex-1 flex-col gap-1 overflow-y-auto p-3">{navItems.map((item) => <NavLink key={item.to} to={item.to} title={sidebarCollapsed ? item.label : undefined} onClick={() => setMobileOpen(false)} className={({ isActive }) => `sidebar-nav-link flex min-h-11 items-center gap-3 rounded-xl px-3 py-3 text-sm ${sidebarCollapsed ? 'lg:justify-center' : ''} ${isActive ? 'is-active' : ''}`}><AppIcon className="h-5 w-5 flex-none" name={item.icon} /><span className={sidebarCollapsed ? 'lg:hidden' : ''}>{item.label}</span></NavLink>)}</nav>
+      <nav className="flex flex-1 flex-col gap-1 overflow-y-auto p-3">{navItems.map((item) => <NavLink key={item.to} to={item.to} title={sidebarCollapsed ? item.label : undefined} className={({ isActive }) => `sidebar-nav-link flex min-h-11 items-center gap-3 rounded-xl px-3 py-3 text-sm ${sidebarCollapsed ? 'lg:justify-center' : ''} ${isActive ? 'is-active' : ''}`}><AppIcon className="h-5 w-5 flex-none" name={item.icon} /><span className={sidebarCollapsed ? 'lg:hidden' : ''}>{item.label}</span></NavLink>)}</nav>
       <div className="sidebar-footer grid gap-3 border-t p-4"><div className={`flex min-w-0 items-center gap-3 ${sidebarCollapsed ? 'lg:justify-center' : ''}`}><span className="sidebar-avatar flex h-10 w-10 flex-none items-center justify-center rounded-full font-bold">{user.fullName.trim().charAt(0).toUpperCase()}</span><div className={`min-w-0 ${sidebarCollapsed ? 'lg:hidden' : ''}`}><div className="truncate text-sm font-bold">{user.fullName}</div><div className="sidebar-role truncate text-xs">{translatedRole}</div></div></div><button className="sidebar-logout flex w-full items-center justify-center rounded-xl" onClick={handleLogout} aria-label={t('nav.logout')} title={t('nav.logout')}><LogoutIcon /></button></div>
     </aside>
-    <div className={`min-h-screen transition-[margin] duration-300 ${sidebarCollapsed ? 'lg:ms-20' : 'lg:ms-64'}`}><header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-border bg-surface/95 px-4 backdrop-blur lg:px-6"><button className="flex h-11 w-11 items-center justify-center border border-border bg-transparent p-0 text-text lg:hidden" onClick={() => setMobileOpen(true)} aria-label={t('nav.expandMenu')}><AppIcon className="h-5 w-5" name="menu" /></button><div className="hidden font-cairo font-bold sm:block">{navItems.find((item) => pathname.startsWith(item.to))?.label ?? t('app.title')}</div><div className="top-bar-actions"><NotificationBell /><ThemeToggle />{kioskButton}<LanguageSwitcher /><UserSettingsLink fullName={user.fullName} roleName={user.roleName} /><button className="logout-button" onClick={handleLogout} aria-label={t('nav.logout')} title={t('nav.logout')}><LogoutIcon /></button></div></header><main className="admin-content mx-auto w-full max-w-[1440px] p-4 lg:p-6"><Breadcrumb items={breadcrumbTrail} />{children}</main></div>
-    
+    <div className={`min-h-screen transition-[margin] duration-300 ${sidebarCollapsed ? 'lg:ms-20' : 'lg:ms-64'}`}><header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-border bg-surface/95 px-4 backdrop-blur lg:px-6"><div className="font-cairo font-bold">{navItems.find((item) => pathname.startsWith(item.to))?.label ?? t('app.title')}</div><div className="top-bar-actions"><NotificationBell /><ThemeToggle />{kioskButton}<LanguageSwitcher /><UserSettingsLink fullName={user.fullName} roleName={user.roleName} /><button className="logout-button" onClick={handleLogout} aria-label={t('nav.logout')} title={t('nav.logout')}><LogoutIcon /></button></div></header><main className="admin-content mx-auto w-full max-w-[1440px] p-4 pb-24 lg:p-6"><Breadcrumb items={breadcrumbTrail} />{children}</main></div>
+    <nav className="admin-bottom-nav fixed inset-x-0 bottom-0 z-40 flex border-t border-border bg-surface lg:hidden" aria-label={t('app.title')}>
+      {primaryNavItems.map((item) => <NavLink key={item.to} to={item.to} className={({ isActive }) => `flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 text-ui-xs ${isActive ? 'font-bold text-primary' : 'text-muted'}`}><AppIcon className="h-5 w-5" name={item.icon} /><span className="truncate">{item.label}</span></NavLink>)}
+      {moreNavItems.length > 0 && <button type="button" className="flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 text-ui-xs text-muted" onClick={() => setMoreOpen(true)} aria-haspopup="true" aria-expanded={moreOpen}><AppIcon className="h-5 w-5" name="more" /><span className="truncate">{t('nav.more')}</span></button>}
+    </nav>
+    <BottomSheet open={moreOpen} onClose={() => setMoreOpen(false)}>
+      <div className="grid gap-1">{moreNavItems.map((item) => <NavLink key={item.to} to={item.to} onClick={() => setMoreOpen(false)} className={({ isActive }) => `flex min-h-11 items-center gap-3 rounded-xl px-3 py-3 text-sm ${isActive ? 'bg-surface2 font-bold text-text' : 'text-muted'}`}><AppIcon className="h-5 w-5 flex-none" name={item.icon} /><span>{item.label}</span></NavLink>)}</div>
+    </BottomSheet>
   </div>
 }
