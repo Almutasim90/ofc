@@ -27,6 +27,9 @@ services:
     volumes:
       - api_uploads:/app/wwwroot/uploads
       - api_keys:/keys
+    networks:
+      - default
+      - supabase-db
 
   web:
     container_name: ofc-web
@@ -40,7 +43,24 @@ services:
       - api
     expose:
       - "80"
+    networks:
+      - default
+      - dokploy-network
 
 volumes:
   api_uploads:
   api_keys:
+
+networks:
+  default:
+  # Self-hosted Supabase's own compose network, so `api` can reach the
+  # Postgres container directly (Host=db) without going through the public
+  # Kong/Cloudflare path. Name must match the running Supabase stack's
+  # project network - update it if that stack is ever redeployed under a
+  # different Dokploy project suffix.
+  supabase-db:
+    name: ofc-supabase-tvmlhw_default
+    external: true
+  # Dokploy's shared network - lets Traefik reach `web` for the public domain.
+  dokploy-network:
+    external: true
