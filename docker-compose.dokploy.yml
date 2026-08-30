@@ -24,8 +24,8 @@ services:
     expose:
       - "8080"
     volumes:
-      - lolat_uploads:/app/wwwroot/uploads
-      - lolat_keys:/keys
+      - ofc_uploads:/app/wwwroot/uploads
+      - ofc_keys:/keys
 
   web:
     build:
@@ -40,5 +40,5 @@ services:
       - "80"
 
 volumes:
-  lolat_uploads:
-  lolat_keys:
+  ofc_uploads:
+  ofc_keys:

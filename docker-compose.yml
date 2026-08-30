@@ -1,6 +1,6 @@
 services:
   api:
-    container_name: lolat-api
+    container_name: ofc-api
     build:
       context: ./backend
       dockerfile: Dockerfile
@@ -29,7 +29,7 @@ services:
       - api_keys:/keys
 
   web:
-    container_name: lolat-web
+    container_name: ofc-web
     build:
       context: ./frontend
       dockerfile: Dockerfile
