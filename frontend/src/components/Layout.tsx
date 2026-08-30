@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Link, NavLink, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../auth/AuthContext'
@@ -36,16 +36,70 @@ export default function Layout({ children }: { children: ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => localStorage.getItem('sidebar-collapsed') === 'true')
   const [kiosk, setKiosk] = useState(false)
+  const kioskRequested = useRef(false)
+  const printing = useRef(false)
+  const restoreKioskAfterPrint = useRef(false)
 
   useEffect(() => {
-    const syncKioskState = () => setKiosk(!!document.fullscreenElement)
+    const requestKiosk = () => {
+      if (kioskRequested.current && !document.fullscreenElement)
+        document.documentElement.requestFullscreen?.().catch(() => {})
+    }
+    const syncKioskState = () => {
+      const isFullscreen = !!document.fullscreenElement
+      setKiosk(isFullscreen)
+      if (isFullscreen) restoreKioskAfterPrint.current = false
+      // Escape is an explicit exit. Printing is not, so retain the user's
+      // kiosk preference until the print dialog closes.
+      if (!isFullscreen && !printing.current) kioskRequested.current = false
+    }
+    const beforePrint = () => { printing.current = true }
+    const afterPrint = () => {
+      printing.current = false
+      restoreKioskAfterPrint.current = kioskRequested.current && !document.fullscreenElement
+      requestKiosk()
+    }
+    const retryKiosk = () => {
+      if (restoreKioskAfterPrint.current) requestKiosk()
+    }
     document.addEventListener('fullscreenchange', syncKioskState)
-    return () => document.removeEventListener('fullscreenchange', syncKioskState)
+    document.addEventListener('click', retryKiosk)
+    window.addEventListener('beforeprint', beforePrint)
+    window.addEventListener('afterprint', afterPrint)
+    return () => {
+      document.removeEventListener('fullscreenchange', syncKioskState)
+      document.removeEventListener('click', retryKiosk)
+      window.removeEventListener('beforeprint', beforePrint)
+      window.removeEventListener('afterprint', afterPrint)
+    }
   }, [])
 
+  useEffect(() => {
+    if (user) return
+    kioskRequested.current = false
+    restoreKioskAfterPrint.current = false
+    setKiosk(false)
+    if (document.fullscreenElement) document.exitFullscreen().catch(() => {})
+  }, [user])
+
   const toggleKiosk = async () => {
+    if (document.fullscreenElement) {
+      kioskRequested.current = false
+      restoreKioskAfterPrint.current = false
+      await document.exitFullscreen().catch(() => {})
+    } else {
+      kioskRequested.current = true
+      await document.documentElement.requestFullscreen?.().catch(() => {
+        kioskRequested.current = false
+      })
+    }
+  }
+
+  const handleLogout = async () => {
+    kioskRequested.current = false
+    restoreKioskAfterPrint.current = false
     if (document.fullscreenElement) await document.exitFullscreen().catch(() => {})
-    else await document.documentElement.requestFullscreen?.().catch(() => {})
+    logout()
   }
 
   if (!user || pathname === '/login') return <main>{children}</main>
@@ -73,16 +127,16 @@ export default function Layout({ children }: { children: ReactNode }) {
   const breadcrumbTrail = getBreadcrumbTrail(pathname, navItems, t)
   const kioskButton = <button className="utility-icon-button" type="button" onClick={toggleKiosk} aria-pressed={kiosk} aria-label={t(kiosk ? 'kiosk.exit' : 'kiosk.enter')} title={t(kiosk ? 'kiosk.exit' : 'kiosk.enter')}><AppIcon className="h-5 w-5" name={kiosk ? 'fullscreenExit' : 'fullscreen'} /></button>
 
-  if (operational) return <div className="operational-shell flex flex-col overflow-hidden bg-bg"><header className="top-bar h-16 flex-none"><Link className="hidden items-center gap-2 font-cairo text-xl font-extrabold text-primary xl:flex" to="/"><span className="brand-mark">ل</span>{t('app.title')}</Link><nav className="top-bar-nav">{navItems.slice(0, 2).map((item) => <NavLink key={item.to} to={item.to}>{item.label}</NavLink>)}</nav><div className="top-bar-actions"><NotificationBell /><ThemeToggle />{kioskButton}<LanguageSwitcher /><UserSettingsLink fullName={user.fullName} roleName={user.roleName} /><button className="logout-button" onClick={logout} aria-label={t('nav.logout')} title={t('nav.logout')}><LogoutIcon /><span className="logout-label">{t('nav.logout')}</span></button></div></header><main className="min-h-0 flex-1 overflow-hidden">{children}</main></div>
+  if (operational) return <div className="operational-shell flex flex-col overflow-hidden bg-bg"><header className="top-bar h-16 flex-none"><Link className="hidden items-center gap-2 font-cairo text-xl font-extrabold text-primary xl:flex" to="/"><span className="brand-mark">ل</span>{t('app.title')}</Link><nav className="top-bar-nav">{navItems.slice(0, 2).map((item) => <NavLink key={item.to} to={item.to} aria-label={item.label} title={item.label}><AppIcon className="top-bar-nav-icon h-5 w-5" name={item.icon} /><span>{item.label}</span></NavLink>)}</nav><div className="top-bar-actions"><NotificationBell /><ThemeToggle />{kioskButton}<LanguageSwitcher /><UserSettingsLink fullName={user.fullName} roleName={user.roleName} /><button className="logout-button" onClick={handleLogout} aria-label={t('nav.logout')} title={t('nav.logout')}><LogoutIcon /></button></div></header><main className="min-h-0 flex-1 overflow-hidden">{children}</main></div>
 
   return <div className="admin-shell min-h-screen bg-bg text-text">
     {mobileOpen && <button aria-label={t('nav.closeMenu')} className="app-scrim fixed inset-0 z-30 rounded-none lg:hidden" onClick={() => setMobileOpen(false)} />}
     <aside id="app-sidebar" className={`app-sidebar fixed inset-y-0 start-0 z-40 flex flex-none flex-col shadow-xl transition-all duration-300 lg:!translate-x-0 lg:shadow-none ${sidebarCollapsed ? 'lg:w-20' : 'w-64'} ${mobileOpen ? 'translate-x-0' : 'ltr:-translate-x-full rtl:translate-x-full'}`}>
       <div className="sidebar-brand flex h-16 items-center justify-between gap-2 border-b px-4"><div className={`min-w-0 items-center gap-2 ${sidebarCollapsed ? 'flex lg:hidden' : 'flex'}`}><span className="brand-mark">ل</span><div className="truncate font-cairo text-xl font-extrabold">{t('app.title')}</div></div><button className="sidebar-collapse hidden h-11 w-11 flex-none items-center justify-center p-0 lg:flex" onClick={() => setSidebarCollapsed((value) => { localStorage.setItem('sidebar-collapsed', String(!value)); return !value })} aria-label={sidebarCollapsed ? t('nav.expandMenu') : t('nav.collapseMenu')} title={sidebarCollapsed ? t('nav.expandMenu') : t('nav.collapseMenu')}><AppIcon className={`h-5 w-5 transition-transform ${sidebarCollapsed ? 'rotate-180' : ''}`} name="chevron" /></button></div>
       <nav className="flex flex-1 flex-col gap-1 overflow-y-auto p-3">{navItems.map((item) => <NavLink key={item.to} to={item.to} title={sidebarCollapsed ? item.label : undefined} onClick={() => setMobileOpen(false)} className={({ isActive }) => `sidebar-nav-link flex min-h-11 items-center gap-3 rounded-xl px-3 py-3 text-sm ${sidebarCollapsed ? 'lg:justify-center' : ''} ${isActive ? 'is-active' : ''}`}><AppIcon className="h-5 w-5 flex-none" name={item.icon} /><span className={sidebarCollapsed ? 'lg:hidden' : ''}>{item.label}</span></NavLink>)}</nav>
-      <div className="sidebar-footer grid gap-3 border-t p-4"><div className={`flex min-w-0 items-center gap-3 ${sidebarCollapsed ? 'lg:justify-center' : ''}`}><span className="sidebar-avatar flex h-10 w-10 flex-none items-center justify-center rounded-full font-bold">{user.fullName.trim().charAt(0).toUpperCase()}</span><div className={`min-w-0 ${sidebarCollapsed ? 'lg:hidden' : ''}`}><div className="truncate text-sm font-bold">{user.fullName}</div><div className="sidebar-role truncate text-xs">{translatedRole}</div></div></div><button className="sidebar-logout flex w-full items-center justify-center gap-2 rounded-xl" onClick={logout} aria-label={t('nav.logout')} title={t('nav.logout')}><LogoutIcon /><span className={`logout-label ${sidebarCollapsed ? 'lg:hidden' : ''}`}>{t('nav.logout')}</span></button></div>
+      <div className="sidebar-footer grid gap-3 border-t p-4"><div className={`flex min-w-0 items-center gap-3 ${sidebarCollapsed ? 'lg:justify-center' : ''}`}><span className="sidebar-avatar flex h-10 w-10 flex-none items-center justify-center rounded-full font-bold">{user.fullName.trim().charAt(0).toUpperCase()}</span><div className={`min-w-0 ${sidebarCollapsed ? 'lg:hidden' : ''}`}><div className="truncate text-sm font-bold">{user.fullName}</div><div className="sidebar-role truncate text-xs">{translatedRole}</div></div></div><button className="sidebar-logout flex w-full items-center justify-center rounded-xl" onClick={handleLogout} aria-label={t('nav.logout')} title={t('nav.logout')}><LogoutIcon /></button></div>
     </aside>
-    <div className={`min-h-screen transition-[margin] duration-300 ${sidebarCollapsed ? 'lg:ms-20' : 'lg:ms-64'}`}><header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-border bg-surface/95 px-4 backdrop-blur lg:px-6"><button className="flex h-11 w-11 items-center justify-center border border-border bg-transparent p-0 text-text lg:hidden" onClick={() => setMobileOpen(true)} aria-label={t('nav.expandMenu')}><AppIcon className="h-5 w-5" name="menu" /></button><div className="hidden font-cairo font-bold sm:block">{navItems.find((item) => pathname.startsWith(item.to))?.label ?? t('app.title')}</div><div className="top-bar-actions"><NotificationBell /><ThemeToggle />{kioskButton}<LanguageSwitcher /><UserSettingsLink fullName={user.fullName} roleName={user.roleName} /><button className="logout-button" onClick={logout} aria-label={t('nav.logout')} title={t('nav.logout')}><LogoutIcon /><span className="logout-label">{t('nav.logout')}</span></button></div></header><main className="admin-content mx-auto w-full max-w-[1440px] p-4 lg:p-6"><Breadcrumb items={breadcrumbTrail} />{children}</main></div>
+    <div className={`min-h-screen transition-[margin] duration-300 ${sidebarCollapsed ? 'lg:ms-20' : 'lg:ms-64'}`}><header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-border bg-surface/95 px-4 backdrop-blur lg:px-6"><button className="flex h-11 w-11 items-center justify-center border border-border bg-transparent p-0 text-text lg:hidden" onClick={() => setMobileOpen(true)} aria-label={t('nav.expandMenu')}><AppIcon className="h-5 w-5" name="menu" /></button><div className="hidden font-cairo font-bold sm:block">{navItems.find((item) => pathname.startsWith(item.to))?.label ?? t('app.title')}</div><div className="top-bar-actions"><NotificationBell /><ThemeToggle />{kioskButton}<LanguageSwitcher /><UserSettingsLink fullName={user.fullName} roleName={user.roleName} /><button className="logout-button" onClick={handleLogout} aria-label={t('nav.logout')} title={t('nav.logout')}><LogoutIcon /></button></div></header><main className="admin-content mx-auto w-full max-w-[1440px] p-4 lg:p-6"><Breadcrumb items={breadcrumbTrail} />{children}</main></div>
     
   </div>
 }

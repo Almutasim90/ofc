@@ -417,6 +417,7 @@ body {
   display: flex;
   gap: var(--space-6);
 }
+.top-bar-nav-icon { display: none; }
 
 .top-bar-nav a {
   display: inline-flex;
@@ -461,14 +462,7 @@ body {
   background: rgb(var(--color-surface2));
   color: rgb(var(--color-text));
 }
-/* Keep tablet headers compact, including 1280/1366px tablet landscape viewports. */
-.logout-label { display: none; }
-@media (min-width: 1440px) {
-  .logout-label { display: inline; }
-}
-@media (max-width: 1439px) {
-  .logout-button { width: var(--control-height); padding: 0; justify-content: center; }
-}
+.logout-button { width: var(--control-height); padding: 0; justify-content: center; }
 
 .flag-circle {
   display: grid;
@@ -486,10 +480,28 @@ body {
 
 @media (max-width: 640px) {
   .top-bar { padding-inline: var(--space-2); }
-  .top-bar-nav { gap: var(--space-3); }
+  .operational-shell .top-bar-nav { gap: var(--space-1); }
+  .operational-shell .top-bar-nav a { width: var(--control-height); justify-content: center; }
+  .operational-shell .top-bar-nav a span { display: none; }
+  .operational-shell .top-bar-nav-icon { display: block; }
   .top-bar-actions { gap: var(--space-1); }
   .top-bar-actions button { padding: 0; }
   .user-settings-link { width: var(--control-height); padding: var(--space-1); gap: 0; }
+}
+
+@media (max-width: 380px) {
+  .top-bar-actions { gap: 0; }
+  .top-bar-actions > button,
+  .top-bar-actions > .notification-bell,
+  .top-bar-actions > .user-settings-link { width: 2.5rem; }
+  .top-bar-actions > button,
+  .top-bar-actions .notification-trigger,
+  .top-bar-actions > .user-settings-link { min-width: 2.5rem; height: 2.5rem; min-height: 2.5rem; }
+}
+
+@media (max-width: 340px) {
+  .operational-shell .top-bar-actions > .user-settings-link { display: none; }
+  .operational-shell .top-bar-nav a { width: 2.5rem; min-height: 2.5rem; }
 }
 
 .content {
