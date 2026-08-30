@@ -35,11 +35,12 @@ export default function Layout({ children }: { children: ReactNode }) {
   const { user, logout, hasPermission } = useAuth()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => localStorage.getItem('sidebar-collapsed') === 'true')
-  const kiosk = pathname === '/cashier'
+  // Kiosk mode covers the whole app, not just one screen: any signed-in
+  // route requests fullscreen. The only thing that turns it off is signing
+  // out (user goes from set to null) — navigating between screens, browser
+  // back, or a typed URL all stay within kiosk since they're still signed in.
+  const kiosk = !!user
 
-  // Kiosk mode: the cashier screen requests fullscreen; leaving it (via the
-  // Shift link, the username, browser back, a typed URL) exits fullscreen
-  // the same way, so there's no separate "exit" handler to wire.
   // Printing (window.print()) forces the browser out of fullscreen; the
   // fullscreenchange/click listeners below re-request it so kiosk mode
   // survives a print instead of staying exited.
