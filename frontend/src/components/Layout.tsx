@@ -35,35 +35,22 @@ export default function Layout({ children }: { children: ReactNode }) {
   const { user, logout, hasPermission } = useAuth()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => localStorage.getItem('sidebar-collapsed') === 'true')
-  // Kiosk mode covers the whole app, not just one screen: any signed-in
-  // route requests fullscreen. The only thing that turns it off is signing
-  // out (user goes from set to null) — navigating between screens, browser
-  // back, or a typed URL all stay within kiosk since they're still signed in.
-  const kiosk = !!user
+  const [kiosk, setKiosk] = useState(false)
 
-  // Printing (window.print()) forces the browser out of fullscreen; the
-  // fullscreenchange/click listeners below re-request it so kiosk mode
-  // survives a print instead of staying exited.
   useEffect(() => {
-    if (!kiosk) {
-      if (document.fullscreenElement) document.exitFullscreen().catch(() => {})
-      return
-    }
-    const enterFullscreen = () => {
-      if (!document.fullscreenElement) document.documentElement.requestFullscreen?.().catch(() => {})
-    }
-    enterFullscreen()
-    document.addEventListener('fullscreenchange', enterFullscreen)
-    document.addEventListener('click', enterFullscreen)
-    return () => {
-      document.removeEventListener('fullscreenchange', enterFullscreen)
-      document.removeEventListener('click', enterFullscreen)
-    }
-  }, [kiosk])
+    const syncKioskState = () => setKiosk(!!document.fullscreenElement)
+    document.addEventListener('fullscreenchange', syncKioskState)
+    return () => document.removeEventListener('fullscreenchange', syncKioskState)
+  }, [])
+
+  const toggleKiosk = async () => {
+    if (document.fullscreenElement) await document.exitFullscreen().catch(() => {})
+    else await document.documentElement.requestFullscreen?.().catch(() => {})
+  }
 
   if (!user || pathname === '/login') return <main>{children}</main>
 
-  const operational = pathname === '/cashier' || pathname === '/shift'
+  const operational = pathname === '/cashier'
   const navItems = ([
     { to: '/cashier', label: t('nav.cashier'), icon: 'cashier', permission: 'sales.create' },
     { to: '/shift', label: t('nav.shift'), icon: 'shift', permission: 'sales.create' },
@@ -84,8 +71,9 @@ export default function Layout({ children }: { children: ReactNode }) {
   ] satisfies NavItem[]).filter((item) => !item.permission || hasPermission(item.permission))
   const translatedRole = t(`roles.${user.roleName}`, { defaultValue: user.roleName })
   const breadcrumbTrail = getBreadcrumbTrail(pathname, navItems, t)
+  const kioskButton = <button className="utility-icon-button" type="button" onClick={toggleKiosk} aria-pressed={kiosk} aria-label={t(kiosk ? 'kiosk.exit' : 'kiosk.enter')} title={t(kiosk ? 'kiosk.exit' : 'kiosk.enter')}><AppIcon className="h-5 w-5" name={kiosk ? 'fullscreenExit' : 'fullscreen'} /></button>
 
-  if (operational) return <div className="operational-shell flex flex-col overflow-hidden bg-bg"><header className="top-bar h-16 flex-none"><Link className="hidden items-center gap-2 font-cairo text-xl font-extrabold text-primary xl:flex" to="/"><span className="brand-mark">ل</span>{t('app.title')}</Link><nav className="top-bar-nav">{navItems.slice(0, 2).map((item) => <NavLink key={item.to} to={item.to}>{item.label}</NavLink>)}</nav><div className="top-bar-actions"><NotificationBell /><ThemeToggle /><LanguageSwitcher /><UserSettingsLink fullName={user.fullName} roleName={user.roleName} /><button className="logout-button" onClick={logout} aria-label={t('nav.logout')} title={t('nav.logout')}><LogoutIcon /><span className="logout-label">{t('nav.logout')}</span></button></div></header><main className={`min-h-0 flex-1 ${pathname === '/shift' ? 'admin-content overflow-y-auto p-4 lg:p-6' : 'overflow-hidden'}`}>{pathname === '/shift' && <Breadcrumb items={breadcrumbTrail} />}{children}</main></div>
+  if (operational) return <div className="operational-shell flex flex-col overflow-hidden bg-bg"><header className="top-bar h-16 flex-none"><Link className="hidden items-center gap-2 font-cairo text-xl font-extrabold text-primary xl:flex" to="/"><span className="brand-mark">ل</span>{t('app.title')}</Link><nav className="top-bar-nav">{navItems.slice(0, 2).map((item) => <NavLink key={item.to} to={item.to}>{item.label}</NavLink>)}</nav><div className="top-bar-actions"><NotificationBell /><ThemeToggle />{kioskButton}<LanguageSwitcher /><UserSettingsLink fullName={user.fullName} roleName={user.roleName} /><button className="logout-button" onClick={logout} aria-label={t('nav.logout')} title={t('nav.logout')}><LogoutIcon /><span className="logout-label">{t('nav.logout')}</span></button></div></header><main className="min-h-0 flex-1 overflow-hidden">{children}</main></div>
 
   return <div className="admin-shell min-h-screen bg-bg text-text">
     {mobileOpen && <button aria-label={t('nav.closeMenu')} className="app-scrim fixed inset-0 z-30 rounded-none lg:hidden" onClick={() => setMobileOpen(false)} />}
@@ -94,7 +82,7 @@ export default function Layout({ children }: { children: ReactNode }) {
       <nav className="flex flex-1 flex-col gap-1 overflow-y-auto p-3">{navItems.map((item) => <NavLink key={item.to} to={item.to} title={sidebarCollapsed ? item.label : undefined} onClick={() => setMobileOpen(false)} className={({ isActive }) => `sidebar-nav-link flex min-h-11 items-center gap-3 rounded-xl px-3 py-3 text-sm ${sidebarCollapsed ? 'lg:justify-center' : ''} ${isActive ? 'is-active' : ''}`}><AppIcon className="h-5 w-5 flex-none" name={item.icon} /><span className={sidebarCollapsed ? 'lg:hidden' : ''}>{item.label}</span></NavLink>)}</nav>
       <div className="sidebar-footer grid gap-3 border-t p-4"><div className={`flex min-w-0 items-center gap-3 ${sidebarCollapsed ? 'lg:justify-center' : ''}`}><span className="sidebar-avatar flex h-10 w-10 flex-none items-center justify-center rounded-full font-bold">{user.fullName.trim().charAt(0).toUpperCase()}</span><div className={`min-w-0 ${sidebarCollapsed ? 'lg:hidden' : ''}`}><div className="truncate text-sm font-bold">{user.fullName}</div><div className="sidebar-role truncate text-xs">{translatedRole}</div></div></div><button className="sidebar-logout flex w-full items-center justify-center gap-2 rounded-xl" onClick={logout} aria-label={t('nav.logout')} title={t('nav.logout')}><LogoutIcon /><span className={`logout-label ${sidebarCollapsed ? 'lg:hidden' : ''}`}>{t('nav.logout')}</span></button></div>
     </aside>
-    <div className={`min-h-screen transition-[margin] duration-300 ${sidebarCollapsed ? 'lg:ms-20' : 'lg:ms-64'}`}><header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-border bg-surface/95 px-4 backdrop-blur lg:px-6"><button className="flex h-11 w-11 items-center justify-center border border-border bg-transparent p-0 text-text lg:hidden" onClick={() => setMobileOpen(true)} aria-label={t('nav.expandMenu')}><AppIcon className="h-5 w-5" name="menu" /></button><div className="hidden font-cairo font-bold sm:block">{navItems.find((item) => pathname.startsWith(item.to))?.label ?? t('app.title')}</div><div className="top-bar-actions"><NotificationBell /><ThemeToggle /><LanguageSwitcher /><UserSettingsLink fullName={user.fullName} roleName={user.roleName} /><button className="logout-button" onClick={logout} aria-label={t('nav.logout')} title={t('nav.logout')}><LogoutIcon /><span className="logout-label">{t('nav.logout')}</span></button></div></header><main className="admin-content mx-auto w-full max-w-[1440px] p-4 lg:p-6"><Breadcrumb items={breadcrumbTrail} />{children}</main></div>
+    <div className={`min-h-screen transition-[margin] duration-300 ${sidebarCollapsed ? 'lg:ms-20' : 'lg:ms-64'}`}><header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-border bg-surface/95 px-4 backdrop-blur lg:px-6"><button className="flex h-11 w-11 items-center justify-center border border-border bg-transparent p-0 text-text lg:hidden" onClick={() => setMobileOpen(true)} aria-label={t('nav.expandMenu')}><AppIcon className="h-5 w-5" name="menu" /></button><div className="hidden font-cairo font-bold sm:block">{navItems.find((item) => pathname.startsWith(item.to))?.label ?? t('app.title')}</div><div className="top-bar-actions"><NotificationBell /><ThemeToggle />{kioskButton}<LanguageSwitcher /><UserSettingsLink fullName={user.fullName} roleName={user.roleName} /><button className="logout-button" onClick={logout} aria-label={t('nav.logout')} title={t('nav.logout')}><LogoutIcon /><span className="logout-label">{t('nav.logout')}</span></button></div></header><main className="admin-content mx-auto w-full max-w-[1440px] p-4 lg:p-6"><Breadcrumb items={breadcrumbTrail} />{children}</main></div>
     
   </div>
 }

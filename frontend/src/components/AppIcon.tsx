@@ -1,6 +1,6 @@
 import type { SVGProps } from 'react'
 
-export type AppIconName = 'cashier' | 'shift' | 'reports' | 'inventory' | 'products' | 'materials' | 'branches' | 'users' | 'schedule' | 'channels' | 'ai' | 'notifications' | 'settings' | 'logout' | 'menu' | 'more' | 'chevron' | 'close' | 'plus' | 'minus' | 'trash' | 'sun' | 'moon' | 'home' | 'email' | 'printer' | 'check' | 'alert'
+export type AppIconName = 'cashier' | 'shift' | 'reports' | 'inventory' | 'products' | 'materials' | 'branches' | 'users' | 'schedule' | 'channels' | 'ai' | 'notifications' | 'settings' | 'logout' | 'menu' | 'more' | 'chevron' | 'close' | 'plus' | 'minus' | 'trash' | 'sun' | 'moon' | 'home' | 'email' | 'printer' | 'check' | 'alert' | 'fullscreen' | 'fullscreenExit'
 
 const paths: Record<AppIconName, JSX.Element> = {
   cashier: <><path d="M4 5h16v14H4z"/><path d="M4 9h16M8 13h2M14 13h2M8 16h2"/></>,
@@ -31,6 +31,8 @@ const paths: Record<AppIconName, JSX.Element> = {
   printer: <><path d="M6 9V4h12v5"/><rect x="4" y="9" width="16" height="7" rx="1.5"/><path d="M8 13h8v7H8z"/></>,
   check: <path d="m5 12 5 5L20 7"/>,
   alert: <><circle cx="12" cy="12" r="9"/><path d="M12 7.5v6"/><path d="M12 16.5h.01"/></>,
+  fullscreen: <><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 8H6v2M16 8h2v2M8 16H6v-2M16 16h2v-2"/></>,
+  fullscreenExit: <><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M6 10h2V8M18 10h-2V8M6 14h2v2M18 14h-2v2"/></>,
 }
 
 export default function AppIcon({ name, ...props }: { name: AppIconName } & SVGProps<SVGSVGElement>) {

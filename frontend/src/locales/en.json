@@ -9,6 +9,10 @@
   "theme": {
     "toggle": "Toggle light/dark theme"
   },
+  "kiosk": {
+    "enter": "Enter kiosk mode",
+    "exit": "Exit kiosk mode"
+  },
   "login": {
     "title": "Sign in",
     "username": "Username",
