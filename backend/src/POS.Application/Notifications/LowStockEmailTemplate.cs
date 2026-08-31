@@ -30,7 +30,7 @@ public static class LowStockEmailTemplate
           <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="width:100%;background:#f3f0ea"><tr><td align="center" style="padding:32px 12px">
             <table role="presentation" width="640" cellspacing="0" cellpadding="0" style="width:100%;max-width:640px;background:#fff;border:1px solid #ded6c8;border-radius:18px;overflow:hidden">
               <tr><td style="padding:26px 30px;background:#762b25;color:#fff;text-align:center">
-                <div style="font-size:13px;letter-spacing:.4px;opacity:.86">LOLAT AL SUWAIQ · لولاة السويق</div>
+                <div style="font-size:13px;letter-spacing:.4px;opacity:.86">OFC · أو إف سي</div>
                 <div dir="rtl" style="font-size:25px;font-weight:700;margin-top:8px">تنبيه انخفاض المخزون</div>
                 <div dir="ltr" style="font-size:16px;margin-top:4px;opacity:.92">Low Stock Alert</div>
               </td></tr>
@@ -64,7 +64,7 @@ public static class LowStockEmailTemplate
               </td></tr>
               <tr><td style="padding:18px 30px;background:#29251f;color:#dcd5ca;text-align:center;font-size:11px;line-height:1.8">
                 <div>وقت التنبيه · Alert time: {{triggeredAt}} UTC</div>
-                <div>رسالة آلية من نظام لولاة السويق · Automated message from Lolat Al Suwaiq POS</div>
+                <div>رسالة آلية من نظام أو إف سي · Automated message from OFC POS</div>
               </td></tr>
             </table>
           </td></tr></table>

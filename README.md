@@ -1,6 +1,6 @@
-# POS System — بيت الشاي
+# OFC POS System — نظام أو إف سي
 
-Online-first point-of-sale and recipe-based inventory system for a multi-branch tea shop.
+Online-first point-of-sale and recipe-based inventory system for OFC fast-food branches.
 
 ## Architecture
 

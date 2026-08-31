@@ -40,5 +40,7 @@ public class LowStockTests
         Assert.Contains("8.000 liter", html);
         Assert.Contains("dir=\"rtl\"", html);
         Assert.Contains("dir=\"ltr\"", html);
+        Assert.Contains("OFC · أو إف سي", html);
+        Assert.DoesNotContain("Lolat Al Suwaiq", html);
     }
 }

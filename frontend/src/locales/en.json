@@ -1,6 +1,6 @@
 {
   "app": {
-    "title": "Lolat Al Suwaiq"
+    "title": "OFC"
   },
   "language": {
     "switchTo": "العربية",
@@ -24,14 +24,14 @@
     "subtitle": "Enter your account details to access the point-of-sale system.",
     "usernamePlaceholder": "Enter your username",
     "passwordPlaceholder": "Enter your password",
-    "brandLabel": "Lolat Al Suwaiq system identity",
-    "brandName": "Lolat Al Suwaiq",
+    "brandLabel": "OFC system identity",
+    "brandName": "OFC",
     "brandHeadline": "Manage every branch and sale in one place.",
     "brandDescription": "A complete platform for sales, inventory, and shifts, designed to keep daily operations clear and fast.",
     "featureSales": "Faster sales",
     "featureInventory": "Accurate inventory",
     "featureReports": "Clear reporting",
-    "securityNote": "Secure access for Lolat Al Suwaiq staff"
+    "securityNote": "Secure access for OFC staff"
   },
   "nav": {
     "cashier": "Cashier",
@@ -152,7 +152,7 @@
   "ai": {"title":"AI settings","description":"Choose the provider and model used for insights. The API key is encrypted and is never shown in full after saving.","active":"Enable AI insights","provider":"Provider","providerCustom":"Custom provider...","baseUrl":"API base URL","baseUrlHint":"Must be an OpenAI-compatible chat/completions endpoint.","model":"Model","modelHint":"Type any model name you want, or pick a suggestion.","apiKey":"API key","keyHint":"Leave blank to keep the saved key.","saved":"AI settings saved.","loadError":"Could not load AI settings.","saveError":"Could not save AI settings.","analyze":"AI insight","summary":"Summary","anomaly":"Anomaly detection","forecast":"Demand forecast","test":"Test connection","testSuccess":"Connection works — the provider replied: \"{{reply}}\"","testError":"Connection test failed."},
   "aiInsights": {"title":"AI Insights","description":"Ask the configured AI provider to analyze sales and shift data for the selected period, either with a quick preset or your own question.","presetsTitle":"Quick analysis","customTitle":"Ask a question","questionLabel":"Your question","questionPlaceholder":"e.g. Why did tea sales drop last week?","ask":"Analyze","recentTitle":"Recent insights","error":"Could not generate the insight. Configure and test the AI provider first."},
   "email": {"title":"Email settings","description":"Configure the SMTP account used to send system alerts automatically. The password is stored encrypted.","active":"Enable email notifications","smtpHost":"SMTP server","smtpPort":"Port","username":"Username","password":"Email password or app password","fromEmail":"Sender email","fromName":"Sender name","recipients":"Alert recipients","recipientsHint":"Separate addresses with commas or semicolons.","useSsl":"Use secure SSL/TLS connection","saved":"Email settings saved.","loadError":"Could not load email settings.","saveError":"Could not save email settings.","testTitle":"Test delivery","testRecipient":"Send a test message to","sendTest":"Send test","testSent":"Test email sent successfully.","testError":"Test email delivery failed."},
-  "receipt": {"settingsTitle":"Receipt settings","settingsDescription":"This text prints at the top of every receipt, above the sale details. No logo — text only.","headerLabel":"Receipt header text","headerPlaceholder":"e.g.\nLolat Al-Suwaiq\nTel: 9XXXXXXX","headerHint":"Up to 500 characters. A new line starts a new line on the printed receipt. Leave blank to print without a header.","saved":"Receipt settings saved.","loadError":"Could not load receipt settings.","saveError":"Could not save receipt settings.","print":"Print receipt","number":"Receipt #{{number}}","date":"Date","cashier":"Cashier","item":"Item","qty":"Qty","subtotal":"Subtotal"},
+  "receipt": {"settingsTitle":"Receipt settings","settingsDescription":"This text prints at the top of every receipt, above the sale details. No logo — text only.","headerLabel":"Receipt header text","headerPlaceholder":"e.g.\nOFC\nTel: 9XXXXXXX","headerHint":"Up to 500 characters. A new line starts a new line on the printed receipt. Leave blank to print without a header.","saved":"Receipt settings saved.","loadError":"Could not load receipt settings.","saveError":"Could not save receipt settings.","print":"Print receipt","number":"Receipt #{{number}}","date":"Date","cashier":"Cashier","item":"Item","qty":"Qty","subtotal":"Subtotal"},
   "closing": {
     "title": "Automatic closing schedule",
     "timezoneHint": "All closing times use Muscat time (Asia/Muscat). Cashiers may open shifts at any time.",

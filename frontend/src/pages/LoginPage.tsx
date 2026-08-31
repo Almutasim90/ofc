@@ -37,7 +37,7 @@ export default function LoginPage() {
 
       <section className="login-minimal-card" aria-labelledby="login-brand-name">
         <div className="login-minimal-brand">
-          <span className="login-minimal-logo" aria-hidden="true">ل</span>
+          <span className="login-minimal-logo" aria-hidden="true">O</span>
           <strong id="login-brand-name">{t('login.brandName')}</strong>
         </div>
 

@@ -58,7 +58,7 @@ public class EmailSettingsService(IAppDbContext db, IDataProtectionProvider prot
             CurrentQuantity: 2m, LowStockThreshold: 10m, TriggeredAt: DateTime.UtcNow));
 
         await sender.SendAsync(
-            "[اختبار] تنبيه انخفاض المخزون — لولاة السويق",
+            "[اختبار] تنبيه انخفاض المخزون — OFC | أو إف سي",
             html, recipient.Trim(), isHtml: true, cancellationToken: ct);
     }
 
