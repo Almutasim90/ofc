@@ -55,7 +55,8 @@ export interface BranchDto {
   defaultOpeningFloat: number
   isActive: boolean
 }
-export interface SalesChannelDto { id: string; nameAr: string; nameEn: string; logoUrl: string | null; isActive: boolean; isInStore: boolean }
+export interface SalesChannelDto { id: string; code:string; nameAr: string; nameEn: string; logoUrl: string | null; isActive: boolean; isInStore: boolean }
+export interface BranchChannelAvailabilityDto { branchId:string; salesChannelId:string; isEnabled:boolean; requiresPrepayment:boolean }
 export interface ProductChannelPriceDto { productId: string; price: number | null }
 export interface ChannelSalesDto { channelId:string; nameAr:string; nameEn:string; totalSales:number; invoiceCount:number }
 

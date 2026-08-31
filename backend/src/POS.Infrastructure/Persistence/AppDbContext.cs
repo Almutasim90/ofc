@@ -45,6 +45,7 @@ public class AppDbContext : DbContext, IAppDbContext
     public DbSet<PrinterSection> PrinterSections => Set<PrinterSection>();
     public DbSet<PaymentMethod> PaymentMethods => Set<PaymentMethod>(); public DbSet<OrderPayment> OrderPayments => Set<OrderPayment>(); public DbSet<OrderEditLog> OrderEditLogs => Set<OrderEditLog>();
     public DbSet<CashShift> CashShifts => Set<CashShift>(); public DbSet<CashCount> CashCounts => Set<CashCount>();
+    public DbSet<BranchSalesChannelAvailability> BranchSalesChannelAvailabilities => Set<BranchSalesChannelAvailability>();
     public DbSet<Product> Products => Set<Product>();
     public DbSet<SalesChannel> SalesChannels => Set<SalesChannel>();
     public DbSet<ProductChannelPrice> ProductChannelPrices => Set<ProductChannelPrice>();
@@ -334,11 +335,14 @@ public class AppDbContext : DbContext, IAppDbContext
         modelBuilder.Entity<SalesChannel>(entity =>
         {
             entity.HasKey(c => c.Id);
+            entity.Property(c => c.Code).IsRequired().HasMaxLength(60);
+            entity.HasIndex(c => c.Code).IsUnique();
             entity.Property(c => c.NameAr).IsRequired().HasMaxLength(200);
             entity.Property(c => c.NameEn).IsRequired().HasMaxLength(200);
             entity.Property(c => c.LogoUrl).HasMaxLength(1000);
             entity.HasIndex(c => c.IsInStore).IsUnique().HasFilter("\"IsInStore\" = TRUE");
         });
+        modelBuilder.Entity<BranchSalesChannelAvailability>(e=>{e.HasKey(x=>x.Id);e.HasOne(x=>x.Branch).WithMany().HasForeignKey(x=>x.BranchId).OnDelete(DeleteBehavior.Cascade);e.HasOne(x=>x.SalesChannel).WithMany().HasForeignKey(x=>x.SalesChannelId).OnDelete(DeleteBehavior.Cascade);e.HasIndex(x=>new{x.BranchId,x.SalesChannelId}).IsUnique();e.HasIndex(x=>x.SalesChannelId);e.HasQueryFilter(x=>BypassRestaurantBranchFilter||x.BranchId==RestaurantBranchId);});
         modelBuilder.Entity<ProductChannelPrice>(entity =>
         {
             entity.HasKey(p => new { p.ProductId, p.ChannelId });

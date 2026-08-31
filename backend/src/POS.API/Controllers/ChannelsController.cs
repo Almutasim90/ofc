@@ -22,4 +22,6 @@ public class ChannelsController(ChannelService service) : ControllerBase
     public async Task<ActionResult<List<ProductChannelPriceDto>>> CatalogPrices(Guid id, CancellationToken ct) => Ok(await service.GetPricesAsync(id, ct));
     [HttpPut("{id:guid}/prices"), RequirePermission(PermissionKeys.ChannelsManage)]
     public async Task<IActionResult> SetPrices(Guid id, SetChannelPricesRequest request, CancellationToken ct) { await service.SetPricesAsync(id, request, ct); return NoContent(); }
+    [HttpGet("branches/{branchId:guid}"), RequirePermission(PermissionKeys.ChannelsManage)]public async Task<ActionResult<List<BranchChannelAvailabilityDto>>>Availability(Guid branchId,CancellationToken ct)=>Ok(await service.GetAvailabilityAsync(branchId,ct));
+    [HttpPut("{id:guid}/branches/{branchId:guid}"), RequirePermission(PermissionKeys.ChannelsManage)]public async Task<ActionResult<BranchChannelAvailabilityDto>>SetAvailability(Guid id,Guid branchId,SetBranchChannelAvailabilityRequest request,CancellationToken ct)=>Ok(await service.SetAvailabilityAsync(branchId,id,request,ct));
 }

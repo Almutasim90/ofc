@@ -26,7 +26,7 @@ public static class SeedData
 
         if (!await db.SalesChannels.AnyAsync(c => c.IsInStore, cancellationToken))
         {
-            db.SalesChannels.Add(new SalesChannel { Id = SalesChannelIds.InStore, NameAr = "المحل", NameEn = "In-store", IsActive = true, IsInStore = true });
+            db.SalesChannels.Add(new SalesChannel { Id = SalesChannelIds.InStore, Code="IN_STORE",NameAr = "المحل", NameEn = "In-store", IsActive = true, IsInStore = true });
             await db.SaveChangesAsync(cancellationToken);
         }
 

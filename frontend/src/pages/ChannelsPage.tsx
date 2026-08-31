@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { api, ApiError, resolveApiAssetUrl } from '../api/client'
-import type { ProductChannelPriceDto, ProductDto, SalesChannelDto } from '../api/types'
+import type { BranchChannelAvailabilityDto, BranchDto, ProductChannelPriceDto, ProductDto, SalesChannelDto } from '../api/types'
 import { useToast } from '../components/ToastContext'
 
-const emptyForm = { nameAr: '', nameEn: '', logoUrl: '', isActive: true }
+const emptyForm = { code:'', nameAr: '', nameEn: '', logoUrl: '', isActive: true }
 
 export default function ChannelsPage() {
   const { t, i18n } = useTranslation()
@@ -17,9 +17,11 @@ export default function ChannelsPage() {
   const [prices, setPrices] = useState<Record<string, string>>({})
   const [form, setForm] = useState(emptyForm)
   const [uploading, setUploading] = useState(false)
+  const [branches,setBranches]=useState<BranchDto[]>([]);const[branchId,setBranchId]=useState('');const[availability,setAvailability]=useState<BranchChannelAvailabilityDto[]>([])
 
   const load = () => Promise.all([api.get<SalesChannelDto[]>('/api/channels'), api.get<ProductDto[]>('/api/products')]).then(([channelRows, productRows]) => { setChannels(channelRows); setProducts(productRows) })
-  useEffect(() => { void load() }, [])
+  useEffect(() => { void Promise.all([load(),api.get<BranchDto[]>('/api/branches').then(x=>{setBranches(x);setBranchId(x[0]?.id??'')})]) }, [])
+  useEffect(()=>{if(branchId)void api.get<BranchChannelAvailabilityDto[]>(`/api/channels/branches/${branchId}`).then(setAvailability)},[branchId,channels])
 
   const uploadLogo = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -59,7 +61,7 @@ export default function ChannelsPage() {
 
   const toggleActive = async (channel: SalesChannelDto) => {
     try {
-      await api.put(`/api/channels/${channel.id}`, { nameAr: channel.nameAr, nameEn: channel.nameEn, logoUrl: channel.logoUrl, isActive: !channel.isActive })
+      await api.put(`/api/channels/${channel.id}`, { code:channel.code,nameAr: channel.nameAr, nameEn: channel.nameEn, logoUrl: channel.logoUrl, isActive: !channel.isActive })
       await load()
       toast.success(t('common.updated'))
     } catch (err) {
@@ -98,6 +100,7 @@ export default function ChannelsPage() {
     <div className="page-heading"><div><h1>{t('channels.title')}</h1><p>{t('channels.description')}</p></div></div>
     <form className="channel-form-card" onSubmit={save}>
       <div className="channel-form-fields">
+        <label>{t('channels.code')}<input required value={form.code} disabled={selected?.isInStore} onChange={event=>setForm({...form,code:event.target.value.toUpperCase()})}/></label>
         <label>{t('channels.nameAr')}<input required value={form.nameAr} onChange={event => setForm({ ...form, nameAr: event.target.value })} /></label>
         <label>{t('channels.nameEn')}<input required value={form.nameEn} onChange={event => setForm({ ...form, nameEn: event.target.value })} /></label>
         <div className="channel-logo-field"><span className="channel-field-label">{t('channels.logo')}</span><div className="channel-logo-picker">
@@ -111,9 +114,10 @@ export default function ChannelsPage() {
     </form>
     <div className="table-shell channel-table"><table><thead><tr><th>{t('channels.logo')}</th><th>{t('channels.channel')}</th><th>{t('channels.status')}</th><th>{t('common.actions')}</th></tr></thead><tbody>{channels.map(channel => <tr key={channel.id}>
       <td><div className="channel-table-logo">{channel.logoUrl ? <img src={resolveApiAssetUrl(channel.logoUrl)} alt="" /> : <span>{(i18n.language === 'ar' ? channel.nameAr : channel.nameEn).charAt(0)}</span>}</div></td>
-      <td><strong>{i18n.language === 'ar' ? channel.nameAr : channel.nameEn}</strong></td><td><span className={`channel-status ${channel.isActive ? 'is-active' : ''}`}>{channel.isActive ? t('channels.active') : t('channels.inactive')}</span></td>
-      <td><div className="channel-row-actions"><button onClick={() => void editPrices(channel)}>{t('channels.pricing')}</button><button className="button-secondary" onClick={() => { setSelected(channel); setForm({ nameAr: channel.nameAr, nameEn: channel.nameEn, logoUrl: channel.logoUrl ?? '', isActive: channel.isActive }); window.scrollTo({ top: 0, behavior: 'smooth' }) }}>{t('common.edit')}</button>{!channel.isInStore && <button className="button-secondary" onClick={() => toggleActive(channel)}>{channel.isActive ? t('channels.stop') : t('channels.enable')}</button>}{!channel.isInStore && <button className="button-danger" onClick={() => deleteChannel(channel.id)}>{t('common.delete')}</button>}</div></td>
+      <td><strong>{i18n.language === 'ar' ? channel.nameAr : channel.nameEn}</strong><small> {channel.code}</small></td><td><span className={`channel-status ${channel.isActive ? 'is-active' : ''}`}>{channel.isActive ? t('channels.active') : t('channels.inactive')}</span></td>
+      <td><div className="channel-row-actions"><button onClick={() => void editPrices(channel)}>{t('channels.pricing')}</button><button className="button-secondary" onClick={() => { setSelected(channel); setForm({code:channel.code,nameAr: channel.nameAr, nameEn: channel.nameEn, logoUrl: channel.logoUrl ?? '', isActive: channel.isActive }); window.scrollTo({ top: 0, behavior: 'smooth' }) }}>{t('common.edit')}</button>{!channel.isInStore && <button className="button-secondary" onClick={() => toggleActive(channel)}>{channel.isActive ? t('channels.stop') : t('channels.enable')}</button>}{!channel.isInStore && <button className="button-danger" onClick={() => deleteChannel(channel.id)}>{t('common.delete')}</button>}</div></td>
     </tr>)}</tbody></table></div>
+    <div className="settings-card"><h2>{t('channels.branchAvailability')}</h2><select value={branchId} onChange={e=>setBranchId(e.target.value)}>{branches.map(b=><option key={b.id} value={b.id}>{i18n.language==='ar'?b.nameAr:b.nameEn}</option>)}</select>{channels.filter(x=>x.isActive).map(c=>{const a=availability.find(x=>x.salesChannelId===c.id)??{branchId,salesChannelId:c.id,isEnabled:false,requiresPrepayment:false};const save=(next:BranchChannelAvailabilityDto)=>api.put(`/api/channels/${c.id}/branches/${branchId}`,next).then(()=>setAvailability(x=>[...x.filter(y=>y.salesChannelId!==c.id),next]));return <div className="table-toolbar" key={c.id}><strong>{i18n.language==='ar'?c.nameAr:c.nameEn}</strong><label><input type="checkbox" checked={a.isEnabled} onChange={e=>void save({...a,isEnabled:e.target.checked})}/>{t('channels.enabledAtBranch')}</label><label><input type="checkbox" checked={a.requiresPrepayment} onChange={e=>void save({...a,requiresPrepayment:e.target.checked})}/>{t('channels.requiresPrepayment')}</label></div>})}</div>
     {pricingChannel && <div className="channel-pricing-card"><div className="channel-pricing-heading"><h2>{t('channels.pricing')}: {i18n.language === 'ar' ? pricingChannel.nameAr : pricingChannel.nameEn}</h2><button className="button-secondary" onClick={() => setPricingChannel(null)}>{t('common.cancel')}</button></div><div className="settings-card-grid">{products.map(product => <label key={product.id}>{i18n.language === 'ar' ? product.nameAr : product.nameEn}<input type="number" step="0.001" placeholder={product.price.toString()} value={prices[product.id] ?? ''} onChange={event => setPrices({ ...prices, [product.id]: event.target.value })} /></label>)}</div><button onClick={savePrices}>{t('common.save')}</button></div>}
   </section>
 }

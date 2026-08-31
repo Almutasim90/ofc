@@ -314,6 +314,7 @@
     "nameAr": "الاسم بالعربية",
     "nameEn": "الاسم بالإنجليزية",
     "code": "الرمز",
+    "branchAvailability":"التفعيل حسب الفرع","enabledAtBranch":"مفعّلة","requiresPrepayment":"يتطلب الدفع المسبق",
     "active": "مُفعّل",
     "inactive": "معطّل",
     "actions": "إجراءات",

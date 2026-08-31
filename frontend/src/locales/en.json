@@ -316,6 +316,7 @@
     "nameAr": "Name (Arabic)",
     "nameEn": "Name (English)",
     "code": "Code",
+    "branchAvailability":"Availability by branch","enabledAtBranch":"Enabled","requiresPrepayment":"Requires prepayment",
     "active": "Active",
     "inactive": "Inactive",
     "actions": "Actions",

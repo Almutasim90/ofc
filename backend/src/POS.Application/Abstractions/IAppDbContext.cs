@@ -44,6 +44,7 @@ public interface IAppDbContext
     DbSet<OrderEditLog> OrderEditLogs { get; }
     DbSet<CashShift> CashShifts { get; }
     DbSet<CashCount> CashCounts { get; }
+    DbSet<BranchSalesChannelAvailability> BranchSalesChannelAvailabilities { get; }
     DbSet<Product> Products { get; }
     DbSet<SalesChannel> SalesChannels { get; }
     DbSet<ProductChannelPrice> ProductChannelPrices { get; }
