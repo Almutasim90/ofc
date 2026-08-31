@@ -35,6 +35,8 @@ public interface IAppDbContext
     DbSet<MenuItemRecipeLine> MenuItemRecipeLines { get; }
     DbSet<InventoryTransactionReason> InventoryTransactionReasons { get; }
     DbSet<RestaurantInventoryTransaction> RestaurantInventoryTransactions { get; }
+    DbSet<StockCount> StockCounts { get; }
+    DbSet<StockCountLine> StockCountLines { get; }
     DbSet<Product> Products { get; }
     DbSet<SalesChannel> SalesChannels { get; }
     DbSet<ProductChannelPrice> ProductChannelPrices { get; }
