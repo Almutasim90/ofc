@@ -9,6 +9,8 @@ public static class DefaultRolePermissions
             [
                 PermissionKeys.SalesCreate,
                 PermissionKeys.SalesEdit,
+                PermissionKeys.OrdersCreate,
+                PermissionKeys.OrdersCancel,
             ],
             [RoleNames.BranchManager] =
             [
@@ -18,6 +20,15 @@ public static class DefaultRolePermissions
                 PermissionKeys.InventoryAdjust,
                 PermissionKeys.ReportsBranchView,
                 PermissionKeys.UsersManage,
+                PermissionKeys.OrdersCreate,
+                PermissionKeys.OrdersCancel,
+                PermissionKeys.OrdersTransfer,
+                PermissionKeys.OrdersEditClosed,
+                PermissionKeys.PaymentsApproveDebt,
+                PermissionKeys.CombosManage,
+                PermissionKeys.ModifiersManage,
+                PermissionKeys.TablesManage,
+                PermissionKeys.PrintingManage,
             ],
             [RoleNames.GeneralManager] = PermissionKeys.All,
         };

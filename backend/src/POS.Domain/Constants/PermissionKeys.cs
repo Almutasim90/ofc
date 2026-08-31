@@ -17,6 +17,17 @@ public static class PermissionKeys
     public const string EmailManage = "email.manage";
     public const string ReceiptManage = "receipt.manage";
 
+    // OFC fast-food track (see OFC-System-Detailed-Spec.md Sprint 1)
+    public const string OrdersCreate = "orders.create";
+    public const string OrdersCancel = "orders.cancel";
+    public const string OrdersTransfer = "orders.transfer";
+    public const string OrdersEditClosed = "orders.editClosed";
+    public const string PaymentsApproveDebt = "payments.approveDebt";
+    public const string CombosManage = "combos.manage";
+    public const string ModifiersManage = "modifiers.manage";
+    public const string TablesManage = "tables.manage";
+    public const string PrintingManage = "printing.manage";
+
     public static readonly IReadOnlyList<string> All =
     [
         SalesCreate,
@@ -33,5 +44,14 @@ public static class PermissionKeys
         AiManage,
         EmailManage,
         ReceiptManage,
+        OrdersCreate,
+        OrdersCancel,
+        OrdersTransfer,
+        OrdersEditClosed,
+        PaymentsApproveDebt,
+        CombosManage,
+        ModifiersManage,
+        TablesManage,
+        PrintingManage,
     ];
 }
