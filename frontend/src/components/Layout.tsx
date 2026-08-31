@@ -116,6 +116,7 @@ export default function Layout({ children }: { children: ReactNode }) {
     { to: '/reports', label: t('nav.reports'), icon: 'reports', permission: 'reports.branch.view' },
     { to: '/ai-insights', label: t('nav.aiInsights'), icon: 'ai', permission: 'reports.branch.view' },
     { to: '/inventory', label: t('nav.inventory'), icon: 'inventory', permission: 'inventory.adjust' },
+    { to: '/restaurant-inventory', label: 'مخزون المطعم / Restaurant inventory', icon: 'inventory', permission: 'inventory.adjust' },
     { to: '/products', label: t('nav.products'), icon: 'products', permission: 'products.manage' },
     { to: '/restaurant-catalog', label: t('nav.restaurantCatalog'), icon: 'products', permission: 'products.manage' },
     { to: '/modifiers', label: t('nav.modifiers'), icon: 'products', permission: 'modifiers.manage' },

@@ -5,7 +5,7 @@ using POS.Domain.Entities;
 
 namespace POS.Application.Orders;
 
-public class OrderCancellationService(IAppDbContext db, ICurrentUserService currentUser)
+public class OrderCancellationService(IAppDbContext db, ICurrentUserService currentUser, POS.Application.RestaurantInventory.RestaurantInventoryService inventory)
 {
     public Task<List<OrderCancellationDto>> GetAsync(Guid branchId, DateTime? from, DateTime? to, Guid? cashierUserId, CancellationToken ct=default) =>
         db.OrderCancellations.Where(x=>x.Order.BranchId==branchId && (from==null||x.CreatedAt>=from) && (to==null||x.CreatedAt<to) && (cashierUserId==null||x.CancelledByUserId==cashierUserId))
@@ -17,7 +17,7 @@ public class OrderCancellationService(IAppDbContext db, ICurrentUserService curr
         var order=await db.RestaurantOrders.Include(x=>x.Items).FirstOrDefaultAsync(x=>x.Id==orderId,ct)??throw new NotFoundException("Order not found.");
         EnsureOpen(order); var item=order.Items.SingleOrDefault(x=>x.Id==itemId)??throw new NotFoundException("Order item not found.");
         if(item.IsCancelled)throw new ValidationException("Order item is already cancelled.");
-        item.IsCancelled=true; db.OrderCancellations.Add(new(){Id=Guid.NewGuid(),OrderId=order.Id,OrderItemId=item.Id,Reason=reason.Trim(),CancelledByUserId=userId,CreatedAt=DateTime.UtcNow});
+        if(order.Status==RestaurantOrderStatuses.Sent)await inventory.StageReversal(order.Id,item.Id,ct); item.IsCancelled=true; db.OrderCancellations.Add(new(){Id=Guid.NewGuid(),OrderId=order.Id,OrderItemId=item.Id,Reason=reason.Trim(),CancelledByUserId=userId,CreatedAt=DateTime.UtcNow});
         Recalculate(order); await db.SaveChangesAsync(ct);
     }
 
@@ -25,7 +25,7 @@ public class OrderCancellationService(IAppDbContext db, ICurrentUserService curr
     {
         ValidateReason(reason); var userId=RequireUser();
         var order=await db.RestaurantOrders.Include(x=>x.Items).FirstOrDefaultAsync(x=>x.Id==orderId,ct)??throw new NotFoundException("Order not found."); EnsureOpen(order);
-        foreach(var item in order.Items)item.IsCancelled=true; order.Status=RestaurantOrderStatuses.Cancelled; order.Subtotal=0; order.DiscountAmount=0; order.GrandTotal=0;
+        if(order.Status==RestaurantOrderStatuses.Sent)await inventory.StageReversal(order.Id,null,ct); foreach(var item in order.Items)item.IsCancelled=true; order.Status=RestaurantOrderStatuses.Cancelled; order.Subtotal=0; order.DiscountAmount=0; order.GrandTotal=0;
         db.OrderCancellations.Add(new(){Id=Guid.NewGuid(),OrderId=order.Id,Reason=reason.Trim(),CancelledByUserId=userId,CreatedAt=DateTime.UtcNow}); await db.SaveChangesAsync(ct);
     }
 

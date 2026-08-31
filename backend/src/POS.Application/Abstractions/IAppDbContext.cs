@@ -28,6 +28,13 @@ public interface IAppDbContext
     DbSet<OrderItemComboSelection> OrderItemComboSelections { get; }
     DbSet<OrderItemModifier> OrderItemModifiers { get; }
     DbSet<OrderCancellation> OrderCancellations { get; }
+    DbSet<UnitOfMeasure> UnitsOfMeasure { get; }
+    DbSet<Ingredient> Ingredients { get; }
+    DbSet<Warehouse> Warehouses { get; }
+    DbSet<WarehouseIngredientStock> WarehouseIngredientStocks { get; }
+    DbSet<MenuItemRecipeLine> MenuItemRecipeLines { get; }
+    DbSet<InventoryTransactionReason> InventoryTransactionReasons { get; }
+    DbSet<RestaurantInventoryTransaction> RestaurantInventoryTransactions { get; }
     DbSet<Product> Products { get; }
     DbSet<SalesChannel> SalesChannels { get; }
     DbSet<ProductChannelPrice> ProductChannelPrices { get; }

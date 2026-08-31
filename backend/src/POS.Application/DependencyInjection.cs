@@ -14,6 +14,7 @@ using POS.Application.Settings;
 using POS.Application.RestaurantCatalog;
 using POS.Application.Modifiers;
 using POS.Application.Orders;
+using POS.Application.RestaurantInventory;
 
 namespace POS.Application;
 
@@ -34,6 +35,7 @@ public static class DependencyInjection
         services.AddScoped<ModifierService>();
         services.AddScoped<RestaurantOrderService>();
         services.AddScoped<OrderCancellationService>();
+        services.AddScoped<RestaurantInventoryService>();
         services.AddScoped<ProductService>();
         services.AddScoped<RawMaterialService>();
         services.AddScoped<RecipeService>();
