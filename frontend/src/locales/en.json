@@ -39,6 +39,7 @@
     "branches": "Branches",
     "products": "Legacy products",
     "restaurantCatalog": "Restaurant menu",
+    "modifiers": "Modifiers",
     "rawMaterials": "Raw Materials",
     "inventory": "Inventory",
     "shift": "Shift",
@@ -444,6 +445,11 @@
     "saveError": "Could not save changes. Check the values and that the shift is still open.",
     "conflict": "The order, stock or shift changed. Close this window and reopen the order before editing.",
     "saved": "Order updated and changes recorded."
+  },
+  "modifiers": {
+    "title": "Modifier groups", "description": "Create reusable choices and link them to one or more menu products.",
+    "minimum": "Minimum selections", "maximum": "Maximum selections", "options": "Options", "products": "Linked products",
+    "rules": "Selection rules", "addOption": "Add option", "addGroup": "Add modifier group"
   },
   "restaurant": {
     "title": "Restaurant menu setup", "description": "Manage dynamic categories, products, combos, tables and branch features.",

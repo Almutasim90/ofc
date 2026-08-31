@@ -19,6 +19,9 @@ public interface IAppDbContext
     DbSet<MenuItem> MenuItems { get; }
     DbSet<ComboComponent> ComboComponents { get; }
     DbSet<ComboComponentOption> ComboComponentOptions { get; }
+    DbSet<ModifierGroup> ModifierGroups { get; }
+    DbSet<ModifierOption> ModifierOptions { get; }
+    DbSet<MenuItemModifierGroup> MenuItemModifierGroups { get; }
     DbSet<Product> Products { get; }
     DbSet<SalesChannel> SalesChannels { get; }
     DbSet<ProductChannelPrice> ProductChannelPrices { get; }

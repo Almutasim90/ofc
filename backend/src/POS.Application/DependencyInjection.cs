@@ -12,6 +12,7 @@ using POS.Application.Notifications;
 using POS.Application.AI;
 using POS.Application.Settings;
 using POS.Application.RestaurantCatalog;
+using POS.Application.Modifiers;
 
 namespace POS.Application;
 
@@ -29,6 +30,7 @@ public static class DependencyInjection
         services.AddHttpClient();
         services.AddScoped<BranchService>();
         services.AddScoped<RestaurantCatalogService>();
+        services.AddScoped<ModifierService>();
         services.AddScoped<ProductService>();
         services.AddScoped<RawMaterialService>();
         services.AddScoped<RecipeService>();

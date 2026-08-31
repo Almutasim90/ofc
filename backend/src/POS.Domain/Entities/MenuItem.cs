@@ -21,4 +21,5 @@ public class MenuItem
     public bool IsActive { get; set; } = true;
     public Guid? PrinterSectionId { get; set; }
     public ICollection<ComboComponent> ComboComponents { get; set; } = [];
+    public ICollection<MenuItemModifierGroup> ModifierGroups { get; set; } = [];
 }

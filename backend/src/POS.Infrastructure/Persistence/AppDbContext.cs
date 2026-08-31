@@ -30,6 +30,9 @@ public class AppDbContext : DbContext, IAppDbContext
     public DbSet<MenuItem> MenuItems => Set<MenuItem>();
     public DbSet<ComboComponent> ComboComponents => Set<ComboComponent>();
     public DbSet<ComboComponentOption> ComboComponentOptions => Set<ComboComponentOption>();
+    public DbSet<ModifierGroup> ModifierGroups => Set<ModifierGroup>();
+    public DbSet<ModifierOption> ModifierOptions => Set<ModifierOption>();
+    public DbSet<MenuItemModifierGroup> MenuItemModifierGroups => Set<MenuItemModifierGroup>();
     public DbSet<Product> Products => Set<Product>();
     public DbSet<SalesChannel> SalesChannels => Set<SalesChannel>();
     public DbSet<ProductChannelPrice> ProductChannelPrices => Set<ProductChannelPrice>();
@@ -205,6 +208,32 @@ public class AppDbContext : DbContext, IAppDbContext
             entity.HasIndex(x => new { x.ComboComponentId, x.MenuItemId }).IsUnique();
             entity.HasIndex(x => x.MenuItemId);
             entity.HasIndex(x => x.ComboComponentId).IsUnique().HasFilter("\"IsDefault\" = TRUE");
+        });
+
+        modelBuilder.Entity<ModifierGroup>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.NameAr).IsRequired().HasMaxLength(200);
+            entity.Property(x => x.NameEn).IsRequired().HasMaxLength(200);
+            entity.ToTable(x => x.HasCheckConstraint("CK_ModifierGroups_Selection", "\"MinSelect\" >= 0 AND \"MaxSelect\" >= \"MinSelect\""));
+        });
+
+        modelBuilder.Entity<ModifierOption>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.NameAr).IsRequired().HasMaxLength(200);
+            entity.Property(x => x.NameEn).IsRequired().HasMaxLength(200);
+            entity.Property(x => x.PriceDelta).HasPrecision(12, 3);
+            entity.HasOne(x => x.ModifierGroup).WithMany(x => x.Options).HasForeignKey(x => x.ModifierGroupId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasIndex(x => new { x.ModifierGroupId, x.NameEn }).IsUnique();
+        });
+
+        modelBuilder.Entity<MenuItemModifierGroup>(entity =>
+        {
+            entity.HasKey(x => new { x.MenuItemId, x.ModifierGroupId });
+            entity.HasOne(x => x.MenuItem).WithMany(x => x.ModifierGroups).HasForeignKey(x => x.MenuItemId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(x => x.ModifierGroup).WithMany(x => x.MenuItems).HasForeignKey(x => x.ModifierGroupId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasIndex(x => x.ModifierGroupId);
         });
 
         modelBuilder.Entity<Product>(entity =>
