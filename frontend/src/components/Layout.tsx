@@ -110,6 +110,7 @@ export default function Layout({ children }: { children: ReactNode }) {
   const operational = pathname === '/cashier'
   const navItems = ([
     { to: '/cashier', label: t('nav.cashier'), icon: 'cashier', permission: 'sales.create' },
+    { to: '/restaurant-orders', label: t('nav.restaurantOrders'), icon: 'cashier', permission: 'orders.create' },
     { to: '/shift', label: t('nav.shift'), icon: 'shift', permission: 'sales.create' },
     { to: '/reports', label: t('nav.reports'), icon: 'reports', permission: 'reports.branch.view' },
     { to: '/ai-insights', label: t('nav.aiInsights'), icon: 'ai', permission: 'reports.branch.view' },

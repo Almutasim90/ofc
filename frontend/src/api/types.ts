@@ -80,6 +80,8 @@ export interface MenuCategoryDto { id:string; nameAr:string; nameEn:string; sort
 export interface MenuItemDto { id:string; categoryId:string; nameAr:string; nameEn:string; kind:'SingleProduct'|'Combo'; basePrice:number; imageUrl:string|null; sortOrder:number; isActive:boolean }
 export interface ModifierOptionDto { id:string; nameAr:string; nameEn:string; priceDelta:number; isActive:boolean }
 export interface ModifierGroupDto { id:string; nameAr:string; nameEn:string; minSelect:number; maxSelect:number; isRequired:boolean; options:ModifierOptionDto[]; menuItemIds:string[] }
+export interface OrderTypeDto { id:string; code:string; nameAr:string; nameEn:string }
+export interface RestaurantOrderDto { id:string; branchId:string; orderNumber:number; orderTypeCode:string; tableId:string|null; tableLabel:string|null; status:string; subtotal:number; discountAmount:number; grandTotal:number; createdAt:string; items:{id:string;menuItemId:string;name:string;unitPrice:number;quantity:number;lineTotal:number;notes:string|null;modifierOptionIds:string[];comboOptionIds:string[]}[] }
 export interface ComboOptionDto { id:string; menuItemId:string; menuItemNameAr:string; menuItemNameEn:string; priceDelta:number; isDefault:boolean }
 export interface ComboComponentDto { id:string; slotLabel:string; isRequired:boolean; minSelect:number; maxSelect:number; sortOrder:number; options:ComboOptionDto[] }
 

@@ -40,6 +40,7 @@
     "products": "Legacy products",
     "restaurantCatalog": "Restaurant menu",
     "modifiers": "Modifiers",
+    "restaurantOrders": "Restaurant orders",
     "rawMaterials": "Raw Materials",
     "inventory": "Inventory",
     "shift": "Shift",
@@ -446,6 +447,7 @@
     "conflict": "The order, stock or shift changed. Close this window and reopen the order before editing.",
     "saved": "Order updated and changes recorded."
   },
+  "restaurantOrders": {"title":"Restaurant orders","selectTable":"Select table","tableRequired":"Select a table for dine-in.","create":"Create order","created":"Order created.","recent":"Recent orders"},
   "modifiers": {
     "title": "Modifier groups", "description": "Create reusable choices and link them to one or more menu products.",
     "minimum": "Minimum selections", "maximum": "Maximum selections", "options": "Options", "products": "Linked products",

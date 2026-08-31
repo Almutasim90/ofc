@@ -1,0 +1,2 @@
+namespace POS.Domain.Entities;
+public class OrderItemComboSelection { public Guid Id { get; set; } public Guid OrderItemId { get; set; } public RestaurantOrderItem OrderItem { get; set; }=null!; public Guid ComboComponentId { get; set; } public ComboComponent ComboComponent { get; set; }=null!; public Guid SelectedMenuItemId { get; set; } public MenuItem SelectedMenuItem { get; set; }=null!; public decimal PriceDeltaSnapshot { get; set; } }

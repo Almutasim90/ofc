@@ -12,4 +12,5 @@ public class Branch
     /// <summary>The sale number to hand out next for this branch's receipts. Claimed
     /// atomically via an UPDATE ... RETURNING so concurrent sales never collide.</summary>
     public int NextSaleNumber { get; set; } = 1;
+    public int NextOrderNumber { get; set; } = 1;
 }

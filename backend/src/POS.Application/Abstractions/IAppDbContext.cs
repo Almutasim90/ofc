@@ -22,6 +22,11 @@ public interface IAppDbContext
     DbSet<ModifierGroup> ModifierGroups { get; }
     DbSet<ModifierOption> ModifierOptions { get; }
     DbSet<MenuItemModifierGroup> MenuItemModifierGroups { get; }
+    DbSet<OrderType> OrderTypes { get; }
+    DbSet<RestaurantOrder> RestaurantOrders { get; }
+    DbSet<RestaurantOrderItem> RestaurantOrderItems { get; }
+    DbSet<OrderItemComboSelection> OrderItemComboSelections { get; }
+    DbSet<OrderItemModifier> OrderItemModifiers { get; }
     DbSet<Product> Products { get; }
     DbSet<SalesChannel> SalesChannels { get; }
     DbSet<ProductChannelPrice> ProductChannelPrices { get; }
@@ -49,4 +54,5 @@ public interface IAppDbContext
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     Task<int> ClaimNextSaleNumberAsync(Guid branchId, CancellationToken cancellationToken = default);
+    Task<int> ClaimNextOrderNumberAsync(Guid branchId, CancellationToken cancellationToken = default);
 }

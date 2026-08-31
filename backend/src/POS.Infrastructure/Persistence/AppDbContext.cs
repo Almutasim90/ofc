@@ -33,6 +33,11 @@ public class AppDbContext : DbContext, IAppDbContext
     public DbSet<ModifierGroup> ModifierGroups => Set<ModifierGroup>();
     public DbSet<ModifierOption> ModifierOptions => Set<ModifierOption>();
     public DbSet<MenuItemModifierGroup> MenuItemModifierGroups => Set<MenuItemModifierGroup>();
+    public DbSet<OrderType> OrderTypes => Set<OrderType>();
+    public DbSet<RestaurantOrder> RestaurantOrders => Set<RestaurantOrder>();
+    public DbSet<RestaurantOrderItem> RestaurantOrderItems => Set<RestaurantOrderItem>();
+    public DbSet<OrderItemComboSelection> OrderItemComboSelections => Set<OrderItemComboSelection>();
+    public DbSet<OrderItemModifier> OrderItemModifiers => Set<OrderItemModifier>();
     public DbSet<Product> Products => Set<Product>();
     public DbSet<SalesChannel> SalesChannels => Set<SalesChannel>();
     public DbSet<ProductChannelPrice> ProductChannelPrices => Set<ProductChannelPrice>();
@@ -69,6 +74,12 @@ public class AppDbContext : DbContext, IAppDbContext
         return claimed.Count > 0
             ? claimed[0]
             : throw new InvalidOperationException($"Branch {branchId} was not found while claiming a sale number.");
+    }
+
+    public async Task<int> ClaimNextOrderNumberAsync(Guid branchId, CancellationToken cancellationToken = default)
+    {
+        var claimed = await Database.SqlQuery<int>($"""UPDATE "Branches" SET "NextOrderNumber" = "NextOrderNumber" + 1 WHERE "Id" = {branchId} RETURNING "NextOrderNumber" - 1 AS "Value" """).ToListAsync(cancellationToken);
+        return claimed.Count > 0 ? claimed[0] : throw new InvalidOperationException($"Branch {branchId} was not found while claiming an order number.");
     }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -234,6 +245,35 @@ public class AppDbContext : DbContext, IAppDbContext
             entity.HasOne(x => x.MenuItem).WithMany(x => x.ModifierGroups).HasForeignKey(x => x.MenuItemId).OnDelete(DeleteBehavior.Cascade);
             entity.HasOne(x => x.ModifierGroup).WithMany(x => x.MenuItems).HasForeignKey(x => x.ModifierGroupId).OnDelete(DeleteBehavior.Cascade);
             entity.HasIndex(x => x.ModifierGroupId);
+        });
+
+        modelBuilder.Entity<OrderType>(entity => { entity.HasKey(x=>x.Id); entity.Property(x=>x.Code).IsRequired().HasMaxLength(30); entity.HasIndex(x=>x.Code).IsUnique(); entity.Property(x=>x.NameAr).IsRequired().HasMaxLength(100); entity.Property(x=>x.NameEn).IsRequired().HasMaxLength(100); entity.HasData(
+            new OrderType{Id=Guid.Parse("10000000-0000-0000-0000-000000000001"),Code="DINE_IN",NameAr="محلي",NameEn="Dine in"},
+            new OrderType{Id=Guid.Parse("10000000-0000-0000-0000-000000000002"),Code="TAKEAWAY",NameAr="سفري",NameEn="Takeaway"},
+            new OrderType{Id=Guid.Parse("10000000-0000-0000-0000-000000000003"),Code="CAR_PICKUP",NameAr="استلام سيارة",NameEn="Car pickup"},
+            new OrderType{Id=Guid.Parse("10000000-0000-0000-0000-000000000004"),Code="DELIVERY",NameAr="توصيل",NameEn="Delivery"}); });
+        modelBuilder.Entity<RestaurantOrder>(entity =>
+        {
+            entity.ToTable("Orders", x=>x.HasCheckConstraint("CK_Orders_Status", "\"Status\" IN ('Open','Sent','Paid','Closed','Cancelled')")); entity.HasKey(x=>x.Id);
+            entity.Property(x=>x.Subtotal).HasPrecision(12,3); entity.Property(x=>x.DiscountAmount).HasPrecision(12,3); entity.Property(x=>x.GrandTotal).HasPrecision(12,3); entity.Property(x=>x.Status).IsRequired().HasMaxLength(20); entity.Property(x=>x.CarPlateNumber).HasMaxLength(30);
+            entity.HasOne(x=>x.Branch).WithMany().HasForeignKey(x=>x.BranchId).OnDelete(DeleteBehavior.Restrict); entity.HasOne(x=>x.OrderType).WithMany().HasForeignKey(x=>x.OrderTypeId).OnDelete(DeleteBehavior.Restrict); entity.HasOne(x=>x.Table).WithMany().HasForeignKey(x=>x.TableId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasIndex(x=>new{x.BranchId,x.OrderNumber}).IsUnique(); entity.HasIndex(x=>new{x.BranchId,x.BusinessDate,x.Status}); entity.HasQueryFilter(x=>BypassRestaurantBranchFilter||x.BranchId==RestaurantBranchId);
+        });
+        modelBuilder.Entity<RestaurantOrderItem>(entity =>
+        {
+            entity.ToTable("OrderItems"); entity.HasKey(x=>x.Id); entity.Property(x=>x.MenuItemNameSnapshot).IsRequired().HasMaxLength(200); entity.Property(x=>x.UnitPriceSnapshot).HasPrecision(12,3); entity.Property(x=>x.LineTotal).HasPrecision(12,3); entity.Property(x=>x.Notes).HasMaxLength(500);
+            entity.HasOne(x=>x.Order).WithMany(x=>x.Items).HasForeignKey(x=>x.OrderId).OnDelete(DeleteBehavior.Cascade); entity.HasOne(x=>x.MenuItem).WithMany().HasForeignKey(x=>x.MenuItemId).OnDelete(DeleteBehavior.Restrict); entity.HasIndex(x=>x.OrderId);
+            entity.HasQueryFilter(x=>BypassRestaurantBranchFilter||x.Order.BranchId==RestaurantBranchId);
+        });
+        modelBuilder.Entity<OrderItemComboSelection>(entity =>
+        {
+            entity.HasKey(x=>x.Id); entity.Property(x=>x.PriceDeltaSnapshot).HasPrecision(12,3); entity.HasOne(x=>x.OrderItem).WithMany(x=>x.ComboSelections).HasForeignKey(x=>x.OrderItemId).OnDelete(DeleteBehavior.Cascade); entity.HasOne(x=>x.ComboComponent).WithMany().HasForeignKey(x=>x.ComboComponentId).OnDelete(DeleteBehavior.Restrict); entity.HasOne(x=>x.SelectedMenuItem).WithMany().HasForeignKey(x=>x.SelectedMenuItemId).OnDelete(DeleteBehavior.Restrict); entity.HasIndex(x=>x.OrderItemId);
+            entity.HasQueryFilter(x=>BypassRestaurantBranchFilter||x.OrderItem.Order.BranchId==RestaurantBranchId);
+        });
+        modelBuilder.Entity<OrderItemModifier>(entity =>
+        {
+            entity.HasKey(x=>x.Id); entity.Property(x=>x.PriceDeltaSnapshot).HasPrecision(12,3); entity.HasOne(x=>x.OrderItem).WithMany(x=>x.Modifiers).HasForeignKey(x=>x.OrderItemId).OnDelete(DeleteBehavior.Cascade); entity.HasOne(x=>x.ModifierOption).WithMany().HasForeignKey(x=>x.ModifierOptionId).OnDelete(DeleteBehavior.Restrict); entity.HasIndex(x=>x.OrderItemId);
+            entity.HasQueryFilter(x=>BypassRestaurantBranchFilter||x.OrderItem.Order.BranchId==RestaurantBranchId);
         });
 
         modelBuilder.Entity<Product>(entity =>
