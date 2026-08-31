@@ -11,6 +11,7 @@ using POS.Application.Channels;
 using POS.Application.Notifications;
 using POS.Application.AI;
 using POS.Application.Settings;
+using POS.Application.Ofc;
 
 namespace POS.Application;
 
@@ -36,6 +37,9 @@ public static class DependencyInjection
         services.AddScoped<VoidService>();
         services.AddScoped<ClosingScheduleService>();
         services.AddScoped<ReportService>();
+        services.AddScoped<TableService>();
+        services.AddScoped<CategoryService>();
+        services.AddScoped<MenuItemService>();
         return services;
     }
 }

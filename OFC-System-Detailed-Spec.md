@@ -308,6 +308,13 @@ FUNCTION PrintReceipt(orderId):
 **Acceptance:** الصلاحيات الجديدة تُمنح/تُسحب بنفس شاشة إدارة الصلاحيات الفردية الموجودة، بدون أي تعديل على منطق RBAC نفسه.
 
 ### Sprint 2 — الفروع والطاولات والفئات والمنتجات والكومبوهات
+
+> **حالة التنفيذ:** الكيانات (`Table`, `BranchFeatureFlag`, `Category`, `CategoryBranchAvailability`, `MenuItem`, `ComboComponent`, `ComboComponentOption`) وخدمات الـ Application layer والـ Controllers مكتوبة على فرع `ofc-fastfood-sprint1` (غير مدموج بـ `main` بعد). **لم تُولَّد Migration الـ EF Core بعد** — البيئة التي كتبت فيها هذا الكود لا تملك .NET SDK ولا اتصال بقاعدة Supabase، فتوليد/تعديل `AppDbContextModelSnapshot.cs` يدويًا خطر غير مقبول (يؤثر على كل Migration مستقبلية). **قبل تشغيل هذا الفرع، لازم تُنفَّذ يدويًا خطوة واحدة من بيئة فيها dotnet SDK:**
+> ```
+> cd backend/src/POS.API
+> dotnet ef migrations add OfcSprint2AddTablesCategoriesMenuItemsCombos --project ../POS.Infrastructure --startup-project .
+> ```
+> ثم مراجعة الـ Migration المُولَّدة والتأكد من نجاح `dotnet build` قبل أي دمج بـ `main`. لوحات الإدارة بالفرونت إند (شاشات الفئات/المنتجات/الطاولات) لم تُبنَ بعد ضمن هذا الـ Sprint — الأولوية كانت الأساس الخلفي (Backend) أولًا.
 Migrations لكل كيانات القسم 1.1 و1.2 أعلاه (`Tables`, `BranchFeatureFlags`, `Categories`, `MenuItems`, `ComboComponents`, `ComboComponentOptions`) + `CategoryBranchAvailability` (Brief 3.1). شاشات إدارية: الفئات (سحب وإفلات للترتيب)، المنتجات المفردة، بناء الكومبو (اختيار Slots وخياراتها). **Acceptance:** حسب الـ Brief القسم 6 (فئة "Offers" تُبنى بدون كود إضافي) + إنشاء كومبو "وجبة برجر" بثلاث Slots (رئيسي/جانبي/مشروب) وكل Slot له خيارات بفروقات سعر مختلفة.
 
 ### Sprint 3 — الإضافات (Modifiers)

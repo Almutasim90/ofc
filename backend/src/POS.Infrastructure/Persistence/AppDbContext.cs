@@ -46,6 +46,14 @@ public class AppDbContext : DbContext, IAppDbContext
     public DbSet<EmailSettings> EmailSettings => Set<EmailSettings>();
     public DbSet<ReceiptSettings> ReceiptSettings => Set<ReceiptSettings>();
 
+    public DbSet<Table> Tables => Set<Table>();
+    public DbSet<BranchFeatureFlag> BranchFeatureFlags => Set<BranchFeatureFlag>();
+    public DbSet<Category> Categories => Set<Category>();
+    public DbSet<CategoryBranchAvailability> CategoryBranchAvailabilities => Set<CategoryBranchAvailability>();
+    public DbSet<MenuItem> MenuItems => Set<MenuItem>();
+    public DbSet<ComboComponent> ComboComponents => Set<ComboComponent>();
+    public DbSet<ComboComponentOption> ComboComponentOptions => Set<ComboComponentOption>();
+
     // A single UPDATE ... RETURNING is one atomic statement in Postgres: concurrent callers
     // for the same branch serialize on the row lock and each gets a distinct number, so this
     // never needs an explicit transaction or a retry loop.
@@ -373,6 +381,70 @@ public class AppDbContext : DbContext, IAppDbContext
         {
             entity.HasKey(x => x.Id);
             entity.Property(x => x.HeaderText).HasMaxLength(500);
+        });
+
+        // OFC fast-food track (OFC-System-Detailed-Spec.md section 1) - additive, alongside
+        // the existing Sales/SaleItems/Shifts model, not replacing it yet.
+        modelBuilder.Entity<Table>(entity =>
+        {
+            entity.HasKey(t => t.Id);
+            entity.Property(t => t.Label).IsRequired().HasMaxLength(100);
+            entity.HasIndex(t => new { t.BranchId, t.Label }).IsUnique();
+
+            entity.HasQueryFilter(t =>
+                _currentUser == null || _currentUser.BypassBranchFilter || t.BranchId == _currentUser.BranchId);
+        });
+
+        modelBuilder.Entity<BranchFeatureFlag>(entity =>
+        {
+            entity.HasKey(f => f.Id);
+            entity.Property(f => f.FeatureKey).IsRequired().HasMaxLength(50);
+            entity.HasIndex(f => new { f.BranchId, f.FeatureKey }).IsUnique();
+
+            entity.HasQueryFilter(f =>
+                _currentUser == null || _currentUser.BypassBranchFilter || f.BranchId == _currentUser.BranchId);
+        });
+
+        modelBuilder.Entity<Category>(entity =>
+        {
+            entity.HasKey(c => c.Id);
+            entity.Property(c => c.NameAr).IsRequired().HasMaxLength(200);
+            entity.Property(c => c.NameEn).IsRequired().HasMaxLength(200);
+        });
+
+        modelBuilder.Entity<CategoryBranchAvailability>(entity =>
+        {
+            entity.HasKey(a => a.Id);
+            entity.HasOne(a => a.Category).WithMany(c => c.BranchAvailability).HasForeignKey(a => a.CategoryId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasIndex(a => new { a.CategoryId, a.BranchId }).IsUnique();
+
+            entity.HasQueryFilter(a =>
+                _currentUser == null || _currentUser.BypassBranchFilter || a.BranchId == _currentUser.BranchId);
+        });
+
+        modelBuilder.Entity<MenuItem>(entity =>
+        {
+            entity.HasKey(i => i.Id);
+            entity.Property(i => i.NameAr).IsRequired().HasMaxLength(200);
+            entity.Property(i => i.NameEn).IsRequired().HasMaxLength(200);
+            entity.Property(i => i.Kind).IsRequired().HasMaxLength(20);
+            entity.Property(i => i.BasePrice).HasPrecision(18, 3);
+            entity.HasOne(i => i.Category).WithMany(c => c.Items).HasForeignKey(i => i.CategoryId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<ComboComponent>(entity =>
+        {
+            entity.HasKey(c => c.Id);
+            entity.Property(c => c.SlotLabel).IsRequired().HasMaxLength(100);
+            entity.HasOne(c => c.ComboMenuItem).WithMany(i => i.ComboComponents).HasForeignKey(c => c.ComboMenuItemId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<ComboComponentOption>(entity =>
+        {
+            entity.HasKey(o => o.Id);
+            entity.Property(o => o.PriceDelta).HasPrecision(18, 3);
+            entity.HasOne(o => o.ComboComponent).WithMany(c => c.Options).HasForeignKey(o => o.ComboComponentId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(o => o.MenuItem).WithMany().HasForeignKey(o => o.MenuItemId).OnDelete(DeleteBehavior.Restrict);
         });
     }
 }

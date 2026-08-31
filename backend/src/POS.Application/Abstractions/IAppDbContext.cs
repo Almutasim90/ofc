@@ -37,6 +37,14 @@ public interface IAppDbContext
     DbSet<EmailSettings> EmailSettings { get; }
     DbSet<ReceiptSettings> ReceiptSettings { get; }
 
+    DbSet<Table> Tables { get; }
+    DbSet<BranchFeatureFlag> BranchFeatureFlags { get; }
+    DbSet<Category> Categories { get; }
+    DbSet<CategoryBranchAvailability> CategoryBranchAvailabilities { get; }
+    DbSet<MenuItem> MenuItems { get; }
+    DbSet<ComboComponent> ComboComponents { get; }
+    DbSet<ComboComponentOption> ComboComponentOptions { get; }
+
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     Task<int> ClaimNextSaleNumberAsync(Guid branchId, CancellationToken cancellationToken = default);
 }
