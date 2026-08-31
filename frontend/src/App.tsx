@@ -29,6 +29,7 @@ import ModifiersPage from './pages/ModifiersPage'
 import RestaurantOrdersPage from './pages/RestaurantOrdersPage'
 import OrderCancellationsPage from './pages/OrderCancellationsPage'
 import RestaurantInventoryPage from './pages/RestaurantInventoryPage'
+import PrintersPage from './pages/PrintersPage'
 
 const ReportsPage = lazy(() => import('./pages/ReportsPage'))
 
@@ -105,6 +106,7 @@ function App() {
               <Route path="/restaurant-orders" element={<ProtectedRoute permission="orders.create"><RestaurantOrdersPage /></ProtectedRoute>} />
               <Route path="/order-cancellations" element={<ProtectedRoute permission="orders.cancel"><OrderCancellationsPage /></ProtectedRoute>} />
               <Route path="/restaurant-inventory" element={<ProtectedRoute permission="inventory.adjust"><RestaurantInventoryPage /></ProtectedRoute>} />
+              <Route path="/printers" element={<ProtectedRoute permission="products.manage"><PrintersPage /></ProtectedRoute>} />
               <Route
                 path="/products/:id/recipe"
                 element={

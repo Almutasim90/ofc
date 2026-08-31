@@ -84,7 +84,7 @@ public class RestaurantCatalogService(IAppDbContext db)
 
     public Task<List<MenuItemDto>> GetItemsAsync(Guid? categoryId, CancellationToken ct = default) =>
         db.MenuItems.Where(x => categoryId == null || x.CategoryId == categoryId).OrderBy(x => x.Category.SortOrder).ThenBy(x => x.SortOrder)
-            .Select(x => new MenuItemDto(x.Id, x.CategoryId, x.NameAr, x.NameEn, x.Kind, x.BasePrice, x.ImageUrl, x.SortOrder, x.IsActive)).ToListAsync(ct);
+            .Select(x => new MenuItemDto(x.Id, x.CategoryId, x.NameAr, x.NameEn, x.Kind, x.BasePrice, x.ImageUrl, x.SortOrder, x.IsActive, x.PrinterSectionId)).ToListAsync(ct);
 
     public async Task<MenuItemDto> SaveItemAsync(Guid? id, SaveMenuItemRequest request, CancellationToken ct = default)
     {
@@ -92,11 +92,12 @@ public class RestaurantCatalogService(IAppDbContext db)
         if (!MenuItemKinds.All.Contains(request.Kind)) throw new ValidationException("Invalid menu item kind.");
         if (request.BasePrice < 0 || request.SortOrder < 0) throw new ValidationException("Price and sort order cannot be negative.");
         if (!await db.MenuCategories.AnyAsync(x => x.Id == request.CategoryId, ct)) throw new NotFoundException("Category not found.");
+        if (request.PrinterSectionId is not null && !await db.PrinterSections.AnyAsync(x => x.Id == request.PrinterSectionId, ct)) throw new NotFoundException("Printer section not found.");
         var row = id is null ? new MenuItem { Id = Guid.NewGuid() } :
             await db.MenuItems.FirstOrDefaultAsync(x => x.Id == id, ct) ?? throw new NotFoundException("Menu item not found.");
         if (id is null) db.MenuItems.Add(row);
         row.CategoryId = request.CategoryId; row.NameAr = request.NameAr.Trim(); row.NameEn = request.NameEn.Trim(); row.Kind = request.Kind;
-        row.BasePrice = request.BasePrice; row.ImageUrl = string.IsNullOrWhiteSpace(request.ImageUrl) ? null : request.ImageUrl.Trim(); row.SortOrder = request.SortOrder; row.IsActive = request.IsActive;
+        row.BasePrice = request.BasePrice; row.ImageUrl = string.IsNullOrWhiteSpace(request.ImageUrl) ? null : request.ImageUrl.Trim(); row.SortOrder = request.SortOrder; row.IsActive = request.IsActive; row.PrinterSectionId = request.PrinterSectionId;
         await db.SaveChangesAsync(ct);
         return ToDto(row);
     }
@@ -134,5 +135,5 @@ public class RestaurantCatalogService(IAppDbContext db)
     }
 
     private static void ValidateNames(string ar, string en) { if (string.IsNullOrWhiteSpace(ar) || string.IsNullOrWhiteSpace(en)) throw new ValidationException("Arabic and English names are required."); }
-    private static MenuItemDto ToDto(MenuItem x) => new(x.Id, x.CategoryId, x.NameAr, x.NameEn, x.Kind, x.BasePrice, x.ImageUrl, x.SortOrder, x.IsActive);
+    private static MenuItemDto ToDto(MenuItem x) => new(x.Id, x.CategoryId, x.NameAr, x.NameEn, x.Kind, x.BasePrice, x.ImageUrl, x.SortOrder, x.IsActive, x.PrinterSectionId);
 }

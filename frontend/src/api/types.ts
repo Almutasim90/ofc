@@ -77,7 +77,9 @@ export interface UpdateBranchRequest {
 export interface RestaurantTableDto { id:string; branchId:string; label:string; capacity:number|null; isActive:boolean }
 export interface BranchFeatureFlagDto { id:string; branchId:string; featureKey:string; isEnabled:boolean }
 export interface MenuCategoryDto { id:string; nameAr:string; nameEn:string; sortOrder:number; isActive:boolean; isAvailable:boolean }
-export interface MenuItemDto { id:string; categoryId:string; nameAr:string; nameEn:string; kind:'SingleProduct'|'Combo'; basePrice:number; imageUrl:string|null; sortOrder:number; isActive:boolean }
+export interface MenuItemDto { id:string; categoryId:string; nameAr:string; nameEn:string; kind:'SingleProduct'|'Combo'; basePrice:number; imageUrl:string|null; sortOrder:number; isActive:boolean; printerSectionId:string|null }
+export interface PrinterConfigDto { id:string; branchId:string; nameAr:string; nameEn:string; ipAddress:string; port:number; isDefault:boolean; isActive:boolean }
+export interface PrinterSectionDto { id:string; branchId:string; nameAr:string; nameEn:string; printerConfigId:string|null }
 export interface ModifierOptionDto { id:string; nameAr:string; nameEn:string; priceDelta:number; isActive:boolean }
 export interface ModifierGroupDto { id:string; nameAr:string; nameEn:string; minSelect:number; maxSelect:number; isRequired:boolean; options:ModifierOptionDto[]; menuItemIds:string[] }
 export interface OrderTypeDto { id:string; code:string; nameAr:string; nameEn:string }

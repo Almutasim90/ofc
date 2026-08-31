@@ -21,6 +21,7 @@ public static class DependencyInjection
         services.AddSingleton<IFileStorageService, SupabaseStorageService>();
         services.AddScoped<IDomainEventPublisher, DomainEventPublisher>();
         services.AddScoped<IEmailNotificationSender, DatabaseEmailNotificationSender>();
+        services.AddScoped<IRawPrinterClient, TcpRawPrinterClient>();
         services.AddHostedService<AutomaticShiftClosingService>();
         services.AddHostedService<LowStockMonitoringService>();
 

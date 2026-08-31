@@ -11,9 +11,9 @@ public record ReorderCategoriesRequest(IReadOnlyList<Guid> CategoryIds);
 public record SetCategoryAvailabilityRequest(bool IsAvailable);
 
 public record MenuItemDto(Guid Id, Guid CategoryId, string NameAr, string NameEn, string Kind, decimal BasePrice,
-    string? ImageUrl, int SortOrder, bool IsActive);
+    string? ImageUrl, int SortOrder, bool IsActive, Guid? PrinterSectionId);
 public record SaveMenuItemRequest(Guid CategoryId, string NameAr, string NameEn, string Kind, decimal BasePrice,
-    string? ImageUrl, int SortOrder, bool IsActive = true);
+    string? ImageUrl, int SortOrder, bool IsActive = true, Guid? PrinterSectionId = null);
 
 public record ComboOptionDto(Guid Id, Guid MenuItemId, string MenuItemNameAr, string MenuItemNameEn,
     decimal PriceDelta, bool IsDefault);

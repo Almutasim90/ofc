@@ -37,6 +37,8 @@ public interface IAppDbContext
     DbSet<RestaurantInventoryTransaction> RestaurantInventoryTransactions { get; }
     DbSet<StockCount> StockCounts { get; }
     DbSet<StockCountLine> StockCountLines { get; }
+    DbSet<PrinterConfig> PrinterConfigs { get; }
+    DbSet<PrinterSection> PrinterSections { get; }
     DbSet<Product> Products { get; }
     DbSet<SalesChannel> SalesChannels { get; }
     DbSet<ProductChannelPrice> ProductChannelPrices { get; }

@@ -41,6 +41,8 @@ public class AppDbContext : DbContext, IAppDbContext
     public DbSet<OrderCancellation> OrderCancellations => Set<OrderCancellation>();
     public DbSet<UnitOfMeasure> UnitsOfMeasure=>Set<UnitOfMeasure>();public DbSet<Ingredient> Ingredients=>Set<Ingredient>();public DbSet<Warehouse> Warehouses=>Set<Warehouse>();public DbSet<WarehouseIngredientStock> WarehouseIngredientStocks=>Set<WarehouseIngredientStock>();public DbSet<MenuItemRecipeLine> MenuItemRecipeLines=>Set<MenuItemRecipeLine>();public DbSet<InventoryTransactionReason> InventoryTransactionReasons=>Set<InventoryTransactionReason>();public DbSet<RestaurantInventoryTransaction> RestaurantInventoryTransactions=>Set<RestaurantInventoryTransaction>();
     public DbSet<StockCount> StockCounts=>Set<StockCount>();public DbSet<StockCountLine> StockCountLines=>Set<StockCountLine>();
+    public DbSet<PrinterConfig> PrinterConfigs => Set<PrinterConfig>();
+    public DbSet<PrinterSection> PrinterSections => Set<PrinterSection>();
     public DbSet<Product> Products => Set<Product>();
     public DbSet<SalesChannel> SalesChannels => Set<SalesChannel>();
     public DbSet<ProductChannelPrice> ProductChannelPrices => Set<ProductChannelPrice>();
@@ -200,8 +202,25 @@ public class AppDbContext : DbContext, IAppDbContext
             entity.Property(x => x.BasePrice).HasPrecision(12, 3);
             entity.Property(x => x.ImageUrl).HasMaxLength(1000);
             entity.HasOne(x => x.Category).WithMany(x => x.Items).HasForeignKey(x => x.CategoryId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(x => x.PrinterSection).WithMany().HasForeignKey(x => x.PrinterSectionId).OnDelete(DeleteBehavior.SetNull);
             entity.HasIndex(x => new { x.CategoryId, x.SortOrder });
             entity.ToTable(x => x.HasCheckConstraint("CK_MenuItems_Kind", "\"Kind\" IN ('SingleProduct','Combo')"));
+        });
+
+        modelBuilder.Entity<PrinterConfig>(entity =>
+        {
+            entity.HasKey(x => x.Id); entity.Property(x => x.NameAr).IsRequired().HasMaxLength(200); entity.Property(x => x.NameEn).IsRequired().HasMaxLength(200);
+            entity.Property(x => x.IpAddress).IsRequired().HasMaxLength(255); entity.HasOne(x => x.Branch).WithMany().HasForeignKey(x => x.BranchId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasIndex(x => new { x.BranchId, x.NameEn }).IsUnique(); entity.HasIndex(x => x.BranchId).IsUnique().HasFilter("\"IsDefault\" = TRUE");
+            entity.ToTable(x => x.HasCheckConstraint("CK_PrinterConfigs_Port", "\"Port\" BETWEEN 1 AND 65535"));
+            entity.HasQueryFilter(x => BypassRestaurantBranchFilter || x.BranchId == RestaurantBranchId);
+        });
+        modelBuilder.Entity<PrinterSection>(entity =>
+        {
+            entity.HasKey(x => x.Id); entity.Property(x => x.NameAr).IsRequired().HasMaxLength(200); entity.Property(x => x.NameEn).IsRequired().HasMaxLength(200);
+            entity.HasOne(x => x.Branch).WithMany().HasForeignKey(x => x.BranchId).OnDelete(DeleteBehavior.Cascade); entity.HasOne(x => x.PrinterConfig).WithMany().HasForeignKey(x => x.PrinterConfigId).OnDelete(DeleteBehavior.SetNull);
+            entity.HasIndex(x => new { x.BranchId, x.NameEn }).IsUnique(); entity.HasIndex(x => x.PrinterConfigId);
+            entity.HasQueryFilter(x => BypassRestaurantBranchFilter || x.BranchId == RestaurantBranchId);
         });
 
         modelBuilder.Entity<ComboComponent>(entity =>
