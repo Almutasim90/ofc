@@ -49,6 +49,7 @@
     "orderTransfers": "Order transfers",
     "rawMaterials": "Raw Materials",
     "inventory": "Inventory",
+    "stockCounts": "Stock counts",
     "shift": "Shift",
     "closingSchedule": "Closing schedule",
     "reports": "Reports",
@@ -463,6 +464,7 @@
   "cashShifts":{"title":"Cash shifts","open":"Open shift","opened":"Cash shift opened.","count":"Cash count","close":"Close shift","closed":"Cash shift closed.","history":"Shift history","expected":"Expected","counted":"Counted","variance":"Variance"},
   "orderingPoints":{"title":"QR ordering points","carBays":"Car pickup bays","bayLabel":"Bay label","addPoint":"Add ordering point","table":"Table","carBay":"Car bay","codes":"QR codes","regenerate":"Regenerate securely","closeSession":"Close settled session","closed":"Session closed and QR token rotated.","created":"Ordering point created.","regenerated":"QR token regenerated.","sessionReady":"Your ordering session is ready.","invalid":"This QR code is invalid or disabled."},
   "orderTransfers":{"title":"Transfer orders","selectTarget":"Select destination","targetRequired":"Select a destination ordering point.","notes":"Transfer notes","transfer":"Transfer","transferred":"Order transferred and audit log recorded.","empty":"There are no transferable orders."},
+  "stockCounts":{"title":"Inventory count","warehouseRequired":"Select a warehouse.","start":"Start count","system":"System","counted":"Counted","variance":"Variance","save":"Save count","saved":"Count saved.","finalize":"Finalize count","confirmFinalize":"Finalize this count and adjust warehouse stock?","finalizedMessage":"Count finalized and stock adjusted.","draft":"Draft","finalized":"Finalized"},
   "modifiers": {
     "title": "Modifier groups", "description": "Create reusable choices and link them to one or more menu products.",
     "minimum": "Minimum selections", "maximum": "Maximum selections", "options": "Options", "products": "Linked products",

@@ -49,6 +49,7 @@
     "orderTransfers": "تحويل الطلبات",
     "rawMaterials": "المواد الخام",
     "inventory": "المخزون",
+    "stockCounts": "جرد المخزون",
     "shift": "الوردية",
     "closingSchedule": "جدول الإغلاق",
     "reports": "التقارير",
@@ -461,6 +462,7 @@
   "cashShifts":{"title":"ورديات الصندوق","open":"فتح الوردية","opened":"تم فتح وردية الصندوق.","count":"عد النقدية","close":"إغلاق الوردية","closed":"تم إغلاق وردية الصندوق.","history":"سجل الورديات","expected":"المتوقع","counted":"المعدود","variance":"الفرق"},
   "orderingPoints":{"title":"نقاط طلب QR","carBays":"ممرات استلام السيارات","bayLabel":"اسم الممر","addPoint":"إضافة نقطة طلب","table":"طاولة","carBay":"ممر سيارة","codes":"رموز QR","regenerate":"إعادة توليد آمنة","closeSession":"إغلاق الجلسة المسددة","closed":"تم إغلاق الجلسة وتجديد رمز QR.","created":"تم إنشاء نقطة الطلب.","regenerated":"تم تجديد رمز QR.","sessionReady":"جلسة الطلب جاهزة.","invalid":"رمز QR غير صالح أو معطّل."},
   "orderTransfers":{"title":"تحويل الطلبات","selectTarget":"اختر نقطة الوجهة","targetRequired":"اختر نقطة طلب للوجهة.","notes":"ملاحظات التحويل","transfer":"تحويل","transferred":"تم تحويل الطلب وتسجيل العملية.","empty":"لا توجد طلبات قابلة للتحويل."},
+  "stockCounts":{"title":"جرد المخزون","warehouseRequired":"اختر مخزناً.","start":"بدء الجرد","system":"رصيد النظام","counted":"الرصيد الفعلي","variance":"الفرق","save":"حفظ الجرد","saved":"تم حفظ الجرد.","finalize":"اعتماد الجرد","confirmFinalize":"هل تريد اعتماد الجرد وتعديل رصيد المخزن؟","finalizedMessage":"تم اعتماد الجرد وتعديل المخزون.","draft":"مسودة","finalized":"معتمد"},
   "modifiers": {
     "title": "مجموعات الإضافات", "description": "أنشئ خيارات قابلة لإعادة الاستخدام واربطها بمنتج واحد أو عدة منتجات.",
     "minimum": "الحد الأدنى للاختيار", "maximum": "الحد الأقصى للاختيار", "options": "الخيارات", "products": "المنتجات المرتبطة",

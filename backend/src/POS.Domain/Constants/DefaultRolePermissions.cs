@@ -22,6 +22,10 @@ public static class DefaultRolePermissions
                 PermissionKeys.OrdersCancel,
                 PermissionKeys.OrdersTransfer,
                 PermissionKeys.TablesManage,
+                PermissionKeys.ProductsManage,
+                PermissionKeys.CombosManage,
+                PermissionKeys.ModifiersManage,
+                PermissionKeys.PrintingManage,
             ],
             [RoleNames.GeneralManager] = PermissionKeys.All,
         };

@@ -11,3 +11,5 @@
 - Added cash-shift variance and invoice-edit audit data to the manager dashboard.
 - Added secure QR ordering points, single open sessions, grouped session orders, prepayment enforcement, and token rotation.
 - Added manager-only order transfers with destination-session validation, a bilingual dashboard screen, and immutable audit entries.
+- Added the missing bilingual stock-count workflow to the dashboard, including draft saving, variance review, and final stock adjustment.
+- Expanded branch-manager defaults for restaurant operations and corrected printer navigation to use `printing.manage`.

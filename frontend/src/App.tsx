@@ -34,6 +34,7 @@ import OrderPaymentsPage from './pages/OrderPaymentsPage'
 import CashShiftsPage from './pages/CashShiftsPage'
 import OrderingPointsPage from './pages/OrderingPointsPage'
 import OrderTransfersPage from './pages/OrderTransfersPage'
+import StockCountsPage from './pages/StockCountsPage'
 import QrLandingPage from './pages/QrLandingPage'
 
 const ReportsPage = lazy(() => import('./pages/ReportsPage'))
@@ -117,6 +118,7 @@ function App() {
               <Route path="/cash-shifts" element={<ProtectedRoute permission="sales.edit"><CashShiftsPage /></ProtectedRoute>} />
               <Route path="/ordering-points" element={<ProtectedRoute permission="tables.manage"><OrderingPointsPage /></ProtectedRoute>} />
               <Route path="/order-transfers" element={<ProtectedRoute permission="orders.transfer"><OrderTransfersPage /></ProtectedRoute>} />
+              <Route path="/stock-counts" element={<ProtectedRoute permission="inventory.adjust"><StockCountsPage /></ProtectedRoute>} />
               <Route
                 path="/products/:id/recipe"
                 element={
