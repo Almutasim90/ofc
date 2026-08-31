@@ -56,6 +56,9 @@ public class ReportService(IAppDbContext db, ICurrentUserService currentUser)
                 && s.OpenedAt < to.AddDays(1).ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc)
                 && s.Status == ShiftStatus.Closed && s.VarianceAmount != null && (!branchId.HasValue || s.BranchId == branchId))
             .OrderBy(s => s.OpenedAt).Select(s => new ShiftVariancePointDto(s.Id, s.OpenedAt, s.VarianceAmount!.Value)).ToListAsync(cancellationToken);
+        var start=from.ToDateTime(TimeOnly.MinValue,DateTimeKind.Utc);var end=to.AddDays(1).ToDateTime(TimeOnly.MinValue,DateTimeKind.Utc);
+        var cashShiftVariances=await db.CashShifts.AsNoTracking().Where(x=>x.OpenedAt>=start&&x.OpenedAt<end&&x.Status=="Closed"&&(!branchId.HasValue||x.BranchId==branchId)).OrderByDescending(x=>x.OpenedAt).Select(x=>new CashShiftVarianceDto(x.Id,x.BranchId,x.OpenedAt,x.ExpectedCash??0,x.CountedCash??0,x.VarianceCash??0)).ToListAsync(cancellationToken);
+        var orderEdits=await db.OrderEditLogs.AsNoTracking().Where(x=>x.CreatedAt>=start&&x.CreatedAt<end&&(!branchId.HasValue||x.Order.BranchId==branchId)).OrderByDescending(x=>x.CreatedAt).Select(x=>new OrderEditReportDto(x.Id,x.OrderId,x.Order.OrderNumber,x.Order.BranchId,x.UserId,x.EditType,x.Notes,x.AmountDelta,x.CreatedAt)).ToListAsync(cancellationToken);
 
         var totalSales = dailyRows.Sum(x => x.Total);
         var totalDiscounts = await sales.SumAsync(s => s.DiscountAmount, cancellationToken);
@@ -74,7 +77,7 @@ public class ReportService(IAppDbContext db, ICurrentUserService currentUser)
                 return new ProductSalesSummaryDto(x.ProductId, x.NameAr, x.NameEn, x.Quantity, x.Total, x.Invoices,
                     cash.Quantity, cash.Total, cash.Invoices,
                     card.Quantity, card.Total, card.Invoices);
-            }).ToList(), varianceRows);
+            }).ToList(), varianceRows,cashShiftVariances,orderEdits);
     }
 
     private async Task<Dictionary<Guid, (decimal Quantity, decimal Total, int Invoices)>> ProductPaymentBreakdownAsync(

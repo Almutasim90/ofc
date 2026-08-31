@@ -8,3 +8,4 @@
 - Added split order payments, approval-gated debt payments, and audited closed-order edits.
 - Added cash-shift opening, denomination counting, and expected/count/variance reconciliation.
 - Added coded sales channels with independent enablement and prepayment rules per branch.
+- Added cash-shift variance and invoice-edit audit data to the manager dashboard.

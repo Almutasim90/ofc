@@ -192,6 +192,8 @@
   "reports": {
     "title": "التقارير",
     "dashboardTitle": "لوحة تحليل المبيعات",
+    "cashShiftVarianceReport":"فروقات ورديات الصندوق",
+    "orderEditReport":"سجل تعديلات الفواتير",
     "dashboardSubtitle": "رؤية شاملة تساعدك على فهم الأداء واتخاذ القرار",
     "from": "من تاريخ",
     "to": "إلى تاريخ",

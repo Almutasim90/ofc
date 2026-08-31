@@ -19,9 +19,12 @@ public record ProductSalesSummaryDto(
 public record ManagerDashboardDto(
     DateOnly From, DateOnly To, decimal TotalSales, decimal TotalDiscounts, int InvoiceCount, decimal ItemsSold, decimal AverageTicket,
     List<SalesTrendPointDto> DailyTrend, List<BranchSalesSummaryDto> Branches,
-    List<PaymentBreakdownDto> PaymentBreakdown, List<ProductSalesSummaryDto> Products, List<ShiftVariancePointDto> ShiftVariances);
+    List<PaymentBreakdownDto> PaymentBreakdown, List<ProductSalesSummaryDto> Products, List<ShiftVariancePointDto> ShiftVariances,
+    List<CashShiftVarianceDto> CashShiftVariances,List<OrderEditReportDto> OrderEdits);
 public record DiscountSaleDto(Guid SaleId, Guid BranchId, Guid CashierUserId, DateTime CreatedAt,
     decimal DiscountAmount, decimal TotalAmount);
 public record DiscountReportDto(DateOnly From, DateOnly To, decimal TotalDiscounts, List<DiscountSaleDto> Sales);
 public record ChannelSalesDto(Guid ChannelId, string NameAr, string NameEn, decimal TotalSales, int InvoiceCount);
 public record ShiftVariancePointDto(Guid ShiftId, DateTime OpenedAt, decimal VarianceAmount);
+public record CashShiftVarianceDto(Guid CashShiftId,Guid BranchId,DateTime OpenedAt,decimal ExpectedCash,decimal CountedCash,decimal VarianceCash);
+public record OrderEditReportDto(Guid Id,Guid OrderId,int OrderNumber,Guid BranchId,Guid UserId,string EditType,string? Notes,decimal AmountDelta,DateTime CreatedAt);
