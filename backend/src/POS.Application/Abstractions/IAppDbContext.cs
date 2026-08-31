@@ -27,6 +27,7 @@ public interface IAppDbContext
     DbSet<RestaurantOrderItem> RestaurantOrderItems { get; }
     DbSet<OrderItemComboSelection> OrderItemComboSelections { get; }
     DbSet<OrderItemModifier> OrderItemModifiers { get; }
+    DbSet<OrderCancellation> OrderCancellations { get; }
     DbSet<Product> Products { get; }
     DbSet<SalesChannel> SalesChannels { get; }
     DbSet<ProductChannelPrice> ProductChannelPrices { get; }

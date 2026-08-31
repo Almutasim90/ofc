@@ -38,6 +38,7 @@ public class AppDbContext : DbContext, IAppDbContext
     public DbSet<RestaurantOrderItem> RestaurantOrderItems => Set<RestaurantOrderItem>();
     public DbSet<OrderItemComboSelection> OrderItemComboSelections => Set<OrderItemComboSelection>();
     public DbSet<OrderItemModifier> OrderItemModifiers => Set<OrderItemModifier>();
+    public DbSet<OrderCancellation> OrderCancellations => Set<OrderCancellation>();
     public DbSet<Product> Products => Set<Product>();
     public DbSet<SalesChannel> SalesChannels => Set<SalesChannel>();
     public DbSet<ProductChannelPrice> ProductChannelPrices => Set<ProductChannelPrice>();
@@ -274,6 +275,14 @@ public class AppDbContext : DbContext, IAppDbContext
         {
             entity.HasKey(x=>x.Id); entity.Property(x=>x.PriceDeltaSnapshot).HasPrecision(12,3); entity.HasOne(x=>x.OrderItem).WithMany(x=>x.Modifiers).HasForeignKey(x=>x.OrderItemId).OnDelete(DeleteBehavior.Cascade); entity.HasOne(x=>x.ModifierOption).WithMany().HasForeignKey(x=>x.ModifierOptionId).OnDelete(DeleteBehavior.Restrict); entity.HasIndex(x=>x.OrderItemId);
             entity.HasQueryFilter(x=>BypassRestaurantBranchFilter||x.OrderItem.Order.BranchId==RestaurantBranchId);
+        });
+        modelBuilder.Entity<OrderCancellation>(entity =>
+        {
+            entity.HasKey(x=>x.Id); entity.Property(x=>x.Reason).IsRequired().HasMaxLength(500);
+            entity.HasOne(x=>x.Order).WithMany(x=>x.Cancellations).HasForeignKey(x=>x.OrderId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(x=>x.OrderItem).WithMany().HasForeignKey(x=>x.OrderItemId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasIndex(x=>new{x.OrderId,x.CreatedAt}); entity.HasIndex(x=>x.OrderItemId); entity.HasIndex(x=>x.CancelledByUserId);
+            entity.HasQueryFilter(x=>BypassRestaurantBranchFilter||x.Order.BranchId==RestaurantBranchId);
         });
 
         modelBuilder.Entity<Product>(entity =>

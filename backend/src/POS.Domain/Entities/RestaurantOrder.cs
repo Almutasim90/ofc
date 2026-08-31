@@ -8,4 +8,5 @@ public class RestaurantOrder
     public DateOnly BusinessDate { get; set; } public DateTime CreatedAt { get; set; } public decimal Subtotal { get; set; } public decimal DiscountAmount { get; set; }
     public decimal GrandTotal { get; set; } public string Status { get; set; }=RestaurantOrderStatuses.Open; public Guid? SalesChannelId { get; set; } public Guid? OrderingSessionId { get; set; }
     public ICollection<RestaurantOrderItem> Items { get; set; }=[];
+    public ICollection<OrderCancellation> Cancellations { get; set; }=[];
 }

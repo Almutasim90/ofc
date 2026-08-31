@@ -41,6 +41,7 @@
     "restaurantCatalog": "Restaurant menu",
     "modifiers": "Modifiers",
     "restaurantOrders": "Restaurant orders",
+    "orderCancellations": "Order cancellations",
     "rawMaterials": "Raw Materials",
     "inventory": "Inventory",
     "shift": "Shift",
@@ -447,6 +448,7 @@
     "conflict": "The order, stock or shift changed. Close this window and reopen the order before editing.",
     "saved": "Order updated and changes recorded."
   },
+  "cancellations":{"title":"Order cancellations","openOrders":"Open orders","cancelOrder":"Cancel order","cancelItem":"Cancel item","reason":"Cancellation reason","saved":"Cancellation recorded.","log":"Cancellation log","item":"Item","date":"Date","wholeOrder":"Whole order"},
   "restaurantOrders": {"title":"Restaurant orders","selectTable":"Select table","tableRequired":"Select a table for dine-in.","create":"Create order","created":"Order created.","recent":"Recent orders"},
   "modifiers": {
     "title": "Modifier groups", "description": "Create reusable choices and link them to one or more menu products.",
