@@ -42,6 +42,8 @@ public interface IAppDbContext
     DbSet<PaymentMethod> PaymentMethods { get; }
     DbSet<OrderPayment> OrderPayments { get; }
     DbSet<OrderEditLog> OrderEditLogs { get; }
+    DbSet<CashShift> CashShifts { get; }
+    DbSet<CashCount> CashCounts { get; }
     DbSet<Product> Products { get; }
     DbSet<SalesChannel> SalesChannels { get; }
     DbSet<ProductChannelPrice> ProductChannelPrices { get; }

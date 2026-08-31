@@ -42,6 +42,7 @@
     "modifiers": "Modifiers",
     "restaurantOrders": "Restaurant orders",
     "orderPayments": "Order payments",
+    "cashShifts": "Cash shifts",
     "printers": "Printers",
     "orderCancellations": "Order cancellations",
     "rawMaterials": "Raw Materials",
@@ -454,6 +455,7 @@
   "restaurantOrders": {"title":"Restaurant orders","selectTable":"Select table","tableRequired":"Select a table for dine-in.","carPlate":"Car plate number","create":"Create order","created":"Order created.","recent":"Recent orders","confirmPrint":"Confirm & print","printed":"Order confirmed and printed."},
   "printers":{"title":"Printer routing","addPrinter":"Add printer","addSection":"Add printer section","address":"IP address or host","default":"Default printer","test":"Test","testSent":"Test ticket sent.","routing":"Product routing","saved":"Printer settings saved."},
   "orderPayments":{"title":"Payments & invoice edits","split":"Split payment","paid":"Paid","pay":"Record payment","saved":"Payment recorded.","edit":"Edit closed invoice","edited":"Invoice edit recorded.","notes":"Reason / notes"},
+  "cashShifts":{"title":"Cash shifts","open":"Open shift","opened":"Cash shift opened.","count":"Cash count","close":"Close shift","closed":"Cash shift closed.","history":"Shift history","expected":"Expected","counted":"Counted","variance":"Variance"},
   "modifiers": {
     "title": "Modifier groups", "description": "Create reusable choices and link them to one or more menu products.",
     "minimum": "Minimum selections", "maximum": "Maximum selections", "options": "Options", "products": "Linked products",

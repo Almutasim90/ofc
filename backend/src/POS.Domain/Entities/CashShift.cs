@@ -1,0 +1,3 @@
+namespace POS.Domain.Entities;
+public static class CashShiftStatuses{public const string Open="Open",Closed="Closed";}
+public class CashShift{public Guid Id{get;set;}public Guid BranchId{get;set;}public Branch Branch{get;set;}=null!;public Guid OpenedByUserId{get;set;}public Guid? ClosedByUserId{get;set;}public decimal OpeningFloat{get;set;}public DateTime OpenedAt{get;set;}public DateTime? ClosedAt{get;set;}public string Status{get;set;}=CashShiftStatuses.Open;public decimal? ExpectedCash{get;set;}public decimal? CountedCash{get;set;}public decimal? VarianceCash{get;set;}public ICollection<CashCount> Counts{get;set;}=[];}

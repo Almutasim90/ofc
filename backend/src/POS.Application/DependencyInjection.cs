@@ -17,6 +17,7 @@ using POS.Application.Orders;
 using POS.Application.RestaurantInventory;
 using POS.Application.Printing;
 using POS.Application.Payments;
+using POS.Application.CashShifts;
 
 namespace POS.Application;
 
@@ -42,6 +43,7 @@ public static class DependencyInjection
         services.AddScoped<PrinterAdminService>();
         services.AddScoped<OrderPrintingService>();
         services.AddScoped<OrderPaymentService>();
+        services.AddScoped<CashShiftService>();
         services.AddScoped<ProductService>();
         services.AddScoped<RawMaterialService>();
         services.AddScoped<RecipeService>();

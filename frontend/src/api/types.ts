@@ -83,6 +83,7 @@ export interface PrinterSectionDto { id:string; branchId:string; nameAr:string; 
 export interface PaymentMethodDto { id:string; code:string; nameAr:string; nameEn:string; requiresApproval:boolean; isActive:boolean }
 export interface OrderPaymentDto { id:string; orderId:string; methodCode:string; amount:number; approvedByUserId:string|null; createdAt:string }
 export interface OrderEditLogDto { id:string; orderId:string; userId:string; editType:string; notes:string|null; amountDelta:number; createdAt:string }
+export interface CashShiftDto { id:string; branchId:string; openedByUserId:string; closedByUserId:string|null; openingFloat:number; openedAt:string; closedAt:string|null; status:string; expectedCash:number|null; countedCash:number|null; varianceCash:number|null }
 export interface ModifierOptionDto { id:string; nameAr:string; nameEn:string; priceDelta:number; isActive:boolean }
 export interface ModifierGroupDto { id:string; nameAr:string; nameEn:string; minSelect:number; maxSelect:number; isRequired:boolean; options:ModifierOptionDto[]; menuItemIds:string[] }
 export interface OrderTypeDto { id:string; code:string; nameAr:string; nameEn:string }

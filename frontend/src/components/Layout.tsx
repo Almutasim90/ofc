@@ -112,6 +112,7 @@ export default function Layout({ children }: { children: ReactNode }) {
     { to: '/cashier', label: t('nav.cashier'), icon: 'cashier', permission: 'sales.create' },
     { to: '/restaurant-orders', label: t('nav.restaurantOrders'), icon: 'cashier', permission: 'orders.create' },
     { to: '/order-payments', label: t('nav.orderPayments'), icon: 'cashier', permission: 'orders.create' },
+    { to: '/cash-shifts', label: t('nav.cashShifts'), icon: 'shift', permission: 'sales.edit' },
     { to: '/order-cancellations', label: t('nav.orderCancellations'), icon: 'reports', permission: 'orders.cancel' },
     { to: '/shift', label: t('nav.shift'), icon: 'shift', permission: 'sales.create' },
     { to: '/reports', label: t('nav.reports'), icon: 'reports', permission: 'reports.branch.view' },

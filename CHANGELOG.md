@@ -6,3 +6,4 @@
 - Added dynamic printer sections and menu-item routing.
 - Added order confirmation that prints one ticket per section and one customer receipt.
 - Added split order payments, approval-gated debt payments, and audited closed-order edits.
+- Added cash-shift opening, denomination counting, and expected/count/variance reconciliation.
