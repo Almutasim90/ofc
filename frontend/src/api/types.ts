@@ -80,6 +80,9 @@ export interface MenuCategoryDto { id:string; nameAr:string; nameEn:string; sort
 export interface MenuItemDto { id:string; categoryId:string; nameAr:string; nameEn:string; kind:'SingleProduct'|'Combo'; basePrice:number; imageUrl:string|null; sortOrder:number; isActive:boolean; printerSectionId:string|null }
 export interface PrinterConfigDto { id:string; branchId:string; nameAr:string; nameEn:string; ipAddress:string; port:number; isDefault:boolean; isActive:boolean }
 export interface PrinterSectionDto { id:string; branchId:string; nameAr:string; nameEn:string; printerConfigId:string|null }
+export interface PaymentMethodDto { id:string; code:string; nameAr:string; nameEn:string; requiresApproval:boolean; isActive:boolean }
+export interface OrderPaymentDto { id:string; orderId:string; methodCode:string; amount:number; approvedByUserId:string|null; createdAt:string }
+export interface OrderEditLogDto { id:string; orderId:string; userId:string; editType:string; notes:string|null; amountDelta:number; createdAt:string }
 export interface ModifierOptionDto { id:string; nameAr:string; nameEn:string; priceDelta:number; isActive:boolean }
 export interface ModifierGroupDto { id:string; nameAr:string; nameEn:string; minSelect:number; maxSelect:number; isRequired:boolean; options:ModifierOptionDto[]; menuItemIds:string[] }
 export interface OrderTypeDto { id:string; code:string; nameAr:string; nameEn:string }

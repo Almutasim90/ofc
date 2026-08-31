@@ -43,6 +43,7 @@ public class AppDbContext : DbContext, IAppDbContext
     public DbSet<StockCount> StockCounts=>Set<StockCount>();public DbSet<StockCountLine> StockCountLines=>Set<StockCountLine>();
     public DbSet<PrinterConfig> PrinterConfigs => Set<PrinterConfig>();
     public DbSet<PrinterSection> PrinterSections => Set<PrinterSection>();
+    public DbSet<PaymentMethod> PaymentMethods => Set<PaymentMethod>(); public DbSet<OrderPayment> OrderPayments => Set<OrderPayment>(); public DbSet<OrderEditLog> OrderEditLogs => Set<OrderEditLog>();
     public DbSet<Product> Products => Set<Product>();
     public DbSet<SalesChannel> SalesChannels => Set<SalesChannel>();
     public DbSet<ProductChannelPrice> ProductChannelPrices => Set<ProductChannelPrice>();
@@ -222,6 +223,9 @@ public class AppDbContext : DbContext, IAppDbContext
             entity.HasIndex(x => new { x.BranchId, x.NameEn }).IsUnique(); entity.HasIndex(x => x.PrinterConfigId);
             entity.HasQueryFilter(x => BypassRestaurantBranchFilter || x.BranchId == RestaurantBranchId);
         });
+        modelBuilder.Entity<PaymentMethod>(e=>{e.HasKey(x=>x.Id);e.Property(x=>x.Code).IsRequired().HasMaxLength(30);e.Property(x=>x.NameAr).IsRequired().HasMaxLength(100);e.Property(x=>x.NameEn).IsRequired().HasMaxLength(100);e.HasIndex(x=>x.Code).IsUnique();e.HasData(new PaymentMethod{Id=Guid.Parse("40000000-0000-0000-0000-000000000001"),Code="CASH",NameAr="نقدي",NameEn="Cash"},new PaymentMethod{Id=Guid.Parse("40000000-0000-0000-0000-000000000002"),Code="CARD",NameAr="بطاقة",NameEn="Card"},new PaymentMethod{Id=Guid.Parse("40000000-0000-0000-0000-000000000003"),Code="DEBT",NameAr="دَين",NameEn="Debt",RequiresApproval=true});});
+        modelBuilder.Entity<OrderPayment>(e=>{e.HasKey(x=>x.Id);e.Property(x=>x.Amount).HasPrecision(12,3);e.ToTable(x=>x.HasCheckConstraint("CK_OrderPayments_Amount","\"Amount\" > 0"));e.HasOne(x=>x.Order).WithMany(x=>x.Payments).HasForeignKey(x=>x.OrderId).OnDelete(DeleteBehavior.Cascade);e.HasOne(x=>x.PaymentMethod).WithMany().HasForeignKey(x=>x.PaymentMethodId).OnDelete(DeleteBehavior.Restrict);e.HasIndex(x=>new{x.OrderId,x.CreatedAt});e.HasQueryFilter(x=>BypassRestaurantBranchFilter||x.Order.BranchId==RestaurantBranchId);});
+        modelBuilder.Entity<OrderEditLog>(e=>{e.HasKey(x=>x.Id);e.Property(x=>x.EditType).IsRequired().HasMaxLength(30);e.Property(x=>x.Notes).HasMaxLength(500);e.Property(x=>x.AmountDelta).HasPrecision(12,3);e.HasOne(x=>x.Order).WithMany(x=>x.EditLogs).HasForeignKey(x=>x.OrderId).OnDelete(DeleteBehavior.Cascade);e.HasIndex(x=>new{x.OrderId,x.CreatedAt});e.HasQueryFilter(x=>BypassRestaurantBranchFilter||x.Order.BranchId==RestaurantBranchId);});
 
         modelBuilder.Entity<ComboComponent>(entity =>
         {

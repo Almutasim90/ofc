@@ -39,6 +39,9 @@ public interface IAppDbContext
     DbSet<StockCountLine> StockCountLines { get; }
     DbSet<PrinterConfig> PrinterConfigs { get; }
     DbSet<PrinterSection> PrinterSections { get; }
+    DbSet<PaymentMethod> PaymentMethods { get; }
+    DbSet<OrderPayment> OrderPayments { get; }
+    DbSet<OrderEditLog> OrderEditLogs { get; }
     DbSet<Product> Products { get; }
     DbSet<SalesChannel> SalesChannels { get; }
     DbSet<ProductChannelPrice> ProductChannelPrices { get; }

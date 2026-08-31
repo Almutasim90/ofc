@@ -9,4 +9,6 @@ public class RestaurantOrder
     public decimal GrandTotal { get; set; } public string Status { get; set; }=RestaurantOrderStatuses.Open; public Guid? SalesChannelId { get; set; } public Guid? OrderingSessionId { get; set; }
     public ICollection<RestaurantOrderItem> Items { get; set; }=[];
     public ICollection<OrderCancellation> Cancellations { get; set; }=[];
+    public ICollection<OrderPayment> Payments { get; set; }=[];
+    public ICollection<OrderEditLog> EditLogs { get; set; }=[];
 }
