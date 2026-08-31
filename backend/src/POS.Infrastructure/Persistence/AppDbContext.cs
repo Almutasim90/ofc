@@ -7,6 +7,8 @@ namespace POS.Infrastructure.Persistence;
 public class AppDbContext : DbContext, IAppDbContext
 {
     private readonly ICurrentUserService? _currentUser;
+    private bool BypassRestaurantBranchFilter => _currentUser?.BypassBranchFilter ?? true;
+    private Guid? RestaurantBranchId => _currentUser?.BranchId;
 
     public AppDbContext(DbContextOptions<AppDbContext> options, ICurrentUserService? currentUser = null)
         : base(options)
@@ -21,6 +23,13 @@ public class AppDbContext : DbContext, IAppDbContext
     public DbSet<UserPermissionOverride> UserPermissionOverrides => Set<UserPermissionOverride>();
 
     public DbSet<Branch> Branches => Set<Branch>();
+    public DbSet<RestaurantTable> RestaurantTables => Set<RestaurantTable>();
+    public DbSet<BranchFeatureFlag> BranchFeatureFlags => Set<BranchFeatureFlag>();
+    public DbSet<MenuCategory> MenuCategories => Set<MenuCategory>();
+    public DbSet<CategoryBranchAvailability> CategoryBranchAvailabilities => Set<CategoryBranchAvailability>();
+    public DbSet<MenuItem> MenuItems => Set<MenuItem>();
+    public DbSet<ComboComponent> ComboComponents => Set<ComboComponent>();
+    public DbSet<ComboComponentOption> ComboComponentOptions => Set<ComboComponentOption>();
     public DbSet<Product> Products => Set<Product>();
     public DbSet<SalesChannel> SalesChannels => Set<SalesChannel>();
     public DbSet<ProductChannelPrice> ProductChannelPrices => Set<ProductChannelPrice>();
@@ -124,6 +133,78 @@ public class AppDbContext : DbContext, IAppDbContext
             entity.Property(b => b.Code).IsRequired().HasMaxLength(50);
             entity.HasIndex(b => b.Code).IsUnique();
             entity.Property(b => b.DefaultOpeningFloat).HasPrecision(18, 3);
+        });
+
+        modelBuilder.Entity<RestaurantTable>(entity =>
+        {
+            entity.ToTable("Tables");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Label).IsRequired().HasMaxLength(100);
+            entity.HasOne(x => x.Branch).WithMany().HasForeignKey(x => x.BranchId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasIndex(x => new { x.BranchId, x.Label }).IsUnique();
+            entity.HasQueryFilter(x => BypassRestaurantBranchFilter || x.BranchId == RestaurantBranchId);
+        });
+
+        modelBuilder.Entity<BranchFeatureFlag>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.FeatureKey).IsRequired().HasMaxLength(100);
+            entity.HasOne(x => x.Branch).WithMany().HasForeignKey(x => x.BranchId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasIndex(x => new { x.BranchId, x.FeatureKey }).IsUnique();
+            entity.HasQueryFilter(x => BypassRestaurantBranchFilter || x.BranchId == RestaurantBranchId);
+        });
+
+        modelBuilder.Entity<MenuCategory>(entity =>
+        {
+            entity.ToTable("Categories");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.NameAr).IsRequired().HasMaxLength(200);
+            entity.Property(x => x.NameEn).IsRequired().HasMaxLength(200);
+            entity.HasIndex(x => x.SortOrder);
+        });
+
+        modelBuilder.Entity<CategoryBranchAvailability>(entity =>
+        {
+            entity.ToTable("CategoryBranchAvailability");
+            entity.HasKey(x => x.Id);
+            entity.HasOne(x => x.Category).WithMany().HasForeignKey(x => x.CategoryId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(x => x.Branch).WithMany().HasForeignKey(x => x.BranchId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasIndex(x => new { x.CategoryId, x.BranchId }).IsUnique();
+            entity.HasIndex(x => x.BranchId);
+            entity.HasQueryFilter(x => BypassRestaurantBranchFilter || x.BranchId == RestaurantBranchId);
+        });
+
+        modelBuilder.Entity<MenuItem>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.NameAr).IsRequired().HasMaxLength(200);
+            entity.Property(x => x.NameEn).IsRequired().HasMaxLength(200);
+            entity.Property(x => x.Kind).IsRequired().HasMaxLength(20);
+            entity.Property(x => x.BasePrice).HasPrecision(12, 3);
+            entity.Property(x => x.ImageUrl).HasMaxLength(1000);
+            entity.HasOne(x => x.Category).WithMany(x => x.Items).HasForeignKey(x => x.CategoryId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasIndex(x => new { x.CategoryId, x.SortOrder });
+            entity.ToTable(x => x.HasCheckConstraint("CK_MenuItems_Kind", "\"Kind\" IN ('SingleProduct','Combo')"));
+        });
+
+        modelBuilder.Entity<ComboComponent>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.SlotLabel).IsRequired().HasMaxLength(200);
+            entity.HasOne(x => x.ComboMenuItem).WithMany(x => x.ComboComponents).HasForeignKey(x => x.ComboMenuItemId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasIndex(x => new { x.ComboMenuItemId, x.SortOrder });
+            entity.ToTable(x => x.HasCheckConstraint("CK_ComboComponents_Selection", "\"MinSelect\" >= 0 AND \"MaxSelect\" >= \"MinSelect\""));
+        });
+
+        modelBuilder.Entity<ComboComponentOption>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.PriceDelta).HasPrecision(12, 3);
+            entity.HasOne(x => x.ComboComponent).WithMany(x => x.Options).HasForeignKey(x => x.ComboComponentId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(x => x.MenuItem).WithMany().HasForeignKey(x => x.MenuItemId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasIndex(x => new { x.ComboComponentId, x.MenuItemId }).IsUnique();
+            entity.HasIndex(x => x.MenuItemId);
+            entity.HasIndex(x => x.ComboComponentId).IsUnique().HasFilter("\"IsDefault\" = TRUE");
         });
 
         modelBuilder.Entity<Product>(entity =>

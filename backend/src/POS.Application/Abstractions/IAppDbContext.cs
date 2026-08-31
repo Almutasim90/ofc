@@ -12,6 +12,13 @@ public interface IAppDbContext
     DbSet<UserPermissionOverride> UserPermissionOverrides { get; }
 
     DbSet<Branch> Branches { get; }
+    DbSet<RestaurantTable> RestaurantTables { get; }
+    DbSet<BranchFeatureFlag> BranchFeatureFlags { get; }
+    DbSet<MenuCategory> MenuCategories { get; }
+    DbSet<CategoryBranchAvailability> CategoryBranchAvailabilities { get; }
+    DbSet<MenuItem> MenuItems { get; }
+    DbSet<ComboComponent> ComboComponents { get; }
+    DbSet<ComboComponentOption> ComboComponentOptions { get; }
     DbSet<Product> Products { get; }
     DbSet<SalesChannel> SalesChannels { get; }
     DbSet<ProductChannelPrice> ProductChannelPrices { get; }

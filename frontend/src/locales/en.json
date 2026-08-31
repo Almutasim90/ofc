@@ -37,7 +37,8 @@
     "cashier": "Cashier",
     "users": "Users",
     "branches": "Branches",
-    "products": "Products",
+    "products": "Legacy products",
+    "restaurantCatalog": "Restaurant menu",
     "rawMaterials": "Raw Materials",
     "inventory": "Inventory",
     "shift": "Shift",
@@ -443,5 +444,14 @@
     "saveError": "Could not save changes. Check the values and that the shift is still open.",
     "conflict": "The order, stock or shift changed. Close this window and reopen the order before editing.",
     "saved": "Order updated and changes recorded."
+  },
+  "restaurant": {
+    "title": "Restaurant menu setup", "description": "Manage dynamic categories, products, combos, tables and branch features.",
+    "categories": "Categories", "items": "Menu items", "combos": "Combos", "branches": "Tables & features", "branch": "Branch",
+    "nameAr": "Arabic name", "nameEn": "English name", "order": "Order", "active": "Active", "branchAvailable": "Available at branch", "addCategory": "Add category",
+    "category": "Category", "kind": "Type", "single": "Single product", "combo": "Combo", "price": "Base price", "addItem": "Add menu item",
+    "selectCombo": "Select combo", "slotLabel": "Slot label", "required": "Required", "removeSlot": "Remove slot", "option": "Option",
+    "priceDelta": "Price difference", "default": "Default", "addSlot": "Add slot", "saveCombo": "Save combo",
+    "tables": "Tables", "tableLabel": "Table label", "capacity": "Capacity", "addTable": "Add table", "features": "Branch features", "addFeature": "Add and enable feature"
   }
 }

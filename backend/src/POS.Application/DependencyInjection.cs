@@ -11,6 +11,7 @@ using POS.Application.Channels;
 using POS.Application.Notifications;
 using POS.Application.AI;
 using POS.Application.Settings;
+using POS.Application.RestaurantCatalog;
 
 namespace POS.Application;
 
@@ -27,6 +28,7 @@ public static class DependencyInjection
         services.AddScoped<ReceiptSettingsService>();
         services.AddHttpClient();
         services.AddScoped<BranchService>();
+        services.AddScoped<RestaurantCatalogService>();
         services.AddScoped<ProductService>();
         services.AddScoped<RawMaterialService>();
         services.AddScoped<RecipeService>();

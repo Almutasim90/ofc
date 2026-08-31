@@ -74,6 +74,13 @@ export interface UpdateBranchRequest {
   isActive: boolean
 }
 
+export interface RestaurantTableDto { id:string; branchId:string; label:string; capacity:number|null; isActive:boolean }
+export interface BranchFeatureFlagDto { id:string; branchId:string; featureKey:string; isEnabled:boolean }
+export interface MenuCategoryDto { id:string; nameAr:string; nameEn:string; sortOrder:number; isActive:boolean; isAvailable:boolean }
+export interface MenuItemDto { id:string; categoryId:string; nameAr:string; nameEn:string; kind:'SingleProduct'|'Combo'; basePrice:number; imageUrl:string|null; sortOrder:number; isActive:boolean }
+export interface ComboOptionDto { id:string; menuItemId:string; menuItemNameAr:string; menuItemNameEn:string; priceDelta:number; isDefault:boolean }
+export interface ComboComponentDto { id:string; slotLabel:string; isRequired:boolean; minSelect:number; maxSelect:number; sortOrder:number; options:ComboOptionDto[] }
+
 export interface ProductDto {
   id: string
   nameAr: string

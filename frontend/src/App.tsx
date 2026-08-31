@@ -24,6 +24,7 @@ import AiInsightsPage from './pages/AiInsightsPage'
 import NotificationsPage from './pages/NotificationsPage'
 import EmailSettingsPage from './pages/EmailSettingsPage'
 import ReceiptSettingsPage from './pages/ReceiptSettingsPage'
+import RestaurantCatalogPage from './pages/RestaurantCatalogPage'
 
 const ReportsPage = lazy(() => import('./pages/ReportsPage'))
 
@@ -95,6 +96,7 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+              <Route path="/restaurant-catalog" element={<ProtectedRoute permission="products.manage"><RestaurantCatalogPage /></ProtectedRoute>} />
               <Route
                 path="/products/:id/recipe"
                 element={
