@@ -87,6 +87,9 @@ export interface OrderEditLogDto { id:string; orderId:string; userId:string; edi
 export interface CashShiftDto { id:string; branchId:string; openedByUserId:string; closedByUserId:string|null; openingFloat:number; openedAt:string; closedAt:string|null; status:string; expectedCash:number|null; countedCash:number|null; varianceCash:number|null }
 export interface CashShiftVarianceDto { cashShiftId:string; branchId:string; openedAt:string; expectedCash:number; countedCash:number; varianceCash:number }
 export interface OrderEditReportDto { id:string; orderId:string; orderNumber:number; branchId:string; userId:string; editType:string; notes:string|null; amountDelta:number; createdAt:string }
+export interface CarPickupBayDto { id:string; branchId:string; bayLabel:string; isActive:boolean }
+export interface OrderingPointDto { id:string; branchId:string; pointType:'TABLE'|'CAR_BAY'; linkedTableId:string|null; linkedCarBayId:string|null; qrCodeToken:string; isActive:boolean; label:string; activeSessionId:string|null }
+export interface QrSessionDto { sessionId:string; pointId:string; branchId:string; pointType:string; label:string; openedAt:string }
 export interface ModifierOptionDto { id:string; nameAr:string; nameEn:string; priceDelta:number; isActive:boolean }
 export interface ModifierGroupDto { id:string; nameAr:string; nameEn:string; minSelect:number; maxSelect:number; isRequired:boolean; options:ModifierOptionDto[]; menuItemIds:string[] }
 export interface OrderTypeDto { id:string; code:string; nameAr:string; nameEn:string }

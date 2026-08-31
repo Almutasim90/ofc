@@ -1,0 +1,3 @@
+namespace POS.Domain.Entities;
+public static class OrderingPointTypes{public const string Table="TABLE",CarBay="CAR_BAY";public static readonly IReadOnlySet<string>All=new HashSet<string>{Table,CarBay};}
+public class OrderingPoint{public Guid Id{get;set;}public Guid BranchId{get;set;}public Branch Branch{get;set;}=null!;public string PointType{get;set;}=string.Empty;public Guid? LinkedTableId{get;set;}public RestaurantTable? LinkedTable{get;set;}public Guid? LinkedCarBayId{get;set;}public CarPickupBay? LinkedCarBay{get;set;}public string QrCodeToken{get;set;}=string.Empty;public bool IsActive{get;set;}=true;public ICollection<OrderingSession>Sessions{get;set;}=[];}

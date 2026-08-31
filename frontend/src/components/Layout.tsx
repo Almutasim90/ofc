@@ -122,6 +122,7 @@ export default function Layout({ children }: { children: ReactNode }) {
     { to: '/products', label: t('nav.products'), icon: 'products', permission: 'products.manage' },
     { to: '/restaurant-catalog', label: t('nav.restaurantCatalog'), icon: 'products', permission: 'products.manage' },
     { to: '/printers', label: t('nav.printers'), icon: 'printer', permission: 'products.manage' },
+    { to: '/ordering-points', label: t('nav.orderingPoints'), icon: 'products', permission: 'tables.manage' },
     { to: '/modifiers', label: t('nav.modifiers'), icon: 'products', permission: 'modifiers.manage' },
     { to: '/raw-materials', label: t('nav.rawMaterials'), icon: 'materials', permission: 'products.manage' },
     { to: '/branches', label: t('nav.branches'), icon: 'branches', permission: 'branches.manage' },

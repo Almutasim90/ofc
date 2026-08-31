@@ -32,6 +32,8 @@ import RestaurantInventoryPage from './pages/RestaurantInventoryPage'
 import PrintersPage from './pages/PrintersPage'
 import OrderPaymentsPage from './pages/OrderPaymentsPage'
 import CashShiftsPage from './pages/CashShiftsPage'
+import OrderingPointsPage from './pages/OrderingPointsPage'
+import QrLandingPage from './pages/QrLandingPage'
 
 const ReportsPage = lazy(() => import('./pages/ReportsPage'))
 
@@ -44,6 +46,7 @@ function App() {
           <Layout>
             <Routes>
               <Route path="/login" element={<LoginPage />} />
+              <Route path="/qr/:token" element={<QrLandingPage />} />
               <Route
                 path="/cashier"
                 element={
@@ -111,6 +114,7 @@ function App() {
               <Route path="/printers" element={<ProtectedRoute permission="products.manage"><PrintersPage /></ProtectedRoute>} />
               <Route path="/order-payments" element={<ProtectedRoute permission="orders.create"><OrderPaymentsPage /></ProtectedRoute>} />
               <Route path="/cash-shifts" element={<ProtectedRoute permission="sales.edit"><CashShiftsPage /></ProtectedRoute>} />
+              <Route path="/ordering-points" element={<ProtectedRoute permission="tables.manage"><OrderingPointsPage /></ProtectedRoute>} />
               <Route
                 path="/products/:id/recipe"
                 element={

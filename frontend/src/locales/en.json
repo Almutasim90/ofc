@@ -44,6 +44,7 @@
     "orderPayments": "Order payments",
     "cashShifts": "Cash shifts",
     "printers": "Printers",
+    "orderingPoints":"QR ordering points",
     "orderCancellations": "Order cancellations",
     "rawMaterials": "Raw Materials",
     "inventory": "Inventory",
@@ -459,6 +460,7 @@
   "printers":{"title":"Printer routing","addPrinter":"Add printer","addSection":"Add printer section","address":"IP address or host","default":"Default printer","test":"Test","testSent":"Test ticket sent.","routing":"Product routing","saved":"Printer settings saved."},
   "orderPayments":{"title":"Payments & invoice edits","split":"Split payment","paid":"Paid","pay":"Record payment","saved":"Payment recorded.","edit":"Edit closed invoice","edited":"Invoice edit recorded.","notes":"Reason / notes"},
   "cashShifts":{"title":"Cash shifts","open":"Open shift","opened":"Cash shift opened.","count":"Cash count","close":"Close shift","closed":"Cash shift closed.","history":"Shift history","expected":"Expected","counted":"Counted","variance":"Variance"},
+  "orderingPoints":{"title":"QR ordering points","carBays":"Car pickup bays","bayLabel":"Bay label","addPoint":"Add ordering point","table":"Table","carBay":"Car bay","codes":"QR codes","regenerate":"Regenerate securely","closeSession":"Close settled session","closed":"Session closed and QR token rotated.","created":"Ordering point created.","regenerated":"QR token regenerated.","sessionReady":"Your ordering session is ready.","invalid":"This QR code is invalid or disabled."},
   "modifiers": {
     "title": "Modifier groups", "description": "Create reusable choices and link them to one or more menu products.",
     "minimum": "Minimum selections", "maximum": "Maximum selections", "options": "Options", "products": "Linked products",
