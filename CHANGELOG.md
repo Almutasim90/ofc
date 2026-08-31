@@ -10,3 +10,4 @@
 - Added coded sales channels with independent enablement and prepayment rules per branch.
 - Added cash-shift variance and invoice-edit audit data to the manager dashboard.
 - Added secure QR ordering points, single open sessions, grouped session orders, prepayment enforcement, and token rotation.
+- Added manager-only order transfers with destination-session validation, a bilingual dashboard screen, and immutable audit entries.

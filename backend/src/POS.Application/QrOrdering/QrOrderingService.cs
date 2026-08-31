@@ -19,6 +19,51 @@ public class QrOrderingService(IAppDbContext db, OrderPrintingService printing)
     public async Task ConfirmAsync(Guid orderId, CancellationToken ct = default) { var order = await db.RestaurantOrders.Include(x => x.Payments).FirstOrDefaultAsync(x => x.Id == orderId && x.OrderingSessionId != null, ct) ?? throw new NotFoundException("QR order not found."); var cfg = await db.BranchSalesChannelAvailabilities.FirstOrDefaultAsync(x => x.BranchId == order.BranchId && x.SalesChannelId == order.SalesChannelId, ct) ?? throw new ValidationException("Channel configuration is missing."); if (cfg.RequiresPrepayment && order.Payments.Sum(x => x.Amount) < order.GrandTotal) throw new ValidationException("Full prepayment is required before confirmation."); await printing.ConfirmAndPrintAsync(orderId, ct); }
     public async Task CloseAsync(Guid sessionId, CancellationToken ct = default) { var s = await db.OrderingSessions.Include(x => x.OrderingPoint).FirstOrDefaultAsync(x => x.Id == sessionId && x.Status == OrderingSessionStatuses.Open, ct) ?? throw new NotFoundException("Open session not found."); var order = await db.RestaurantOrders.FirstOrDefaultAsync(x => x.OrderingSessionId == sessionId, ct); if (order is not null && order.Status is not (RestaurantOrderStatuses.Paid or RestaurantOrderStatuses.Closed)) throw new ValidationException("The invoice must be fully settled before closing the session."); s.Status = OrderingSessionStatuses.Closed; s.ClosedAt = DateTime.UtcNow; s.OrderingPoint.QrCodeToken = Token(); await db.SaveChangesAsync(ct); }
     private async Task AddLines(RestaurantOrder order, List<CreateOrderLineRequest> inputs, CancellationToken ct) { var ids = inputs.Select(x => x.MenuItemId).Distinct().ToList(); var items = await db.MenuItems.Where(x => ids.Contains(x.Id) && x.IsActive).Include(x => x.ModifierGroups).ThenInclude(x => x.ModifierGroup).ThenInclude(x => x.Options).Include(x => x.ComboComponents).ThenInclude(x => x.Options).ToDictionaryAsync(x => x.Id, ct); if (items.Count != ids.Count) throw new ValidationException("Menu item unavailable."); foreach (var input in inputs) { var item = items[input.MenuItemId]; decimal delta = 0; var line = new RestaurantOrderItem { Id = Guid.NewGuid(), MenuItemId = item.Id, MenuItemNameSnapshot = item.NameEn, Quantity = input.Quantity, Notes = input.Notes?.Trim() }; if (item.Kind == MenuItemKinds.SingleProduct) { var selected = input.ModifierOptionIds.Distinct().ToList(); foreach (var link in item.ModifierGroups) { var group = link.ModifierGroup; var chosen = group.Options.Where(x => selected.Contains(x.Id) && x.IsActive).ToList(); var min = group.IsRequired ? Math.Max(1, group.MinSelect) : group.MinSelect; if (chosen.Count < min || chosen.Count > group.MaxSelect) throw new ValidationException($"Invalid selection for {group.NameEn}."); foreach (var o in chosen) { delta += o.PriceDelta; line.Modifiers.Add(new() { Id = Guid.NewGuid(), ModifierOptionId = o.Id, PriceDeltaSnapshot = o.PriceDelta }); } } if (selected.Any(x => !line.Modifiers.Any(m => m.ModifierOptionId == x))) throw new ValidationException("Modifier unavailable."); } else foreach (var c in item.ComboComponents) { var chosen = input.ComboSelections.Where(x => x.ComboComponentId == c.Id).ToList(); var min = c.IsRequired ? Math.Max(1, c.MinSelect) : c.MinSelect; if (chosen.Count < min || chosen.Count > c.MaxSelect) throw new ValidationException($"Invalid selection for {c.SlotLabel}."); foreach (var s in chosen) { var o = c.Options.SingleOrDefault(x => x.MenuItemId == s.SelectedMenuItemId) ?? throw new ValidationException("Combo option unavailable."); delta += o.PriceDelta; line.ComboSelections.Add(new() { Id = Guid.NewGuid(), ComboComponentId = c.Id, SelectedMenuItemId = o.MenuItemId, PriceDeltaSnapshot = o.PriceDelta }); } } line.UnitPriceSnapshot = item.BasePrice + delta; line.LineTotal = line.UnitPriceSnapshot * line.Quantity; order.Items.Add(line); db.RestaurantOrderItems.Add(line); } }
+    public async Task TransferOrderAsync(Guid orderId, Guid newOrderingPointId, Guid userId, string? notes, CancellationToken ct = default)
+    {
+        var order = await db.RestaurantOrders.FirstOrDefaultAsync(x => x.Id == orderId, ct)
+            ?? throw new NotFoundException("Order not found.");
+        if (order.Status is RestaurantOrderStatuses.Paid or RestaurantOrderStatuses.Closed)
+            throw new ValidationException("Paid or closed orders cannot be transferred.");
+
+        var point = await db.OrderingPoints.FirstOrDefaultAsync(
+            x => x.Id == newOrderingPointId && x.IsActive && x.BranchId == order.BranchId, ct)
+            ?? throw new ValidationException("The target ordering point is inactive or belongs to another branch.");
+        var session = await db.OrderingSessions.FirstOrDefaultAsync(
+            x => x.OrderingPointId == point.Id && x.Status == OrderingSessionStatuses.Open, ct);
+        if (session is null)
+        {
+            session = new OrderingSession
+            {
+                Id = Guid.NewGuid(),
+                OrderingPointId = point.Id,
+                Status = OrderingSessionStatuses.Open,
+                OpenedAt = DateTime.UtcNow
+            };
+            db.OrderingSessions.Add(session);
+        }
+        else if (await db.RestaurantOrders.AnyAsync(
+                     x => x.OrderingSessionId == session.Id && x.Id != order.Id && x.Status == RestaurantOrderStatuses.Open, ct))
+        {
+            throw new ValidationException("The target ordering point already has another open invoice.");
+        }
+
+        var previousSessionId = order.OrderingSessionId;
+        order.OrderingSessionId = session.Id;
+        var auditNotes = $"{notes?.Trim()} From session {previousSessionId?.ToString() ?? "none"} to point {newOrderingPointId}".Trim();
+        db.OrderEditLogs.Add(new OrderEditLog
+        {
+            Id = Guid.NewGuid(),
+            OrderId = order.Id,
+            UserId = userId,
+            EditType = "Transferred",
+            Notes = auditNotes,
+            AmountDelta = 0,
+            CreatedAt = DateTime.UtcNow
+        });
+        await db.SaveChangesAsync(ct);
+    }
+
     private static void ValidatePoint(SaveOrderingPointRequest r) { if (!OrderingPointTypes.All.Contains(r.PointType) || (r.PointType == OrderingPointTypes.Table) != (r.LinkedTableId is not null) || (r.PointType == OrderingPointTypes.CarBay) != (r.LinkedCarBayId is not null)) throw new ValidationException("Ordering point link does not match its type."); }
     private static string Token() => Convert.ToBase64String(RandomNumberGenerator.GetBytes(32)).Replace('+', '-').Replace('/', '_').TrimEnd('='); private static QrSessionDto Session(OrderingPoint p, OrderingSession s) => new(s.Id, p.Id, p.BranchId, p.PointType, p.LinkedTable?.Label ?? p.LinkedCarBay!.BayLabel, s.OpenedAt);
 }

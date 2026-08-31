@@ -18,6 +18,10 @@ public static class DefaultRolePermissions
                 PermissionKeys.InventoryAdjust,
                 PermissionKeys.ReportsBranchView,
                 PermissionKeys.UsersManage,
+                PermissionKeys.OrdersCreate,
+                PermissionKeys.OrdersCancel,
+                PermissionKeys.OrdersTransfer,
+                PermissionKeys.TablesManage,
             ],
             [RoleNames.GeneralManager] = PermissionKeys.All,
         };
