@@ -16,6 +16,15 @@ public static class PermissionKeys
     public const string AiManage = "ai.manage";
     public const string EmailManage = "email.manage";
     public const string ReceiptManage = "receipt.manage";
+    public const string OrdersCreate = "orders.create";
+    public const string OrdersCancel = "orders.cancel";
+    public const string CombosManage = "combos.manage";
+    public const string ModifiersManage = "modifiers.manage";
+    public const string TablesManage = "tables.manage";
+    public const string PrintingManage = "printing.manage";
+    public const string ClosedOrdersEdit = "closedOrders.edit";
+    public const string DebtPaymentsApprove = "debtPayments.approve";
+    public const string OrdersTransfer = "orders.transfer";
 
     public static readonly IReadOnlyList<string> All =
     [
@@ -33,5 +42,14 @@ public static class PermissionKeys
         AiManage,
         EmailManage,
         ReceiptManage,
+        OrdersCreate,
+        OrdersCancel,
+        CombosManage,
+        ModifiersManage,
+        TablesManage,
+        PrintingManage,
+        ClosedOrdersEdit,
+        DebtPaymentsApprove,
+        OrdersTransfer,
     ];
 }
