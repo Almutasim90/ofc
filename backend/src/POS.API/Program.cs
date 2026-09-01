@@ -68,7 +68,7 @@ static string? CleanEnvironmentValue(string name)
     var value = Environment.GetEnvironmentVariable(name)?.Trim();
     if (value?.Length >= 2 && ((value[0] == '"' && value[^1] == '"') || (value[0] == '\'' && value[^1] == '\'')))
         value = value[1..^1].Trim();
-    return value;
+    return string.IsNullOrWhiteSpace(value) ? null : value;
 }
 
 var supabaseUrl = CleanEnvironmentValue("SUPABASE_URL")?.TrimEnd('/');
@@ -90,6 +90,7 @@ var storageOptions = new SupabaseStorageOptions(supabaseUrl, supabaseSecretKey);
 
 builder.Services.AddInfrastructure(connectionString, jwtOptions, storageOptions);
 builder.Services.AddApplication();
+builder.Services.AddSingleton(new POS.Application.QrOrdering.QrTokenService(CleanEnvironmentValue("QR_SIGNING_SECRET") ?? jwtSecret));
 
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

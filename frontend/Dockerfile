@@ -13,6 +13,8 @@ COPY . .
 # ever deployed on a different origin.
 ARG VITE_API_URL=""
 ENV VITE_API_URL=$VITE_API_URL
+ARG VITE_PUBLIC_ORDER_URL=""
+ENV VITE_PUBLIC_ORDER_URL=$VITE_PUBLIC_ORDER_URL
 RUN npm run build
 
 # ---- runtime ----

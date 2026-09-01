@@ -14,6 +14,22 @@ namespace POS.Application.Tests;
 
 public class QrOrderingTests
 {
+    private const string SigningSecret = "qr-test-secret-that-is-longer-than-thirty-two-bytes";
+
+    [Fact]
+    public void Signed_token_round_trips_and_rejects_a_different_point()
+    {
+        var tokens = new QrTokenService(SigningSecret);
+        var pointId = Guid.NewGuid();
+        var token = tokens.Generate(pointId, 1);
+
+        Assert.True(tokens.Verify(pointId, 1, token));
+        Assert.False(tokens.Verify(Guid.NewGuid(), 1, token));
+        Assert.DoesNotContain('+', token);
+        Assert.DoesNotContain('/', token);
+        Assert.DoesNotContain('=', token);
+    }
+
     [Fact]
     public async Task Anonymous_scan_bypasses_only_capability_rooted_branch_filters()
     {
@@ -27,6 +43,29 @@ public class QrOrderingTests
         Assert.Equal(first.SessionId, second.SessionId);
         Assert.Empty(db.OrderingSessions);
         Assert.Single(db.OrderingSessions.IgnoreQueryFilters());
+    }
+
+    [Fact]
+    public async Task Signed_scan_rejects_tampering_and_regeneration_revokes_all_old_links()
+    {
+        await using var db = Db();
+        var point = Point(db, OrderingPointTypes.Table, "T1");
+        var service = Service(db);
+        var tokens = new QrTokenService(SigningSecret);
+        var signed = tokens.Generate(point.Id, point.QrTokenVersion);
+        var legacy = point.QrCodeToken;
+
+        var session = await service.ResolveSignedAsync(point.Id, signed, TestContext.Current.CancellationToken);
+        Assert.Equal(point.Id, session.PointId);
+        await Assert.ThrowsAsync<NotFoundException>(() => service.ResolveSignedAsync(point.Id, signed + "x", TestContext.Current.CancellationToken));
+
+        db.OrderingSessions.Remove(db.OrderingSessions.IgnoreQueryFilters().Single());
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        var regenerated = await service.RegenerateAsync(point.Id, TestContext.Current.CancellationToken);
+
+        Assert.NotEqual(signed, regenerated);
+        await Assert.ThrowsAsync<NotFoundException>(() => service.ResolveSignedAsync(point.Id, signed, TestContext.Current.CancellationToken));
+        await Assert.ThrowsAsync<NotFoundException>(() => service.ResolveAsync(legacy, TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -56,9 +95,9 @@ public class QrOrderingTests
         var channel = Channel(db, point.BranchId, "QR_TABLE");
         await SeedOpenOrder(db, point, session.SessionId, channel.Id);
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
-        var request = new AddQrOrderRequest(point.QrCodeToken, [new(item.Id, 1, null, [], [])]);
+        var request = new AddQrOrderRequest(session.AccessToken, [new(item.Id, 1, null, [], [])]);
 
-        await Assert.ThrowsAsync<NotFoundException>(() => service.AddAsync(session.SessionId, request with { QrCodeToken = "wrong" }, TestContext.Current.CancellationToken));
+        await Assert.ThrowsAsync<NotFoundException>(() => service.AddAsync(session.SessionId, request with { AccessToken = "wrong" }, TestContext.Current.CancellationToken));
         await service.AddAsync(session.SessionId, request, TestContext.Current.CancellationToken);
         await service.AddAsync(session.SessionId, request, TestContext.Current.CancellationToken);
 
@@ -79,7 +118,7 @@ public class QrOrderingTests
         db.RestaurantOrders.Add(order);
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        await Assert.ThrowsAsync<ValidationException>(() => Service(db).ConfirmAsync(order.Id, new(session.SessionId, point.QrCodeToken), TestContext.Current.CancellationToken));
+        await Assert.ThrowsAsync<ValidationException>(() => Service(db).ConfirmAsync(order.Id, new(session.SessionId, session.AccessToken), TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -91,7 +130,7 @@ public class QrOrderingTests
         {
             var point = Point(seed, OrderingPointTypes.Table, "T1");
             sessionId = (await Service(seed).ResolveAsync(point.QrCodeToken, TestContext.Current.CancellationToken)).SessionId;
-            token = point.QrCodeToken;
+            token = (await seed.OrderingSessions.SingleAsync(TestContext.Current.CancellationToken)).AccessToken;
             itemId = MenuItem(seed).Id;
             var channel = Channel(seed, point.BranchId, "QR_TABLE");
             await SeedOpenOrder(seed, point, sessionId, channel.Id);
@@ -124,7 +163,7 @@ public class QrOrderingTests
         db.Warehouses.Add(new() { Id = Guid.NewGuid(), BranchId = point.BranchId, NameAr = "مخزن", NameEn = "Warehouse", IsDefault = true });
         db.PrinterConfigs.Add(new() { Id = Guid.NewGuid(), BranchId = point.BranchId, IpAddress = "127.0.0.1", Port = 9100, IsDefault = true, IsActive = true });
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
-        var request = new AddQrOrderRequest(point.QrCodeToken, [new(item.Id, 1, null, [], [])]);
+        var request = new AddQrOrderRequest(session.AccessToken, [new(item.Id, 1, null, [], [])]);
         var created = await service.AddAsync(session.SessionId, request, TestContext.Current.CancellationToken);
         var order = await db.RestaurantOrders.Include(x => x.Payments).SingleAsync(x => x.Id == created.Id, TestContext.Current.CancellationToken);
         order.Status = RestaurantOrderStatuses.Paid;
@@ -133,12 +172,12 @@ public class QrOrderingTests
         db.OrderPayments.Add(payment);
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        await service.ConfirmAsync(order.Id, new(session.SessionId, point.QrCodeToken), TestContext.Current.CancellationToken);
+        await service.ConfirmAsync(order.Id, new(session.SessionId, session.AccessToken), TestContext.Current.CancellationToken);
 
         Assert.Equal(RestaurantOrderStatuses.Sent, order.Status);
         Assert.True(printer.SendCount >= 2);
         var printCount = printer.SendCount;
-        await service.ConfirmAsync(order.Id, new(session.SessionId, point.QrCodeToken), TestContext.Current.CancellationToken);
+        await service.ConfirmAsync(order.Id, new(session.SessionId, session.AccessToken), TestContext.Current.CancellationToken);
         Assert.Equal(printCount, printer.SendCount);
         await Assert.ThrowsAsync<ValidationException>(() => service.AddAsync(session.SessionId, request, TestContext.Current.CancellationToken));
         Assert.Single(db.RestaurantOrders);
@@ -153,11 +192,11 @@ public class QrOrderingTests
         var session = await service.ResolveAsync(point.QrCodeToken, TestContext.Current.CancellationToken);
         db.RestaurantOrders.Add(new() { Id = Guid.NewGuid(), BranchId = point.BranchId, OrderingSessionId = session.SessionId, Status = RestaurantOrderStatuses.Paid });
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
-        var old = point.QrCodeToken;
+        var physicalToken = new QrTokenService(SigningSecret).Generate(point.Id, point.QrTokenVersion);
 
         await service.CloseAsync(session.SessionId, TestContext.Current.CancellationToken);
 
-        Assert.NotEqual(old, point.QrCodeToken);
+        Assert.True(new QrTokenService(SigningSecret).Verify(point.Id, point.QrTokenVersion, physicalToken));
         Assert.Equal(OrderingSessionStatuses.Closed, db.OrderingSessions.Single().Status);
     }
 
@@ -176,7 +215,7 @@ public class QrOrderingTests
     private static QrOrderingService Service(AppDbContext db, ICurrentUserService? user = null, Printer? printer = null)
     {
         user ??= new User();
-        return new(db, new OrderPrintingService(db, printer ?? new Printer(), new RestaurantInventoryService(db, user)), user);
+        return new(db, new OrderPrintingService(db, printer ?? new Printer(), new RestaurantInventoryService(db, user)), user, new QrTokenService(SigningSecret));
     }
 
     private static OrderingPoint Point(AppDbContext db, string type, string label)

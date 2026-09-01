@@ -50,6 +50,8 @@ SUPABASE_SECRET_KEY=sb_secret_...
 JWT_SECRET=ضع_هنا_قيمة_عشوائية_طويلة_جداً
 JWT_ISSUER=POS.API
 JWT_AUDIENCE=POS.Client
+QR_SIGNING_SECRET=ضع_هنا_قيمة_عشوائية_ثابتة_بطول_32_بايت_على_الأقل
+PUBLIC_ORDER_URL=https://ofc.almutasim.site
 RUN_MIGRATIONS_ON_STARTUP=true
 
 SMTP_HOST=

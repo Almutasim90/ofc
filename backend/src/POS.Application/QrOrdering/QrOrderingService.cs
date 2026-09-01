@@ -10,11 +10,16 @@ using POS.Domain.Entities;
 
 namespace POS.Application.QrOrdering;
 
-public class QrOrderingService(IAppDbContext db, OrderPrintingService printing, ICurrentUserService currentUser)
+public class QrOrderingService(IAppDbContext db, OrderPrintingService printing, ICurrentUserService currentUser, QrTokenService qrTokens)
 {
     private static readonly ConcurrentDictionary<Guid, SemaphoreSlim> SessionLocks = new();
     public Task<List<CarPickupBayDto>> GetBaysAsync(Guid branchId, CancellationToken ct = default) => db.CarPickupBays.Where(x => x.BranchId == ScopedBranch(branchId)).OrderBy(x => x.BayLabel).Select(x => new CarPickupBayDto(x.Id, x.BranchId, x.BayLabel, x.IsActive)).ToListAsync(ct);
-    public Task<List<OrderingPointDto>> GetPointsAsync(Guid branchId, CancellationToken ct = default) => db.OrderingPoints.Where(x => x.BranchId == ScopedBranch(branchId)).OrderBy(x => x.PointType).Select(x => new OrderingPointDto(x.Id, x.BranchId, x.PointType, x.LinkedTableId, x.LinkedCarBayId, x.QrCodeToken, x.IsActive, x.LinkedTable != null ? x.LinkedTable.Label : x.LinkedCarBay!.BayLabel, x.Sessions.Where(s => s.Status == OrderingSessionStatuses.Open).Select(s => (Guid?)s.Id).FirstOrDefault())).ToListAsync(ct);
+    public async Task<List<OrderingPointDto>> GetPointsAsync(Guid branchId, CancellationToken ct = default)
+    {
+        var rows = await db.OrderingPoints.Where(x => x.BranchId == ScopedBranch(branchId)).OrderBy(x => x.PointType)
+            .Select(x => new { Point = x, Label = x.LinkedTable != null ? x.LinkedTable.Label : x.LinkedCarBay!.BayLabel, SessionId = x.Sessions.Where(s => s.Status == OrderingSessionStatuses.Open).Select(s => (Guid?)s.Id).FirstOrDefault() }).ToListAsync(ct);
+        return rows.Select(x => new OrderingPointDto(x.Point.Id, x.Point.BranchId, x.Point.PointType, x.Point.LinkedTableId, x.Point.LinkedCarBayId, qrTokens.Generate(x.Point.Id, x.Point.QrTokenVersion), x.Point.IsActive, x.Label, x.SessionId)).ToList();
+    }
 
     public async Task<CarPickupBayDto> SaveBayAsync(Guid? id, SaveCarPickupBayRequest request, CancellationToken ct = default)
     {
@@ -37,27 +42,50 @@ public class QrOrderingService(IAppDbContext db, OrderPrintingService printing, 
         point.PointType = request.PointType; point.LinkedTableId = request.LinkedTableId; point.LinkedCarBayId = request.LinkedCarBayId; point.IsActive = request.IsActive;
         await db.SaveChangesAsync(ct);
         var label = request.PointType == OrderingPointTypes.Table ? (await db.RestaurantTables.FirstAsync(x => x.Id == request.LinkedTableId, ct)).Label : (await db.CarPickupBays.FirstAsync(x => x.Id == request.LinkedCarBayId, ct)).BayLabel;
-        return new(point.Id, point.BranchId, point.PointType, point.LinkedTableId, point.LinkedCarBayId, point.QrCodeToken, point.IsActive, label, null);
+        return new(point.Id, point.BranchId, point.PointType, point.LinkedTableId, point.LinkedCarBayId, qrTokens.Generate(point.Id, point.QrTokenVersion), point.IsActive, label, null);
     }
 
     public async Task<string> RegenerateAsync(Guid id, CancellationToken ct = default)
     {
         var point = await db.OrderingPoints.FirstOrDefaultAsync(x => x.Id == id, ct) ?? throw new NotFoundException("Ordering point not found."); ScopedBranch(point.BranchId);
         if (await db.OrderingSessions.AnyAsync(x => x.OrderingPointId == id && x.Status == OrderingSessionStatuses.Open, ct)) throw new ValidationException("Close the active session before regenerating its QR code.");
-        point.QrCodeToken = Token(); await db.SaveChangesAsync(ct); return point.QrCodeToken;
+        point.QrTokenVersion++; point.QrCodeToken = Token(); await db.SaveChangesAsync(ct); return qrTokens.Generate(point.Id, point.QrTokenVersion);
     }
 
     public async Task<QrSessionDto> ResolveAsync(string token, CancellationToken ct = default)
     {
         var point = await ActivePoint(token, ct);
+        return await ResolvePoint(point, ct);
+    }
+
+    public async Task<QrSessionDto> ResolveSignedAsync(Guid pointId, string token, CancellationToken ct = default)
+    {
+        var point = await ActivePoint(pointId, token, ct);
+        return await ResolvePoint(point, ct);
+    }
+
+    private async Task<QrSessionDto> ResolvePoint(OrderingPoint point, CancellationToken ct)
+    {
         var session = await db.OrderingSessions.IgnoreQueryFilters().FirstOrDefaultAsync(x => x.OrderingPointId == point.Id && x.Status == OrderingSessionStatuses.Open, ct);
         if (session is null)
         {
-            session = new() { Id = Guid.NewGuid(), OrderingPointId = point.Id, Status = OrderingSessionStatuses.Open, OpenedAt = DateTime.UtcNow }; db.OrderingSessions.Add(session);
+            session = new() { Id = Guid.NewGuid(), OrderingPointId = point.Id, AccessToken = Token(), Status = OrderingSessionStatuses.Open, OpenedAt = DateTime.UtcNow }; db.OrderingSessions.Add(session);
             try { await db.SaveChangesAsync(ct); }
             catch (DbUpdateException) { db.OrderingSessions.Remove(session); session = await db.OrderingSessions.IgnoreQueryFilters().FirstAsync(x => x.OrderingPointId == point.Id && x.Status == OrderingSessionStatuses.Open, ct); }
         }
+        if (string.IsNullOrWhiteSpace(session.AccessToken)) { session.AccessToken = Token(); await db.SaveChangesAsync(ct); }
         return Session(point, session);
+    }
+
+    public async Task<List<QrMenuCategoryDto>> GetMenuAsync(Guid sessionId, string accessToken, CancellationToken ct = default)
+    {
+        var session = await OpenSession(sessionId, accessToken, ct);
+        var branchId = session.OrderingPoint.BranchId;
+        var disabled = db.CategoryBranchAvailabilities.IgnoreQueryFilters().Where(x => x.BranchId == branchId && !x.IsAvailable).Select(x => x.CategoryId);
+        var categories = await db.MenuCategories.AsNoTracking().Where(x => x.IsActive && !disabled.Contains(x.Id)).OrderBy(x => x.SortOrder).ThenBy(x => x.NameEn).ToListAsync(ct);
+        var ids = categories.Select(x => x.Id).ToList();
+        var items = await db.MenuItems.AsNoTracking().Where(x => x.IsActive && ids.Contains(x.CategoryId)).OrderBy(x => x.SortOrder).ThenBy(x => x.NameEn).ToListAsync(ct);
+        return categories.Select(x => new QrMenuCategoryDto(x.Id, x.NameAr, x.NameEn, items.Where(i => i.CategoryId == x.Id).Select(i => new QrMenuItemDto(i.Id, i.CategoryId, i.NameAr, i.NameEn, i.Kind, i.BasePrice, i.ImageUrl)).ToList())).Where(x => x.Items.Count > 0).ToList();
     }
 
     public async Task<RestaurantOrderDto> AddAsync(Guid sessionId, AddQrOrderRequest request, CancellationToken ct = default)
@@ -67,7 +95,7 @@ public class QrOrderingService(IAppDbContext db, OrderPrintingService printing, 
         await gate.WaitAsync(ct);
         try
         {
-        var session = await OpenSession(sessionId, request.QrCodeToken, ct); var point = session.OrderingPoint;
+        var session = await OpenSession(sessionId, request.AccessToken ?? request.QrCodeToken ?? string.Empty, ct); var point = session.OrderingPoint;
         var channelCode = point.PointType == OrderingPointTypes.Table ? "QR_TABLE" : "QR_CAR";
         var availability = await db.BranchSalesChannelAvailabilities.IgnoreQueryFilters().Include(x => x.SalesChannel).FirstOrDefaultAsync(x => x.BranchId == point.BranchId && x.SalesChannel.Code == channelCode && x.SalesChannel.IsActive && x.IsEnabled, ct) ?? throw new ValidationException("The QR sales channel is unavailable at this branch.");
         var typeCode = point.PointType == OrderingPointTypes.Table ? "DINE_IN" : "CAR_PICKUP"; var type = await db.OrderTypes.FirstAsync(x => x.Code == typeCode, ct);
@@ -93,7 +121,7 @@ public class QrOrderingService(IAppDbContext db, OrderPrintingService printing, 
         await gate.WaitAsync(ct);
         try
         {
-        var session = await OpenSession(request.SessionId, request.QrCodeToken, ct);
+        var session = await OpenSession(request.SessionId, request.AccessToken ?? request.QrCodeToken ?? string.Empty, ct);
         var order = await db.RestaurantOrders.IgnoreQueryFilters().Include(x => x.Payments).FirstOrDefaultAsync(x => x.Id == orderId && x.OrderingSessionId == session.Id && x.BranchId == session.OrderingPoint.BranchId, ct) ?? throw new NotFoundException("QR order not found.");
         if (order.Status == RestaurantOrderStatuses.Sent) return;
         var config = await db.BranchSalesChannelAvailabilities.IgnoreQueryFilters().Include(x => x.SalesChannel).FirstOrDefaultAsync(x => x.BranchId == order.BranchId && x.SalesChannelId == order.SalesChannelId && x.IsEnabled && x.SalesChannel.IsActive, ct) ?? throw new ValidationException("The QR sales channel is disabled.");
@@ -108,7 +136,7 @@ public class QrOrderingService(IAppDbContext db, OrderPrintingService printing, 
         var session = await db.OrderingSessions.Include(x => x.OrderingPoint).FirstOrDefaultAsync(x => x.Id == sessionId && x.Status == OrderingSessionStatuses.Open, ct) ?? throw new NotFoundException("Open session not found."); ScopedBranch(session.OrderingPoint.BranchId);
         var order = await db.RestaurantOrders.IgnoreQueryFilters().Include(x => x.Payments).FirstOrDefaultAsync(x => x.OrderingSessionId == sessionId, ct);
         if (order is not null && order.Payments.Sum(x => x.Amount) < order.GrandTotal) throw new ValidationException("The invoice must be fully settled before closing the session.");
-        session.Status = OrderingSessionStatuses.Closed; session.ClosedAt = DateTime.UtcNow; session.OrderingPoint.QrCodeToken = Token(); await db.SaveChangesAsync(ct);
+        session.Status = OrderingSessionStatuses.Closed; session.ClosedAt = DateTime.UtcNow; await db.SaveChangesAsync(ct);
         SessionLocks.TryRemove(sessionId, out _);
     }
 
@@ -153,7 +181,7 @@ public class QrOrderingService(IAppDbContext db, OrderPrintingService printing, 
         if (order.Status is RestaurantOrderStatuses.Paid or RestaurantOrderStatuses.Closed) throw new ValidationException("Paid or closed orders cannot be transferred.");
         var point = await db.OrderingPoints.FirstOrDefaultAsync(x => x.Id == newOrderingPointId && x.IsActive && x.BranchId == order.BranchId, ct) ?? throw new ValidationException("The target ordering point is inactive or belongs to another branch.");
         var session = await db.OrderingSessions.FirstOrDefaultAsync(x => x.OrderingPointId == point.Id && x.Status == OrderingSessionStatuses.Open, ct);
-        if (session is null) { session = new() { Id = Guid.NewGuid(), OrderingPointId = point.Id, Status = OrderingSessionStatuses.Open, OpenedAt = DateTime.UtcNow }; db.OrderingSessions.Add(session); }
+        if (session is null) { session = new() { Id = Guid.NewGuid(), OrderingPointId = point.Id, AccessToken = Token(), Status = OrderingSessionStatuses.Open, OpenedAt = DateTime.UtcNow }; db.OrderingSessions.Add(session); }
         else if (await db.RestaurantOrders.AnyAsync(x => x.OrderingSessionId == session.Id && x.Id != order.Id, ct)) throw new ValidationException("The target ordering point already has another invoice.");
         var previousSessionId = order.OrderingSessionId; order.OrderingSessionId = session.Id;
         db.OrderEditLogs.Add(new() { Id = Guid.NewGuid(), OrderId = order.Id, UserId = userId, EditType = "Transferred", Notes = $"{notes?.Trim()} From session {previousSessionId?.ToString() ?? "none"} to point {newOrderingPointId}".Trim(), CreatedAt = DateTime.UtcNow });
@@ -162,7 +190,7 @@ public class QrOrderingService(IAppDbContext db, OrderPrintingService printing, 
 
     private async Task<OrderingSession> OpenSession(Guid sessionId, string token, CancellationToken ct)
     {
-        var session = await db.OrderingSessions.IgnoreQueryFilters().Include(x => x.OrderingPoint).ThenInclude(x => x.Branch).Include(x => x.OrderingPoint).ThenInclude(x => x.LinkedTable).Include(x => x.OrderingPoint).ThenInclude(x => x.LinkedCarBay).FirstOrDefaultAsync(x => x.Id == sessionId && x.Status == OrderingSessionStatuses.Open && x.OrderingPoint.QrCodeToken == token, ct) ?? throw new NotFoundException("Open ordering session not found.");
+        var session = await db.OrderingSessions.IgnoreQueryFilters().Include(x => x.OrderingPoint).ThenInclude(x => x.Branch).Include(x => x.OrderingPoint).ThenInclude(x => x.LinkedTable).Include(x => x.OrderingPoint).ThenInclude(x => x.LinkedCarBay).FirstOrDefaultAsync(x => x.Id == sessionId && x.Status == OrderingSessionStatuses.Open && x.AccessToken == token, ct) ?? throw new NotFoundException("Open ordering session not found.");
         ValidateActivePoint(session.OrderingPoint);
         if (session.OrderingPoint.PointType == OrderingPointTypes.CarBay && !await CarPickupEnabled(session.OrderingPoint.BranchId, ct)) throw new ValidationException("Car pickup is disabled at this branch.");
         return session;
@@ -171,6 +199,15 @@ public class QrOrderingService(IAppDbContext db, OrderPrintingService printing, 
     private async Task<OrderingPoint> ActivePoint(string token, CancellationToken ct)
     {
         var point = await db.OrderingPoints.IgnoreQueryFilters().Include(x => x.Branch).Include(x => x.LinkedTable).Include(x => x.LinkedCarBay).FirstOrDefaultAsync(x => x.QrCodeToken == token, ct) ?? throw new NotFoundException("QR code is invalid or disabled.");
+        ValidateActivePoint(point);
+        if (point.PointType == OrderingPointTypes.CarBay && !await CarPickupEnabled(point.BranchId, ct)) throw new NotFoundException("QR code is invalid or disabled.");
+        return point;
+    }
+
+    private async Task<OrderingPoint> ActivePoint(Guid pointId, string token, CancellationToken ct)
+    {
+        var point = await db.OrderingPoints.IgnoreQueryFilters().Include(x => x.Branch).Include(x => x.LinkedTable).Include(x => x.LinkedCarBay).FirstOrDefaultAsync(x => x.Id == pointId, ct) ?? throw new NotFoundException("QR code is invalid or disabled.");
+        if (!qrTokens.Verify(point.Id, point.QrTokenVersion, token)) throw new NotFoundException("QR code is invalid or disabled.");
         ValidateActivePoint(point);
         if (point.PointType == OrderingPointTypes.CarBay && !await CarPickupEnabled(point.BranchId, ct)) throw new NotFoundException("QR code is invalid or disabled.");
         return point;
@@ -185,5 +222,5 @@ public class QrOrderingService(IAppDbContext db, OrderPrintingService printing, 
     private Guid ScopedBranch(Guid requested) { if (!currentUser.BypassBranchFilter && currentUser.BranchId != requested) throw new ValidationException("You do not have access to this branch."); return currentUser.BypassBranchFilter ? requested : currentUser.BranchId ?? throw new ValidationException("A branch assignment is required."); }
     private static void ValidatePoint(SaveOrderingPointRequest request) { if (!OrderingPointTypes.All.Contains(request.PointType) || (request.PointType == OrderingPointTypes.Table) != (request.LinkedTableId is not null) || (request.PointType == OrderingPointTypes.CarBay) != (request.LinkedCarBayId is not null)) throw new ValidationException("Ordering point link does not match its type."); }
     private static string Token() => Convert.ToBase64String(RandomNumberGenerator.GetBytes(32)).Replace('+', '-').Replace('/', '_').TrimEnd('=');
-    private static QrSessionDto Session(OrderingPoint point, OrderingSession session) => new(session.Id, point.Id, point.BranchId, point.PointType, point.LinkedTable?.Label ?? point.LinkedCarBay!.BayLabel, session.OpenedAt);
+    private static QrSessionDto Session(OrderingPoint point, OrderingSession session) => new(session.Id, point.Id, point.BranchId, point.PointType, point.LinkedTable?.Label ?? point.LinkedCarBay!.BayLabel, session.OpenedAt, session.AccessToken);
 }

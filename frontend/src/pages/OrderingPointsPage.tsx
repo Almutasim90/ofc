@@ -1,3 +1,54 @@
-import{useEffect,useState}from'react';import{useTranslation}from'react-i18next';import QRCode from'qrcode';import{api,ApiError}from'../api/client';import type{BranchDto,CarPickupBayDto,OrderingPointDto,RestaurantTableDto}from'../api/types';import{useToast}from'../components/ToastContext';
-function QrImage({token,label}:{token:string;label:string}){const[src,setSrc]=useState('');const url=`${location.origin}/qr/${token}`;useEffect(()=>{void QRCode.toDataURL(url,{width:220,margin:2,errorCorrectionLevel:'M'}).then(setSrc)},[url]);return <div className="grid justify-items-center gap-2">{src&&<img src={src} alt={`QR ${label}`}/>}<a download={`OFC-${label}.png`} href={src}>{label}</a></div>}
-export default function OrderingPointsPage(){const{t,i18n}=useTranslation();const toast=useToast();const[branches,setBranches]=useState<BranchDto[]>([]),[branchId,setBranchId]=useState(''),[tables,setTables]=useState<RestaurantTableDto[]>([]),[bays,setBays]=useState<CarPickupBayDto[]>([]),[points,setPoints]=useState<OrderingPointDto[]>([]),[bayLabel,setBayLabel]=useState(''),[type,setType]=useState<'TABLE'|'CAR_BAY'>('TABLE'),[linkedId,setLinkedId]=useState('');const name=(x:BranchDto)=>i18n.language==='ar'?x.nameAr:x.nameEn;const load=async(id:string)=>{const[t,b,p]=await Promise.all([api.get<RestaurantTableDto[]>(`/api/restaurant-catalog/tables?branchId=${id}`),api.get<CarPickupBayDto[]>(`/api/ordering-points/bays?branchId=${id}`),api.get<OrderingPointDto[]>(`/api/ordering-points?branchId=${id}`)]);setTables(t);setBays(b);setPoints(p)};useEffect(()=>{void api.get<BranchDto[]>('/api/branches').then(x=>{setBranches(x);setBranchId(x[0]?.id??'')})},[]);useEffect(()=>{if(branchId)void load(branchId)},[branchId]);const addBay=async()=>{try{await api.post('/api/ordering-points/bays',{branchId,bayLabel,isActive:true});setBayLabel('');await load(branchId)}catch(e){toast.error(e instanceof ApiError?e.message:t('common.saveError'))}};const addPoint=async()=>{try{await api.post('/api/ordering-points',{branchId,pointType:type,linkedTableId:type==='TABLE'?linkedId:null,linkedCarBayId:type==='CAR_BAY'?linkedId:null,isActive:true});setLinkedId('');await load(branchId);toast.success(t('orderingPoints.created'))}catch(e){toast.error(e instanceof ApiError?e.message:t('common.saveError'))}};const regenerate=async(id:string)=>{try{await api.post(`/api/ordering-points/${id}/regenerate`,{});await load(branchId);toast.success(t('orderingPoints.regenerated'))}catch(e){toast.error(e instanceof ApiError?e.message:t('common.saveError'))}};const close=async(id:string)=>{try{await api.post(`/api/ordering-points/sessions/${id}/close`,{});await load(branchId);toast.success(t('orderingPoints.closed'))}catch(e){toast.error(e instanceof ApiError?e.message:t('common.saveError'))}};const choices=type==='TABLE'?tables.filter(x=>x.isActive):bays.filter(x=>x.isActive);return <section><h1>{t('orderingPoints.title')}</h1><div className="table-toolbar"><select value={branchId} onChange={e=>setBranchId(e.target.value)}>{branches.map(x=><option key={x.id} value={x.id}>{name(x)}</option>)}</select></div><div className="grid gap-6 lg:grid-cols-2"><div className="settings-card"><h2>{t('orderingPoints.carBays')}</h2><div className="table-toolbar"><input value={bayLabel} onChange={e=>setBayLabel(e.target.value)} placeholder={t('orderingPoints.bayLabel')}/><button disabled={!bayLabel.trim()} onClick={()=>void addBay()}>{t('common.add')}</button></div>{bays.map(x=><div key={x.id}>{x.bayLabel}</div>)}</div><div className="settings-card"><h2>{t('orderingPoints.addPoint')}</h2><select value={type} onChange={e=>{setType(e.target.value as 'TABLE'|'CAR_BAY');setLinkedId('')}}><option value="TABLE">{t('orderingPoints.table')}</option><option value="CAR_BAY">{t('orderingPoints.carBay')}</option></select><select value={linkedId} onChange={e=>setLinkedId(e.target.value)}><option value="">{t('common.select')}</option>{choices.map(x=><option key={x.id} value={x.id}>{'label'in x?x.label:x.bayLabel}</option>)}</select><button disabled={!linkedId} onClick={()=>void addPoint()}>{t('common.add')}</button></div></div><div className="settings-card"><h2>{t('orderingPoints.codes')}</h2><div className="grid gap-6 md:grid-cols-3">{points.map(x=><div key={x.id}><QrImage token={x.qrCodeToken} label={x.label}/><button onClick={()=>void regenerate(x.id)}>{t('orderingPoints.regenerate')}</button>{x.activeSessionId&&<button onClick={()=>void close(x.activeSessionId!)}>{t('orderingPoints.closeSession')}</button>}</div>)}</div></div></section>}
+import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import QRCode from 'qrcode'
+import { api, ApiError } from '../api/client'
+import type { BranchDto, CarPickupBayDto, OrderingPointDto, RestaurantTableDto } from '../api/types'
+import { useToast } from '../components/ToastContext'
+
+function QrImage({ pointId, token, label }: { pointId: string; token: string; label: string }) {
+  const [src, setSrc] = useState('')
+  const origin = (import.meta.env.VITE_PUBLIC_ORDER_URL || location.origin).replace(/\/$/, '')
+  const url = `${origin}/t/${pointId}?token=${encodeURIComponent(token)}`
+  useEffect(() => { void QRCode.toDataURL(url, { width: 220, margin: 2, errorCorrectionLevel: 'M' }).then(setSrc) }, [url])
+  return <div className="grid justify-items-center gap-2">{src && <img src={src} alt={`QR ${label}`} />}<a download={`OFC-${label}.png`} href={src}>{label}</a><small className="max-w-64 break-all text-muted">{url}</small></div>
+}
+
+export default function OrderingPointsPage() {
+  const { t, i18n } = useTranslation()
+  const toast = useToast()
+  const [branches, setBranches] = useState<BranchDto[]>([])
+  const [branchId, setBranchId] = useState('')
+  const [tables, setTables] = useState<RestaurantTableDto[]>([])
+  const [bays, setBays] = useState<CarPickupBayDto[]>([])
+  const [points, setPoints] = useState<OrderingPointDto[]>([])
+  const [bayLabel, setBayLabel] = useState('')
+  const [type, setType] = useState<'TABLE' | 'CAR_BAY'>('TABLE')
+  const [linkedId, setLinkedId] = useState('')
+  const branchName = (branch: BranchDto) => i18n.language === 'ar' ? branch.nameAr : branch.nameEn
+  const load = async (id: string) => {
+    const [nextTables, nextBays, nextPoints] = await Promise.all([
+      api.get<RestaurantTableDto[]>(`/api/restaurant-catalog/tables?branchId=${id}`),
+      api.get<CarPickupBayDto[]>(`/api/ordering-points/bays?branchId=${id}`),
+      api.get<OrderingPointDto[]>(`/api/ordering-points?branchId=${id}`),
+    ])
+    setTables(nextTables); setBays(nextBays); setPoints(nextPoints)
+  }
+  useEffect(() => { void api.get<BranchDto[]>('/api/branches').then(rows => { setBranches(rows); setBranchId(rows[0]?.id ?? '') }) }, [])
+  useEffect(() => { if (branchId) void load(branchId) }, [branchId])
+  const report = (error: unknown) => toast.error(error instanceof ApiError ? error.message : t('common.saveError'))
+  const addBay = async () => { try { await api.post('/api/ordering-points/bays', { branchId, bayLabel, isActive: true }); setBayLabel(''); await load(branchId) } catch (error) { report(error) } }
+  const addPoint = async () => { try { await api.post('/api/ordering-points', { branchId, pointType: type, linkedTableId: type === 'TABLE' ? linkedId : null, linkedCarBayId: type === 'CAR_BAY' ? linkedId : null, isActive: true }); setLinkedId(''); await load(branchId); toast.success(t('orderingPoints.created')) } catch (error) { report(error) } }
+  const regenerate = async (id: string) => { try { await api.post(`/api/ordering-points/${id}/regenerate`, {}); await load(branchId); toast.success(t('orderingPoints.regenerated')) } catch (error) { report(error) } }
+  const close = async (id: string) => { try { await api.post(`/api/ordering-points/sessions/${id}/close`, {}); await load(branchId); toast.success(t('orderingPoints.closed')) } catch (error) { report(error) } }
+  const options = type === 'TABLE'
+    ? tables.filter(x => x.isActive).map(x => ({ id: x.id, label: x.label }))
+    : bays.filter(x => x.isActive).map(x => ({ id: x.id, label: x.bayLabel }))
+
+  return <section><h1>{t('orderingPoints.title')}</h1>
+    <div className="settings-card grid gap-4"><select value={branchId} onChange={event => setBranchId(event.target.value)}>{branches.map(branch => <option key={branch.id} value={branch.id}>{branchName(branch)}</option>)}</select>
+      <div className="table-toolbar"><input value={bayLabel} onChange={event => setBayLabel(event.target.value)} placeholder={t('orderingPoints.bayLabel')} /><button disabled={!bayLabel} onClick={addBay}>{t('common.add')}</button></div>
+      <div className="table-toolbar"><select value={type} onChange={event => { setType(event.target.value as 'TABLE' | 'CAR_BAY'); setLinkedId('') }}><option value="TABLE">{t('orderingPoints.table')}</option><option value="CAR_BAY">{t('orderingPoints.carBay')}</option></select><select value={linkedId} onChange={event => setLinkedId(event.target.value)}><option value="">—</option>{options.map(option => <option key={option.id} value={option.id}>{option.label}</option>)}</select><button disabled={!linkedId} onClick={addPoint}>{t('orderingPoints.addPoint')}</button></div>
+    </div>
+    <h2>{t('orderingPoints.codes')}</h2><div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">{points.map(point => <article className="settings-card" key={point.id}><QrImage pointId={point.id} token={point.qrToken} label={point.label} /><div className="modal-actions"><button className="button-secondary" onClick={() => regenerate(point.id)}>{t('orderingPoints.regenerate')}</button>{point.activeSessionId && <button onClick={() => close(point.activeSessionId!)}>{t('orderingPoints.closeSession')}</button>}</div></article>)}</div>
+  </section>
+}

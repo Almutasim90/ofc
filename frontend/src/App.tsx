@@ -49,6 +49,7 @@ function App() {
             <Routes>
               <Route path="/login" element={<LoginPage />} />
               <Route path="/qr/:token" element={<QrLandingPage />} />
+              <Route path="/t/:pointId" element={<QrLandingPage />} />
               <Route
                 path="/cashier"
                 element={

@@ -105,7 +105,7 @@ export default function Layout({ children }: { children: ReactNode }) {
     logout()
   }
 
-  if (!user || pathname === '/login') return <main>{children}</main>
+  if (!user || pathname === '/login' || pathname.startsWith('/qr/') || pathname.startsWith('/t/')) return <main>{children}</main>
 
   const operational = pathname === '/cashier'
   const navItems = ([

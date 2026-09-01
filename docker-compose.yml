@@ -14,6 +14,7 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       JWT_ISSUER: ${JWT_ISSUER:-POS.API}
       JWT_AUDIENCE: ${JWT_AUDIENCE:-POS.Client}
+      QR_SIGNING_SECRET: ${QR_SIGNING_SECRET:-}
       SMTP_HOST: ${SMTP_HOST:-}
       SMTP_PORT: ${SMTP_PORT:-587}
       SMTP_USERNAME: ${SMTP_USERNAME:-}
@@ -38,6 +39,7 @@ services:
       dockerfile: Dockerfile
       args:
         VITE_API_URL: ""
+        VITE_PUBLIC_ORDER_URL: ${PUBLIC_ORDER_URL:-}
     restart: unless-stopped
     depends_on:
       - api

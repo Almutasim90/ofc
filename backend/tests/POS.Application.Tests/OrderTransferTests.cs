@@ -47,7 +47,7 @@ public class OrderTransferTests
     {
         await using var db = Db();
         var (order, point) = Seed(db, RestaurantOrderStatuses.Open);
-        var session = new OrderingSession { Id = Guid.NewGuid(), OrderingPointId = point.Id, Status = OrderingSessionStatuses.Open, OpenedAt = DateTime.UtcNow };
+        var session = new OrderingSession { Id = Guid.NewGuid(), OrderingPointId = point.Id, AccessToken = Guid.NewGuid().ToString("N"), Status = OrderingSessionStatuses.Open, OpenedAt = DateTime.UtcNow };
         db.OrderingSessions.Add(session);
         db.RestaurantOrders.Add(new RestaurantOrder { Id = Guid.NewGuid(), BranchId = order.BranchId, OrderingSessionId = session.Id, Status = RestaurantOrderStatuses.Open });
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
@@ -74,7 +74,7 @@ public class OrderTransferTests
         return db;
     }
 
-    private static QrOrderingService Service(AppDbContext db) { var user = new User(); return new(db, new OrderPrintingService(db, new Printer(), new RestaurantInventoryService(db, user)), user); }
+    private static QrOrderingService Service(AppDbContext db) { var user = new User(); return new(db, new OrderPrintingService(db, new Printer(), new RestaurantInventoryService(db, user)), user, new QrTokenService("qr-test-secret-that-is-longer-than-thirty-two-bytes")); }
 
     private sealed class Printer : IRawPrinterClient
     {
