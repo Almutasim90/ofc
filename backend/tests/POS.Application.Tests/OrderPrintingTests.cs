@@ -27,6 +27,18 @@ public class OrderPrintingTests
         var bytes = EscPosDocument.Text("test"); Assert.Equal([0x1B, 0x40], bytes[..2]); Assert.Equal([0x1D, 0x56, 0x00], bytes[^3..]);
     }
 
+    [Fact]
+    public void Car_plate_is_printed_on_kitchen_ticket_and_receipt()
+    {
+        var order = Order(("Burger", null));
+        order.OrderType.Code = "CAR_PICKUP";
+        order.CarPlateNumber = "OMAN 1234";
+
+        var jobs = OrderPrintingService.BuildJobs(order, Printer("127.0.0.1"));
+
+        Assert.All(jobs, job => Assert.Contains("LOCATION OMAN 1234", Encoding.UTF8.GetString(job.Payload)));
+    }
+
     private static PrinterConfig Printer(string ip) => new() { Id = Guid.NewGuid(), IpAddress = ip, Port = 9100, IsActive = true };
     private static PrinterSection Section(string name, PrinterConfig printer) => new() { Id = Guid.NewGuid(), NameEn = name, NameAr = name, PrinterConfig = printer, PrinterConfigId = printer.Id };
     private static RestaurantOrder Order(params (string Name, PrinterSection? Section)[] lines)
