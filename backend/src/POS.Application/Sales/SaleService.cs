@@ -108,6 +108,8 @@ public class SaleService(IAppDbContext db, IDomainEventPublisher eventPublisher,
         {
             throw new ValidationException("The selected branch is unavailable.");
         }
+        if (existing is null && await db.BranchSalesChannelAvailabilities.AnyAsync(x => x.BranchId == request.BranchId && x.SalesChannelId == channelId && !x.IsEnabled, cancellationToken))
+            throw new ValidationException("The selected sales channel is disabled at this branch.");
 
         // A product with zero recipe rows for this branch sells with no stock deduction at
         // all (fresh/prepared-to-order items). Aggregate requirements across all lines first,

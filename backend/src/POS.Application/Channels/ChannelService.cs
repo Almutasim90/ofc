@@ -12,13 +12,13 @@ public class ChannelService(IAppDbContext db)
             .Select(c => new SalesChannelDto(c.Id, c.Code, c.NameAr, c.NameEn, c.LogoUrl, c.IsActive, c.IsInStore)).ToListAsync(ct);
     public async Task<SalesChannelDto> CreateAsync(UpsertSalesChannelRequest r, CancellationToken ct = default)
     {
-        ValidateCode(r.Code);var c = new SalesChannel { Id = Guid.NewGuid(), Code=r.Code.Trim().ToUpperInvariant(),NameAr = r.NameAr.Trim(), NameEn = r.NameEn.Trim(), LogoUrl = r.LogoUrl, IsActive = r.IsActive };
+        Validate(r);var c = new SalesChannel { Id = Guid.NewGuid(), Code=r.Code.Trim().ToUpperInvariant(),NameAr = r.NameAr.Trim(), NameEn = r.NameEn.Trim(), LogoUrl = r.LogoUrl, IsActive = r.IsActive };
         db.SalesChannels.Add(c); await db.SaveChangesAsync(ct); return ToDto(c);
     }
     public async Task<SalesChannelDto> UpdateAsync(Guid id, UpsertSalesChannelRequest r, CancellationToken ct = default)
     {
         var c = await db.SalesChannels.FirstOrDefaultAsync(x => x.Id == id, ct) ?? throw new NotFoundException("Channel not found.");
-        ValidateCode(r.Code);c.Code=r.Code.Trim().ToUpperInvariant();c.NameAr = r.NameAr.Trim(); c.NameEn = r.NameEn.Trim(); c.LogoUrl = r.LogoUrl;
+        Validate(r);c.Code=r.Code.Trim().ToUpperInvariant();c.NameAr = r.NameAr.Trim(); c.NameEn = r.NameEn.Trim(); c.LogoUrl = r.LogoUrl;
         if (!c.IsInStore) c.IsActive = r.IsActive;
         await db.SaveChangesAsync(ct); return ToDto(c);
     }
@@ -26,7 +26,7 @@ public class ChannelService(IAppDbContext db)
     {
         var c = await db.SalesChannels.FirstOrDefaultAsync(x => x.Id == id, ct) ?? throw new NotFoundException("Channel not found.");
         if (c.IsInStore) throw new ValidationException("The in-store channel cannot be deleted.");
-        if (await db.Sales.AnyAsync(s => s.ChannelId == id, ct)) c.IsActive = false;
+        if (await db.RestaurantOrders.AnyAsync(o => o.SalesChannelId == id, ct) || await db.Sales.AnyAsync(s => s.ChannelId == id, ct)) c.IsActive = false;
         else db.SalesChannels.Remove(c);
         await db.SaveChangesAsync(ct);
     }
@@ -40,8 +40,9 @@ public class ChannelService(IAppDbContext db)
         foreach (var p in request.Prices.Where(p => p.Price.HasValue)) db.ProductChannelPrices.Add(new ProductChannelPrice { ChannelId = id, ProductId = p.ProductId, Price = p.Price!.Value });
         await db.SaveChangesAsync(ct);
     }
-    public Task<List<BranchChannelAvailabilityDto>>GetAvailabilityAsync(Guid branchId,CancellationToken ct=default)=>db.SalesChannels.Where(x=>x.IsActive).OrderBy(x=>x.NameEn).Select(x=>new BranchChannelAvailabilityDto(branchId,x.Id,db.BranchSalesChannelAvailabilities.Where(a=>a.BranchId==branchId&&a.SalesChannelId==x.Id).Select(a=>a.IsEnabled).FirstOrDefault(),db.BranchSalesChannelAvailabilities.Where(a=>a.BranchId==branchId&&a.SalesChannelId==x.Id).Select(a=>a.RequiresPrepayment).FirstOrDefault())).ToListAsync(ct);
+    public Task<List<BranchChannelAvailabilityDto>>GetAvailabilityAsync(Guid branchId,CancellationToken ct=default)=>db.SalesChannels.Where(x=>x.IsActive).OrderBy(x=>x.NameEn).Select(x=>new BranchChannelAvailabilityDto(branchId,x.Id,!db.BranchSalesChannelAvailabilities.Any(a=>a.BranchId==branchId&&a.SalesChannelId==x.Id)||db.BranchSalesChannelAvailabilities.Any(a=>a.BranchId==branchId&&a.SalesChannelId==x.Id&&a.IsEnabled),db.BranchSalesChannelAvailabilities.Where(a=>a.BranchId==branchId&&a.SalesChannelId==x.Id).Select(a=>a.RequiresPrepayment).FirstOrDefault())).ToListAsync(ct);
     public async Task<BranchChannelAvailabilityDto>SetAvailabilityAsync(Guid branchId,Guid channelId,SetBranchChannelAvailabilityRequest request,CancellationToken ct=default){if(!await db.Branches.AnyAsync(x=>x.Id==branchId,ct)||!await db.SalesChannels.AnyAsync(x=>x.Id==channelId,ct))throw new NotFoundException("Branch or channel not found.");var row=await db.BranchSalesChannelAvailabilities.FirstOrDefaultAsync(x=>x.BranchId==branchId&&x.SalesChannelId==channelId,ct);if(row is null){row=new(){Id=Guid.NewGuid(),BranchId=branchId,SalesChannelId=channelId};db.BranchSalesChannelAvailabilities.Add(row);}row.IsEnabled=request.IsEnabled;row.RequiresPrepayment=request.RequiresPrepayment;await db.SaveChangesAsync(ct);return new(branchId,channelId,row.IsEnabled,row.RequiresPrepayment);}
     private static void ValidateCode(string code){var x=code?.Trim().ToUpperInvariant()??"";if(x.Length is <2 or >60||x.Any(c=>!(char.IsAsciiLetterUpper(c)||char.IsDigit(c)||c=='_')))throw new ValidationException("Channel code must use letters, numbers, and underscores.");}
+    private static void Validate(UpsertSalesChannelRequest request){ValidateCode(request.Code);if(string.IsNullOrWhiteSpace(request.NameAr)||string.IsNullOrWhiteSpace(request.NameEn))throw new ValidationException("Arabic and English channel names are required.");}
     private static SalesChannelDto ToDto(SalesChannel c) => new(c.Id,c.Code,c.NameAr, c.NameEn, c.LogoUrl, c.IsActive, c.IsInStore);
 }
