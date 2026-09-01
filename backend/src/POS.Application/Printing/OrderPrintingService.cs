@@ -2,11 +2,12 @@ using System.Text;
 using Microsoft.EntityFrameworkCore;
 using POS.Application.Abstractions;
 using POS.Application.Common;
+using POS.Application.RestaurantInventory;
 using POS.Domain.Entities;
 
 namespace POS.Application.Printing;
 
-public class OrderPrintingService(IAppDbContext db, IRawPrinterClient printer)
+public class OrderPrintingService(IAppDbContext db, IRawPrinterClient printer, RestaurantInventoryService inventory)
 {
     public async Task ConfirmAndPrintAsync(Guid orderId, CancellationToken ct = default)
     {
@@ -14,8 +15,8 @@ public class OrderPrintingService(IAppDbContext db, IRawPrinterClient printer)
         if (order.Status != RestaurantOrderStatuses.Open) throw new ValidationException("Only open orders can be confirmed.");
         var fallback = await db.PrinterConfigs.FirstOrDefaultAsync(x => x.BranchId == order.BranchId && x.IsDefault && x.IsActive, ct) ?? throw new ValidationException("An active default printer is required.");
         var jobs = BuildJobs(order, fallback);
+        await inventory.Confirm(orderId, ct);
         foreach (var job in jobs) await printer.SendAsync(job.IpAddress, job.Port, job.Payload, ct);
-        order.Status = RestaurantOrderStatuses.Sent; await db.SaveChangesAsync(ct);
     }
 
     public static IReadOnlyList<PrintJob> BuildJobs(RestaurantOrder order, PrinterConfig fallback)
@@ -25,8 +26,10 @@ public class OrderPrintingService(IAppDbContext db, IRawPrinterClient printer)
         var locationLine = string.IsNullOrWhiteSpace(location) ? string.Empty : $"\nLOCATION {location}";
         foreach (var group in activeItems.GroupBy(x => x.MenuItem.PrinterSection))
         {
-            var target = group.Key?.PrinterConfig is { IsActive: true } configured ? configured : fallback;
-            var heading = group.Key?.NameEn ?? "Kitchen";
+            var target = group.Key is { BranchId: var branchId, PrinterConfig.IsActive: true } && branchId == order.BranchId
+                ? group.Key.PrinterConfig
+                : fallback;
+            var heading = group.Key?.BranchId == order.BranchId ? group.Key.NameEn : "Kitchen";
             jobs.Add(new(target.IpAddress, target.Port, EscPosDocument.Text($"{heading}\nORDER #{order.OrderNumber}{locationLine}\n" + string.Join('\n', group.Select(x => $"{x.Quantity} x {x.MenuItemNameSnapshot}"))), "Kitchen"));
         }
         jobs.Add(new(fallback.IpAddress, fallback.Port, EscPosDocument.Text($"OFC\nRECEIPT #{order.OrderNumber}{locationLine}\n" + string.Join('\n', activeItems.Select(x => $"{x.Quantity} x {x.MenuItemNameSnapshot}  {x.LineTotal:0.000}")) + $"\nTOTAL {order.GrandTotal:0.000}"), "Receipt"));

@@ -6,7 +6,7 @@ using POS.Domain.Constants;
 
 namespace POS.API.Controllers;
 
-[ApiController, Route("api/printers"), Authorize, RequirePermission(PermissionKeys.ProductsManage)]
+[ApiController, Route("api/printers"), Authorize, RequirePermission(PermissionKeys.PrintingManage)]
 public class PrintersController(PrinterAdminService service) : ControllerBase
 {
     [HttpGet] public async Task<ActionResult<List<PrinterConfigDto>>> Get([FromQuery] Guid branchId, CancellationToken ct) => Ok(await service.GetConfigsAsync(branchId, ct));

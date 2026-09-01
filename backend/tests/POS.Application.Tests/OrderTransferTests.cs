@@ -3,6 +3,7 @@ using POS.Application.Abstractions;
 using POS.Application.Common;
 using POS.Application.Printing;
 using POS.Application.QrOrdering;
+using POS.Application.RestaurantInventory;
 using POS.Domain.Entities;
 using POS.Infrastructure.Persistence;
 using Xunit;
@@ -73,10 +74,19 @@ public class OrderTransferTests
         return db;
     }
 
-    private static QrOrderingService Service(AppDbContext db) => new(db, new OrderPrintingService(db, new Printer()));
+    private static QrOrderingService Service(AppDbContext db) => new(db, new OrderPrintingService(db, new Printer(), new RestaurantInventoryService(db, new User())));
 
     private sealed class Printer : IRawPrinterClient
     {
         public Task SendAsync(string ipAddress, int port, byte[] payload, CancellationToken cancellationToken = default) => Task.CompletedTask;
+    }
+
+    private sealed class User : ICurrentUserService
+    {
+        public Guid? UserId { get; } = Guid.NewGuid();
+        public Guid? BranchId => null;
+        public string? RoleName => null;
+        public IReadOnlyCollection<string> Permissions => [];
+        public bool BypassBranchFilter => true;
     }
 }

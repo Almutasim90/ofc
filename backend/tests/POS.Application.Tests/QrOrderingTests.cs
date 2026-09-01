@@ -4,6 +4,7 @@ using POS.Application.Abstractions;
 using POS.Application.Common;
 using POS.Application.Printing;
 using POS.Application.QrOrdering;
+using POS.Application.RestaurantInventory;
 using POS.Domain.Entities;
 using POS.Infrastructure.Persistence;
 using Xunit;
@@ -18,7 +19,8 @@ public class QrOrderingTests
     [Fact] public async Task Closing_paid_session_rotates_token() { await using var db = Db(); var p = Point(db, "TABLE", "T1"); var service = Service(db); var session = await service.ResolveAsync(p.QrCodeToken, TestContext.Current.CancellationToken); db.RestaurantOrders.Add(new() { Id = Guid.NewGuid(), OrderingSessionId = session.SessionId, Status = RestaurantOrderStatuses.Paid }); await db.SaveChangesAsync(TestContext.Current.CancellationToken); var old = p.QrCodeToken; await service.CloseAsync(session.SessionId, TestContext.Current.CancellationToken); Assert.NotEqual(old, p.QrCodeToken); Assert.Equal(OrderingSessionStatuses.Closed, db.OrderingSessions.Single().Status); }
     private static AppDbContext Db() { return Db(new DbContextOptionsBuilder<AppDbContext>().UseInMemoryDatabase(Guid.NewGuid().ToString()).Options); }
     private static AppDbContext Db(DbContextOptions<AppDbContext> options) { var db = new AppDbContext(options); db.Database.EnsureCreated(); return db; }
-    private static QrOrderingService Service(AppDbContext db) => new(db, new OrderPrintingService(db, new Printer()));
+    private static QrOrderingService Service(AppDbContext db) => new(db, new OrderPrintingService(db, new Printer(), new RestaurantInventoryService(db, new User())));
     private static OrderingPoint Point(AppDbContext db, string type, string label) { var branch = Guid.NewGuid(); var p = new OrderingPoint { Id = Guid.NewGuid(), BranchId = branch, PointType = type, QrCodeToken = Guid.NewGuid().ToString("N"), IsActive = true }; if (type == OrderingPointTypes.Table) { var t = new RestaurantTable { Id = Guid.NewGuid(), BranchId = branch, Label = label }; db.RestaurantTables.Add(t); p.LinkedTable = t; p.LinkedTableId = t.Id; } else { var b = new CarPickupBay { Id = Guid.NewGuid(), BranchId = branch, BayLabel = label }; db.CarPickupBays.Add(b); p.LinkedCarBay = b; p.LinkedCarBayId = b.Id; } db.OrderingPoints.Add(p); db.SaveChanges(); return p; }
     private sealed class Printer : IRawPrinterClient { public Task SendAsync(string ipAddress, int port, byte[] payload, CancellationToken cancellationToken = default) => Task.CompletedTask; }
+    private sealed class User : ICurrentUserService { public Guid? UserId { get; } = Guid.NewGuid(); public Guid? BranchId => null; public string? RoleName => null; public IReadOnlyCollection<string> Permissions => []; public bool BypassBranchFilter => true; }
 }

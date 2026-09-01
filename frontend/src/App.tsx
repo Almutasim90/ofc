@@ -113,7 +113,7 @@ function App() {
               <Route path="/restaurant-orders" element={<ProtectedRoute permission="orders.create"><RestaurantOrdersPage /></ProtectedRoute>} />
               <Route path="/order-cancellations" element={<ProtectedRoute permission="orders.cancel"><OrderCancellationsPage /></ProtectedRoute>} />
               <Route path="/restaurant-inventory" element={<ProtectedRoute permission="inventory.adjust"><RestaurantInventoryPage /></ProtectedRoute>} />
-              <Route path="/printers" element={<ProtectedRoute permission="products.manage"><PrintersPage /></ProtectedRoute>} />
+              <Route path="/printers" element={<ProtectedRoute permission="printing.manage"><PrintersPage /></ProtectedRoute>} />
               <Route path="/order-payments" element={<ProtectedRoute permission="orders.create"><OrderPaymentsPage /></ProtectedRoute>} />
               <Route path="/cash-shifts" element={<ProtectedRoute permission="sales.edit"><CashShiftsPage /></ProtectedRoute>} />
               <Route path="/ordering-points" element={<ProtectedRoute permission="tables.manage"><OrderingPointsPage /></ProtectedRoute>} />
