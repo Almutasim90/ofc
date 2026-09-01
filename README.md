@@ -51,3 +51,7 @@ Each branch defines `DefaultOpeningFloat`. A cashier normally opens a shift with
 ## Extension points
 
 Completed sales publish `SaleCompletedEvent`. Printing, KDS, and other integrations should be added as new domain-event handlers without modifying the sale transaction workflow.
+
+## Release readiness
+
+Use [`UAT-ROLLOUT.md`](UAT-ROLLOUT.md) for the real-branch acceptance matrix, evidence requirements, deployment sequence, rollback procedure, and branch expansion gate. Automated tests do not constitute branch sign-off.

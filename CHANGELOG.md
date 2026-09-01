@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-09-01
+
+- Reconciled dashboard and sales reports to paid/closed restaurant orders, order payments, menu items, sales channels, and order types.
+- Hardened anonymous QR capabilities, branch isolation, channel derivation, Car Pickup gating, grouped session concurrency, prepayment confirmation, and token redaction/rate limiting.
+- Added the Sprint 12 pilot UAT, deployment, rollback, evidence, and branch expansion runbook.
+
 ## 2026-08-31
 
 - Added branch-scoped ESC/POS TCP printer configuration and test printing.
