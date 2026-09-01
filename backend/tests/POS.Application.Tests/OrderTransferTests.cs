@@ -74,7 +74,7 @@ public class OrderTransferTests
         return db;
     }
 
-    private static QrOrderingService Service(AppDbContext db) => new(db, new OrderPrintingService(db, new Printer(), new RestaurantInventoryService(db, new User())));
+    private static QrOrderingService Service(AppDbContext db) { var user = new User(); return new(db, new OrderPrintingService(db, new Printer(), new RestaurantInventoryService(db, user)), user); }
 
     private sealed class Printer : IRawPrinterClient
     {

@@ -13,7 +13,8 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Unhandled exception while processing {Method} {Path}", context.Request.Method, context.Request.Path);
+            var path = context.Request.Path.StartsWithSegments("/api/qr-ordering/resolve") ? "/api/qr-ordering/resolve/[redacted]" : context.Request.Path.Value;
+            logger.LogError(ex, "Unhandled exception while processing {Method} {Path}", context.Request.Method, path);
             var statusCode = ex switch
             {
                 Microsoft.EntityFrameworkCore.DbUpdateConcurrencyException => StatusCodes.Status409Conflict,

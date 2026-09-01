@@ -290,7 +290,7 @@ public class AppDbContext : DbContext, IAppDbContext
             entity.HasOne(x=>x.Branch).WithMany().HasForeignKey(x=>x.BranchId).OnDelete(DeleteBehavior.Restrict); entity.HasOne(x=>x.OrderType).WithMany().HasForeignKey(x=>x.OrderTypeId).OnDelete(DeleteBehavior.Restrict); entity.HasOne(x=>x.Table).WithMany().HasForeignKey(x=>x.TableId).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne<SalesChannel>().WithMany().HasForeignKey(x=>x.SalesChannelId).OnDelete(DeleteBehavior.Restrict);entity.HasOne<OrderingSession>().WithMany().HasForeignKey(x=>x.OrderingSessionId).OnDelete(DeleteBehavior.Restrict);
             entity.HasIndex(x=>new{x.BranchId,x.OrderNumber}).IsUnique(); entity.HasIndex(x=>new{x.BranchId,x.BusinessDate,x.Status}); entity.HasQueryFilter(x=>BypassRestaurantBranchFilter||x.BranchId==RestaurantBranchId);
-            entity.HasIndex(x=>x.OrderingSessionId).IsUnique().HasFilter("\"OrderingSessionId\" IS NOT NULL AND \"Status\" = 'Open'");
+            entity.HasIndex(x=>x.OrderingSessionId).IsUnique().HasFilter("\"OrderingSessionId\" IS NOT NULL");
         });
         modelBuilder.Entity<RestaurantOrderItem>(entity =>
         {

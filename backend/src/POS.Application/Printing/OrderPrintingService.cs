@@ -10,12 +10,21 @@ namespace POS.Application.Printing;
 public class OrderPrintingService(IAppDbContext db, IRawPrinterClient printer, RestaurantInventoryService inventory)
 {
     public async Task ConfirmAndPrintAsync(Guid orderId, CancellationToken ct = default)
+        => await ConfirmAndPrintAsync(orderId, null, false, ct);
+
+    public async Task ConfirmQrAndPrintAsync(Guid orderId, Guid branchId, CancellationToken ct = default)
+        => await ConfirmAndPrintAsync(orderId, branchId, true, ct);
+
+    private async Task ConfirmAndPrintAsync(Guid orderId, Guid? capabilityBranchId, bool qrConfirmation, CancellationToken ct)
     {
-        var order = await db.RestaurantOrders.Include(x => x.OrderType).Include(x => x.Table).Include(x => x.Items).ThenInclude(x => x.MenuItem).ThenInclude(x => x.PrinterSection).ThenInclude(x => x!.PrinterConfig).FirstOrDefaultAsync(x => x.Id == orderId, ct) ?? throw new NotFoundException("Order not found.");
-        if (order.Status != RestaurantOrderStatuses.Open) throw new ValidationException("Only open orders can be confirmed.");
-        var fallback = await db.PrinterConfigs.FirstOrDefaultAsync(x => x.BranchId == order.BranchId && x.IsDefault && x.IsActive, ct) ?? throw new ValidationException("An active default printer is required.");
+        var orders = capabilityBranchId.HasValue ? db.RestaurantOrders.IgnoreQueryFilters() : db.RestaurantOrders;
+        var order = await orders.Include(x => x.OrderType).Include(x => x.Table).Include(x => x.Items).ThenInclude(x => x.MenuItem).ThenInclude(x => x.PrinterSection).ThenInclude(x => x!.PrinterConfig)
+            .FirstOrDefaultAsync(x => x.Id == orderId && (!capabilityBranchId.HasValue || x.BranchId == capabilityBranchId), ct) ?? throw new NotFoundException("Order not found.");
+        if (order.Status != RestaurantOrderStatuses.Open && (!qrConfirmation || order.Status != RestaurantOrderStatuses.Paid)) throw new ValidationException("Only open or fully paid QR orders can be confirmed.");
+        var printers = capabilityBranchId.HasValue ? db.PrinterConfigs.IgnoreQueryFilters() : db.PrinterConfigs;
+        var fallback = await printers.FirstOrDefaultAsync(x => x.BranchId == order.BranchId && x.IsDefault && x.IsActive, ct) ?? throw new ValidationException("An active default printer is required.");
         var jobs = BuildJobs(order, fallback);
-        await inventory.Confirm(orderId, ct);
+        await inventory.Confirm(orderId, capabilityBranchId, qrConfirmation, ct);
         foreach (var job in jobs) await printer.SendAsync(job.IpAddress, job.Port, job.Payload, ct);
     }
 
