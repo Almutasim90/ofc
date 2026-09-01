@@ -6,7 +6,7 @@ public class RestaurantOrder
     public Guid OrderTypeId { get; set; } public OrderType OrderType { get; set; }=null!; public Guid? TableId { get; set; } public RestaurantTable? Table { get; set; }
     public string? CarPlateNumber { get; set; } public Guid? CashierUserId { get; set; } public Guid? CashShiftId { get; set; }
     public DateOnly BusinessDate { get; set; } public DateTime CreatedAt { get; set; } public decimal Subtotal { get; set; } public decimal DiscountAmount { get; set; }
-    public decimal GrandTotal { get; set; } public string Status { get; set; }=RestaurantOrderStatuses.Open; public Guid? SalesChannelId { get; set; } public Guid? OrderingSessionId { get; set; }
+    public decimal GrandTotal { get; set; } public string Status { get; set; }=RestaurantOrderStatuses.Open; public int PaymentRevision { get; set; } public Guid? SalesChannelId { get; set; } public Guid? OrderingSessionId { get; set; }
     public ICollection<RestaurantOrderItem> Items { get; set; }=[];
     public ICollection<OrderCancellation> Cancellations { get; set; }=[];
     public ICollection<OrderPayment> Payments { get; set; }=[];

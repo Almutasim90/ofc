@@ -286,7 +286,7 @@ public class AppDbContext : DbContext, IAppDbContext
         modelBuilder.Entity<RestaurantOrder>(entity =>
         {
             entity.ToTable("Orders", x=>x.HasCheckConstraint("CK_Orders_Status", "\"Status\" IN ('Open','Sent','Paid','Closed','Cancelled')")); entity.HasKey(x=>x.Id);
-            entity.Property(x=>x.Subtotal).HasPrecision(12,3); entity.Property(x=>x.DiscountAmount).HasPrecision(12,3); entity.Property(x=>x.GrandTotal).HasPrecision(12,3); entity.Property(x=>x.Status).IsRequired().HasMaxLength(20); entity.Property(x=>x.CarPlateNumber).HasMaxLength(30);
+            entity.Property(x=>x.Subtotal).HasPrecision(12,3); entity.Property(x=>x.DiscountAmount).HasPrecision(12,3); entity.Property(x=>x.GrandTotal).HasPrecision(12,3); entity.Property(x=>x.Status).IsRequired().HasMaxLength(20); entity.Property(x=>x.PaymentRevision).IsConcurrencyToken(); entity.Property(x=>x.CarPlateNumber).HasMaxLength(30);
             entity.HasOne(x=>x.Branch).WithMany().HasForeignKey(x=>x.BranchId).OnDelete(DeleteBehavior.Restrict); entity.HasOne(x=>x.OrderType).WithMany().HasForeignKey(x=>x.OrderTypeId).OnDelete(DeleteBehavior.Restrict); entity.HasOne(x=>x.Table).WithMany().HasForeignKey(x=>x.TableId).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne<SalesChannel>().WithMany().HasForeignKey(x=>x.SalesChannelId).OnDelete(DeleteBehavior.Restrict);entity.HasOne<OrderingSession>().WithMany().HasForeignKey(x=>x.OrderingSessionId).OnDelete(DeleteBehavior.Restrict);
             entity.HasIndex(x=>new{x.BranchId,x.OrderNumber}).IsUnique(); entity.HasIndex(x=>new{x.BranchId,x.BusinessDate,x.Status}); entity.HasQueryFilter(x=>BypassRestaurantBranchFilter||x.BranchId==RestaurantBranchId);
