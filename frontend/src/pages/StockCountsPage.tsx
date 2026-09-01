@@ -20,7 +20,12 @@ export default function StockCountsPage() {
     })
   }, [])
   useEffect(() => {
-    if (!branchId) return
+    if (!branchId) {
+      setWarehouses([])
+      setWarehouseId('')
+      setCount(null)
+      return
+    }
     void api.get<WarehouseDto[]>(`/api/restaurant-inventory/warehouses?branchId=${branchId}`).then((value) => {
       const active = value.filter((warehouse) => warehouse.isActive)
       setWarehouses(active)
@@ -28,6 +33,16 @@ export default function StockCountsPage() {
       setCount(null)
     })
   }, [branchId])
+
+  useEffect(() => {
+    if (!warehouseId) {
+      setCount(null)
+      return
+    }
+    void api.get<StockCountDto | null>(`/api/stock-counts/draft?warehouseId=${warehouseId}`)
+      .then(setCount)
+      .catch((error) => toast.error(error instanceof ApiError ? error.message : t('common.loadError')))
+  }, [t, toast, warehouseId])
 
   const start = async () => {
     if (!warehouseId) return toast.error(t('stockCounts.warehouseRequired'))
@@ -61,11 +76,11 @@ export default function StockCountsPage() {
     </div>
     {count && <div className="settings-card">
       <div className="table-toolbar"><strong>{t(`stockCounts.${count.status.toLowerCase()}`)}</strong><span>{new Date(count.createdAt).toLocaleString()}</span></div>
-      {count.lines.map((line, index) => <div className="table-toolbar" key={line.ingredientId}>
-        <span>{line.name}</span><span>{t('stockCounts.system')}: {line.systemQuantity}</span>
-        <input type="number" min="0" step="0.001" disabled={count.status !== 'Draft'} value={line.countedQuantity} aria-label={`${t('stockCounts.counted')} ${line.name}`} onChange={(event) => setCount((value) => value && ({ ...value, lines: value.lines.map((item, itemIndex) => itemIndex === index ? { ...item, countedQuantity: Number(event.target.value), varianceQuantity: Number(event.target.value) - item.systemQuantity } : item) }))} />
+      {count.lines.map((line, index) => { const name = i18n.language === 'ar' ? line.nameAr : line.nameEn; return <div className="table-toolbar" key={line.ingredientId}>
+        <span>{name}</span><span>{t('stockCounts.system')}: {line.systemQuantity}</span>
+        <input type="number" min="0" step="0.001" disabled={count.status !== 'Draft'} value={line.countedQuantity} aria-label={`${t('stockCounts.counted')} ${name}`} onChange={(event) => setCount((value) => value && ({ ...value, lines: value.lines.map((item, itemIndex) => itemIndex === index ? { ...item, countedQuantity: Number(event.target.value), varianceQuantity: Number(event.target.value) - item.systemQuantity } : item) }))} />
         <strong>{t('stockCounts.variance')}: {line.varianceQuantity}</strong>
-      </div>)}
+      </div> })}
       {count.status === 'Draft' && <div className="modal-actions"><button onClick={() => void save()}>{t('common.save')}</button><button onClick={() => void finalize()}>{t('stockCounts.finalize')}</button></div>}
     </div>}
   </section>

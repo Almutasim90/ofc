@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useMemo, useRef, useState, type ReactNode } from 'react'
 import AppIcon, { type AppIconName } from './AppIcon'
 
 type ToastVariant = 'success' | 'error' | 'info'
@@ -28,11 +28,11 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     window.setTimeout(() => dismiss(id), AUTO_DISMISS_MS)
   }, [dismiss])
 
-  const value: ToastContextValue = {
+  const value = useMemo<ToastContextValue>(() => ({
     success: (message) => push('success', message),
     error: (message) => push('error', message),
     info: (message) => push('info', message),
-  }
+  }), [push])
 
   return (
     <ToastContext.Provider value={value}>
