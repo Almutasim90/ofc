@@ -105,8 +105,10 @@ public class OrderPaymentTests
 
     private static RestaurantOrder AddOrder(AppDbContext db, decimal total, string status = RestaurantOrderStatuses.Open)
     {
-        var order = new RestaurantOrder { Id = Guid.NewGuid(), GrandTotal = total, Subtotal = total, Status = status };
+        var branchId = Guid.NewGuid();
+        var order = new RestaurantOrder { Id = Guid.NewGuid(), BranchId = branchId, GrandTotal = total, Subtotal = total, Status = status };
         db.RestaurantOrders.Add(order);
+        db.CashShifts.Add(new CashShift { Id = Guid.NewGuid(), BranchId = branchId, OpenedByUserId = Guid.NewGuid(), OpenedAt = DateTime.UtcNow });
         db.SaveChanges();
         return order;
     }

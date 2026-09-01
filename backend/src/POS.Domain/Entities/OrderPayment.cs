@@ -1,2 +1,2 @@
 namespace POS.Domain.Entities;
-public class OrderPayment { public Guid Id{get;set;} public Guid OrderId{get;set;} public RestaurantOrder Order{get;set;}=null!; public Guid PaymentMethodId{get;set;} public PaymentMethod PaymentMethod{get;set;}=null!; public decimal Amount{get;set;} public Guid? ApprovedByUserId{get;set;} public DateTime CreatedAt{get;set;} }
+public class OrderPayment { public Guid Id{get;set;} public Guid OrderId{get;set;} public RestaurantOrder Order{get;set;}=null!; public Guid PaymentMethodId{get;set;} public PaymentMethod PaymentMethod{get;set;}=null!; public Guid? CashShiftId{get;set;} public CashShift? CashShift{get;set;} public decimal Amount{get;set;} public Guid? ApprovedByUserId{get;set;} public DateTime CreatedAt{get;set;} }
