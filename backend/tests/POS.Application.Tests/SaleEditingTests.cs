@@ -64,15 +64,14 @@ public class SaleEditingTests
     }
 
     [Fact]
-    public async Task Mixed_sales_count_once_and_only_cash_enters_till()
+    public async Task Mixed_legacy_sale_only_affects_legacy_till_not_restaurant_reports()
     {
         await using var f = await Fixture.Create();
         await f.Service.CreateAsync(f.Request(1, "Mixed", 4, 6));
         var report = await new ReportService(f.Db, f.User).GetDailyBranchAsync(f.BranchId, DateOnly.FromDateTime(DateTime.UtcNow.AddHours(4)));
-        Assert.Equal(1, report.InvoiceCount);
-        Assert.Equal(10, report.TotalSales);
-        Assert.Equal(4, report.PaymentBreakdown.Single(p => p.PaymentMethod == PaymentMethods.Cash).TotalAmount);
-        Assert.Equal(6, report.PaymentBreakdown.Single(p => p.PaymentMethod == PaymentMethods.Card).TotalAmount);
+        Assert.Equal(0, report.InvoiceCount);
+        Assert.Equal(0, report.TotalSales);
+        Assert.Empty(report.PaymentBreakdown);
         var shift = await new ShiftService(f.Db, f.User).GetCurrentAsync();
         Assert.NotNull(shift);
         Assert.Equal(54, shift.ClosingCashExpected);

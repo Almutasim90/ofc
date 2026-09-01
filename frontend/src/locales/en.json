@@ -197,6 +197,7 @@
     "dashboardTitle": "Sales analytics dashboard",
     "cashShiftVarianceReport":"Cash shift variances",
     "orderEditReport":"Invoice edit audit",
+    "orderTypeDistribution":"Order type distribution",
     "dashboardSubtitle": "A clear view of performance for confident decisions",
     "from": "From",
     "to": "To",

@@ -326,10 +326,11 @@ export interface ProductSalesSummaryDto {
   cashQuantitySold: number; cashTotalSales: number; cashInvoiceCount: number
   cardQuantitySold: number; cardTotalSales: number; cardInvoiceCount: number
 }
+export interface OrderTypeSalesDto { code:string; nameAr:string; nameEn:string; totalSales:number; invoiceCount:number }
 export interface ManagerDashboardDto {
   from: string; to: string; totalSales: number; totalDiscounts: number; invoiceCount: number; itemsSold: number; averageTicket: number
   dailyTrend: SalesTrendPointDto[]; branches: BranchSalesSummaryDto[]
   paymentBreakdown: PaymentBreakdownDto[]; products: ProductSalesSummaryDto[]
   shiftVariances: {shiftId:string;openedAt:string;varianceAmount:number}[]
-  cashShiftVariances: CashShiftVarianceDto[]; orderEdits: OrderEditReportDto[]
+  cashShiftVariances: CashShiftVarianceDto[]; orderEdits: OrderEditReportDto[]; orderTypes: OrderTypeSalesDto[]
 }
