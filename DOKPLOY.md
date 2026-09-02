@@ -52,6 +52,7 @@ JWT_ISSUER=POS.API
 JWT_AUDIENCE=POS.Client
 QR_SIGNING_SECRET=ضع_هنا_قيمة_عشوائية_ثابتة_بطول_32_بايت_على_الأقل
 PUBLIC_ORDER_URL=https://ofc.almutasim.site
+SUPABASE_NETWORK_NAME=ofc-supabase-tvmlhw_default
 RUN_MIGRATIONS_ON_STARTUP=true
 
 SMTP_HOST=

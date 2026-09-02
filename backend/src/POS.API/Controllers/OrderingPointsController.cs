@@ -11,4 +11,6 @@ public class OrderingPointsController(QrOrderingService service):ControllerBase
  [HttpPost("bays")]public async Task<ActionResult<CarPickupBayDto>>CreateBay(SaveCarPickupBayRequest request,CancellationToken ct)=>Ok(await service.SaveBayAsync(null,request,ct));
  [HttpPut("bays/{id:guid}")]public async Task<ActionResult<CarPickupBayDto>>UpdateBay(Guid id,SaveCarPickupBayRequest request,CancellationToken ct)=>Ok(await service.SaveBayAsync(id,request,ct));
  [HttpPost("sessions/{id:guid}/close")]public async Task<IActionResult>Close(Guid id,CancellationToken ct){await service.CloseAsync(id,ct);return NoContent();}
+ [HttpGet("branches/{branchId:guid}/schedules")]public async Task<ActionResult<List<BranchQrScheduleDto>>>Schedules(Guid branchId,CancellationToken ct)=>Ok(await service.GetSchedulesAsync(branchId,ct));
+ [HttpPut("branches/{branchId:guid}/schedules")]public async Task<ActionResult<BranchQrScheduleDto>>SaveSchedule(Guid branchId,SaveBranchQrScheduleRequest request,CancellationToken ct)=>Ok(await service.SaveScheduleAsync(branchId,request,ct));
 }

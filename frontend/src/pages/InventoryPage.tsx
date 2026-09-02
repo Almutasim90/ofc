@@ -3,7 +3,8 @@ import { useTranslation } from 'react-i18next'
 import { api, ApiError } from '../api/client'
 import { useAuth } from '../auth/AuthContext'
 import type { BranchDto, StockStatusDto } from '../api/types'
-import { EditIcon, IconAction, SearchBox } from '../components/TableTools'
+import DataTable from '../components/DataTable'
+import { EditIcon, IconAction } from '../components/TableTools'
 import { useToast } from '../components/ToastContext'
 
 export default function InventoryPage() {
@@ -14,7 +15,6 @@ export default function InventoryPage() {
   const [stock, setStock] = useState<StockStatusDto[]>([])
   const [loading, setLoading] = useState(true)
   const [adjusting, setAdjusting] = useState<StockStatusDto | null>(null)
-  const [search, setSearch] = useState('')
   const [receiving, setReceiving] = useState(false)
   const [creating, setCreating] = useState(false)
 
@@ -53,42 +53,19 @@ export default function InventoryPage() {
         </select>
       </label>
 
-      {loading ? (
-        <p>{t('common.loading')}</p>
-      ) : (
-        <><div className="table-toolbar"><SearchBox value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('common.search')} /><div className="row-actions"><button type="button" onClick={()=>setCreating(true)}>{t('inventory.addInventoryItem')}</button><button className="button-secondary" type="button" onClick={()=>setReceiving(true)} disabled={!stock.length}>{t('inventory.receiveGoods')}</button></div></div><div className="table-shell"><table>
-          <thead>
-            <tr>
-              <th>{t('inventory.rawMaterial')}</th>
-              <th>{t('inventory.currentQuantity')}</th>
-              <th>{t('inventory.consumptionUnit')}</th>
-              <th>{t('inventory.purchasePackage')}</th>
-              <th>{t('inventory.conversionFactor')}</th>
-              <th>{t('inventory.lowStockThreshold')}</th>
-              <th></th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {stock.filter((item) => `${item.nameAr ?? ''} ${item.nameEn} ${item.unit}`.toLowerCase().includes(search.trim().toLowerCase())).map((item) => (
-              <tr key={item.rawMaterialId}>
-                <td>
-                  {i18n.language === 'ar' ? item.nameAr : item.nameEn} ({item.unit})
-                </td>
-                <td>{item.currentQuantity}</td>
-                <td>{item.unit}</td>
-                <td>{i18n.language === 'ar' ? item.packageNameAr : item.packageNameEn}</td>
-                <td>{item.baseQuantityPerPackage == null ? '—' : `1 × ${item.baseQuantityPerPackage} ${item.unit}`}</td>
-                <td>{item.lowStockThreshold}</td>
-                <td>{item.isLowStock && <span className="error-text">{t('inventory.lowStock')}</span>}</td>
-                <td>
-                  <IconAction label={t('inventory.adjust')} onClick={() => setAdjusting(item)}><EditIcon /></IconAction>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table></div></>
-      )}
+      <DataTable rows={stock} loading={loading} getRowKey={(item) => item.rawMaterialId}
+        getSearchText={(item) => `${item.nameAr ?? ''} ${item.nameEn} ${item.unit}`}
+        toolbar={<div className="row-actions"><button type="button" onClick={()=>setCreating(true)}>{t('inventory.addInventoryItem')}</button><button className="button-secondary" type="button" onClick={()=>setReceiving(true)} disabled={!stock.length}>{t('inventory.receiveGoods')}</button></div>}
+        columns={[
+          { id: 'material', header: t('inventory.rawMaterial'), cell: (item) => <>{i18n.language === 'ar' ? item.nameAr : item.nameEn} ({item.unit})</>, sortValue: (item) => i18n.language === 'ar' ? item.nameAr : item.nameEn },
+          { id: 'quantity', header: t('inventory.currentQuantity'), cell: (item) => item.currentQuantity, sortValue: (item) => item.currentQuantity },
+          { id: 'unit', header: t('inventory.consumptionUnit'), cell: (item) => item.unit, sortValue: (item) => item.unit },
+          { id: 'package', header: t('inventory.purchasePackage'), cell: (item) => i18n.language === 'ar' ? item.packageNameAr : item.packageNameEn, sortValue: (item) => i18n.language === 'ar' ? item.packageNameAr : item.packageNameEn },
+          { id: 'conversion', header: t('inventory.conversionFactor'), cell: (item) => item.baseQuantityPerPackage == null ? '—' : `1 × ${item.baseQuantityPerPackage} ${item.unit}`, sortValue: (item) => item.baseQuantityPerPackage },
+          { id: 'threshold', header: t('inventory.lowStockThreshold'), cell: (item) => item.lowStockThreshold, sortValue: (item) => item.lowStockThreshold },
+          { id: 'status', header: '', cell: (item) => item.isLowStock && <span className="error-text">{t('inventory.lowStock')}</span>, sortValue: (item) => item.isLowStock },
+          { id: 'actions', header: '', cell: (item) => <IconAction label={t('inventory.adjust')} onClick={() => setAdjusting(item)}><EditIcon /></IconAction> },
+        ]} />
 
       {adjusting && (
         <AdjustModal

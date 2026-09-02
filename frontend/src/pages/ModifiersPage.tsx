@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { api, ApiError } from '../api/client'
 import type { MenuItemDto, ModifierGroupDto } from '../api/types'
+import DataTable from '../components/DataTable'
 import Money from '../components/Money'
 import { useToast } from '../components/ToastContext'
 
@@ -27,6 +28,14 @@ export default function ModifiersPage() {
       <h2>{t('modifiers.products')}</h2><div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">{singles.map(item=><label className="checkbox-row" key={item.id}><input type="checkbox" checked={form.menuItemIds.includes(item.id)} onChange={()=>setForm(x=>({...x,menuItemIds:x.menuItemIds.includes(item.id)?x.menuItemIds.filter(id=>id!==item.id):[...x.menuItemIds,item.id]}))}/>{item.nameAr} / {item.nameEn}</label>)}</div>
       <div className="modal-actions"><button onClick={reset}>{t('common.cancel')}</button><button onClick={save}>{editing?t('common.save'):t('modifiers.addGroup')}</button></div>
     </div>
-    <div className="table-shell"><table><thead><tr><th>{t('restaurant.nameAr')}</th><th>{t('restaurant.nameEn')}</th><th>{t('modifiers.rules')}</th><th>{t('modifiers.options')}</th><th>{t('modifiers.products')}</th><th></th></tr></thead><tbody>{groups.map(g=><tr key={g.id}><td>{g.nameAr}</td><td>{g.nameEn}</td><td>{g.minSelect}–{g.maxSelect}{g.isRequired?` · ${t('restaurant.required')}`:''}</td><td>{g.options.map(o=><span className="block" key={o.id}>{o.nameAr} <Money value={o.priceDelta}/></span>)}</td><td>{g.menuItemIds.length}</td><td><div className="row-actions"><button onClick={()=>edit(g)}>{t('common.edit')}</button><button onClick={()=>remove(g.id)}>{t('common.delete')}</button></div></td></tr>)}</tbody></table></div>
+    <DataTable rows={groups} getRowKey={(group) => group.id} getSearchText={(group) => `${group.nameAr} ${group.nameEn} ${group.options.map((option) => `${option.nameAr} ${option.nameEn}`).join(' ')}`}
+      columns={[
+        { id: 'nameAr', header: t('restaurant.nameAr'), cell: (group) => group.nameAr, sortValue: (group) => group.nameAr },
+        { id: 'nameEn', header: t('restaurant.nameEn'), cell: (group) => group.nameEn, sortValue: (group) => group.nameEn },
+        { id: 'rules', header: t('modifiers.rules'), cell: (group) => <>{group.minSelect}–{group.maxSelect}{group.isRequired?` · ${t('restaurant.required')}`:''}</>, sortValue: (group) => group.minSelect },
+        { id: 'options', header: t('modifiers.options'), cell: (group) => group.options.map(option => <span className="block" key={option.id}>{option.nameAr} <Money value={option.priceDelta}/></span>), sortValue: (group) => group.options.length },
+        { id: 'products', header: t('modifiers.products'), cell: (group) => group.menuItemIds.length, sortValue: (group) => group.menuItemIds.length },
+        { id: 'actions', header: '', cell: (group) => <div className="row-actions"><button onClick={()=>edit(group)}>{t('common.edit')}</button><button onClick={()=>remove(group.id)}>{t('common.delete')}</button></div> },
+      ]} />
   </section>
 }

@@ -23,8 +23,10 @@ public class AppDbContext : DbContext, IAppDbContext
     public DbSet<UserPermissionOverride> UserPermissionOverrides => Set<UserPermissionOverride>();
 
     public DbSet<Branch> Branches => Set<Branch>();
+    public DbSet<RestaurantFloor> RestaurantFloors => Set<RestaurantFloor>();
     public DbSet<RestaurantTable> RestaurantTables => Set<RestaurantTable>();
     public DbSet<BranchFeatureFlag> BranchFeatureFlags => Set<BranchFeatureFlag>();
+    public DbSet<BranchQrOrderingSchedule> BranchQrOrderingSchedules => Set<BranchQrOrderingSchedule>();
     public DbSet<MenuCategory> MenuCategories => Set<MenuCategory>();
     public DbSet<CategoryBranchAvailability> CategoryBranchAvailabilities => Set<CategoryBranchAvailability>();
     public DbSet<MenuItem> MenuItems => Set<MenuItem>();
@@ -43,7 +45,7 @@ public class AppDbContext : DbContext, IAppDbContext
     public DbSet<StockCount> StockCounts=>Set<StockCount>();public DbSet<StockCountLine> StockCountLines=>Set<StockCountLine>();
     public DbSet<PrinterConfig> PrinterConfigs => Set<PrinterConfig>();
     public DbSet<PrinterSection> PrinterSections => Set<PrinterSection>();
-    public DbSet<PaymentMethod> PaymentMethods => Set<PaymentMethod>(); public DbSet<OrderPayment> OrderPayments => Set<OrderPayment>(); public DbSet<OrderEditLog> OrderEditLogs => Set<OrderEditLog>();
+    public DbSet<PaymentMethod> PaymentMethods => Set<PaymentMethod>(); public DbSet<OrderPayment> OrderPayments => Set<OrderPayment>(); public DbSet<BillSplit> BillSplits => Set<BillSplit>(); public DbSet<BillSplitLine> BillSplitLines => Set<BillSplitLine>(); public DbSet<OrderEditLog> OrderEditLogs => Set<OrderEditLog>();
     public DbSet<CashShift> CashShifts => Set<CashShift>(); public DbSet<CashCount> CashCounts => Set<CashCount>();
     public DbSet<BranchSalesChannelAvailability> BranchSalesChannelAvailabilities => Set<BranchSalesChannelAvailability>();
     public DbSet<CarPickupBay> CarPickupBays=>Set<CarPickupBay>();public DbSet<OrderingPoint> OrderingPoints=>Set<OrderingPoint>();public DbSet<OrderingSession> OrderingSessions=>Set<OrderingSession>();
@@ -71,6 +73,7 @@ public class AppDbContext : DbContext, IAppDbContext
     public DbSet<AiInsightRequest> AiInsightRequests => Set<AiInsightRequest>();
     public DbSet<EmailSettings> EmailSettings => Set<EmailSettings>();
     public DbSet<ReceiptSettings> ReceiptSettings => Set<ReceiptSettings>();
+    public DbSet<InvoiceSettings> InvoiceSettings => Set<InvoiceSettings>();
 
     // A single UPDATE ... RETURNING is one atomic statement in Postgres: concurrent callers
     // for the same branch serialize on the row lock and each gets a distinct number, so this
@@ -158,13 +161,34 @@ public class AppDbContext : DbContext, IAppDbContext
             entity.Property(b => b.DefaultOpeningFloat).HasPrecision(18, 3);
         });
 
+        modelBuilder.Entity<RestaurantFloor>(entity =>
+        {
+            entity.ToTable("RestaurantFloors");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Name).IsRequired().HasMaxLength(100);
+            entity.HasOne(x => x.Branch).WithMany().HasForeignKey(x => x.BranchId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasIndex(x => new { x.BranchId, x.Name }).IsUnique();
+            entity.HasIndex(x => new { x.BranchId, x.SortOrder });
+            entity.HasQueryFilter(x => BypassRestaurantBranchFilter || x.BranchId == RestaurantBranchId);
+        });
+
         modelBuilder.Entity<RestaurantTable>(entity =>
         {
             entity.ToTable("Tables");
             entity.HasKey(x => x.Id);
             entity.Property(x => x.Label).IsRequired().HasMaxLength(100);
+            entity.Property(x => x.PositionX).HasDefaultValue(0);
+            entity.Property(x => x.PositionY).HasDefaultValue(0);
+            entity.Property(x => x.Shape).IsRequired().HasMaxLength(20).HasDefaultValue(RestaurantTableShapes.Rectangle);
             entity.HasOne(x => x.Branch).WithMany().HasForeignKey(x => x.BranchId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(x => x.Floor).WithMany(x => x.Tables).HasForeignKey(x => x.FloorId).OnDelete(DeleteBehavior.Restrict);
             entity.HasIndex(x => new { x.BranchId, x.Label }).IsUnique();
+            entity.HasIndex(x => x.FloorId);
+            entity.ToTable(x =>
+            {
+                x.HasCheckConstraint("CK_Tables_Position", "\"PositionX\" BETWEEN 0 AND 100 AND \"PositionY\" BETWEEN 0 AND 100");
+                x.HasCheckConstraint("CK_Tables_Shape", "\"Shape\" IN ('Rectangle','Round')");
+            });
             entity.HasQueryFilter(x => BypassRestaurantBranchFilter || x.BranchId == RestaurantBranchId);
         });
 
@@ -174,6 +198,14 @@ public class AppDbContext : DbContext, IAppDbContext
             entity.Property(x => x.FeatureKey).IsRequired().HasMaxLength(100);
             entity.HasOne(x => x.Branch).WithMany().HasForeignKey(x => x.BranchId).OnDelete(DeleteBehavior.Cascade);
             entity.HasIndex(x => new { x.BranchId, x.FeatureKey }).IsUnique();
+            entity.HasQueryFilter(x => BypassRestaurantBranchFilter || x.BranchId == RestaurantBranchId);
+        });
+        modelBuilder.Entity<BranchQrOrderingSchedule>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+            entity.HasOne(x => x.Branch).WithMany().HasForeignKey(x => x.BranchId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasIndex(x => new { x.BranchId, x.DayOfWeek }).IsUnique();
+            entity.ToTable(x => x.HasCheckConstraint("CK_BranchQrOrderingSchedules_Day", "\"DayOfWeek\" BETWEEN 0 AND 6"));
             entity.HasQueryFilter(x => BypassRestaurantBranchFilter || x.BranchId == RestaurantBranchId);
         });
 
@@ -227,7 +259,9 @@ public class AppDbContext : DbContext, IAppDbContext
             entity.HasQueryFilter(x => BypassRestaurantBranchFilter || x.BranchId == RestaurantBranchId);
         });
         modelBuilder.Entity<PaymentMethod>(e=>{e.HasKey(x=>x.Id);e.Property(x=>x.Code).IsRequired().HasMaxLength(30);e.Property(x=>x.NameAr).IsRequired().HasMaxLength(100);e.Property(x=>x.NameEn).IsRequired().HasMaxLength(100);e.HasIndex(x=>x.Code).IsUnique();e.HasData(new PaymentMethod{Id=Guid.Parse("40000000-0000-0000-0000-000000000001"),Code="CASH",NameAr="نقدي",NameEn="Cash"},new PaymentMethod{Id=Guid.Parse("40000000-0000-0000-0000-000000000002"),Code="CARD",NameAr="بطاقة",NameEn="Card"},new PaymentMethod{Id=Guid.Parse("40000000-0000-0000-0000-000000000003"),Code="DEBT",NameAr="دَين",NameEn="Debt",RequiresApproval=true});});
-        modelBuilder.Entity<OrderPayment>(e=>{e.HasKey(x=>x.Id);e.Property(x=>x.Amount).HasPrecision(12,3);e.ToTable(x=>x.HasCheckConstraint("CK_OrderPayments_Amount","\"Amount\" > 0"));e.HasOne(x=>x.Order).WithMany(x=>x.Payments).HasForeignKey(x=>x.OrderId).OnDelete(DeleteBehavior.Cascade);e.HasOne(x=>x.PaymentMethod).WithMany().HasForeignKey(x=>x.PaymentMethodId).OnDelete(DeleteBehavior.Restrict);e.HasOne(x=>x.CashShift).WithMany(x=>x.Payments).HasForeignKey(x=>x.CashShiftId).OnDelete(DeleteBehavior.Restrict);e.HasIndex(x=>new{x.OrderId,x.CreatedAt});e.HasIndex(x=>x.CashShiftId);e.HasQueryFilter(x=>BypassRestaurantBranchFilter||x.Order.BranchId==RestaurantBranchId);});
+        modelBuilder.Entity<OrderPayment>(e=>{e.HasKey(x=>x.Id);e.Property(x=>x.Amount).HasPrecision(12,3);e.ToTable(x=>x.HasCheckConstraint("CK_OrderPayments_Amount","\"Amount\" > 0"));e.HasOne(x=>x.Order).WithMany(x=>x.Payments).HasForeignKey(x=>x.OrderId).OnDelete(DeleteBehavior.Cascade);e.HasOne(x=>x.BillSplit).WithMany(x=>x.Payments).HasForeignKey(x=>x.BillSplitId).OnDelete(DeleteBehavior.Restrict);e.HasOne(x=>x.PaymentMethod).WithMany().HasForeignKey(x=>x.PaymentMethodId).OnDelete(DeleteBehavior.Restrict);e.HasOne(x=>x.CashShift).WithMany(x=>x.Payments).HasForeignKey(x=>x.CashShiftId).OnDelete(DeleteBehavior.Restrict);e.HasIndex(x=>new{x.OrderId,x.CreatedAt});e.HasIndex(x=>x.BillSplitId);e.HasIndex(x=>x.CashShiftId);e.HasQueryFilter(x=>BypassRestaurantBranchFilter||x.Order.BranchId==RestaurantBranchId);});
+        modelBuilder.Entity<BillSplit>(e=>{e.HasKey(x=>x.Id);e.Property(x=>x.Name).IsRequired().HasMaxLength(100);e.Property(x=>x.Amount).HasPrecision(12,3);e.ToTable(x=>x.HasCheckConstraint("CK_BillSplits_Amount","\"Amount\" > 0"));e.HasOne(x=>x.Order).WithMany(x=>x.BillSplits).HasForeignKey(x=>x.OrderId).OnDelete(DeleteBehavior.Cascade);e.HasIndex(x=>new{x.OrderId,x.CreatedAt});e.HasQueryFilter(x=>BypassRestaurantBranchFilter||x.Order.BranchId==RestaurantBranchId);});
+        modelBuilder.Entity<BillSplitLine>(e=>{e.HasKey(x=>x.Id);e.ToTable(x=>x.HasCheckConstraint("CK_BillSplitLines_Quantity","\"Quantity\" > 0"));e.HasOne(x=>x.BillSplit).WithMany(x=>x.Lines).HasForeignKey(x=>x.BillSplitId).OnDelete(DeleteBehavior.Cascade);e.HasOne(x=>x.OrderItem).WithMany().HasForeignKey(x=>x.OrderItemId).OnDelete(DeleteBehavior.Restrict);e.HasIndex(x=>new{x.BillSplitId,x.OrderItemId}).IsUnique();e.HasIndex(x=>x.OrderItemId);e.HasQueryFilter(x=>BypassRestaurantBranchFilter||x.BillSplit.Order.BranchId==RestaurantBranchId);});
         modelBuilder.Entity<OrderEditLog>(e=>{e.HasKey(x=>x.Id);e.Property(x=>x.EditType).IsRequired().HasMaxLength(30);e.Property(x=>x.Notes).HasMaxLength(500);e.Property(x=>x.AmountDelta).HasPrecision(12,3);e.HasOne(x=>x.Order).WithMany(x=>x.EditLogs).HasForeignKey(x=>x.OrderId).OnDelete(DeleteBehavior.Cascade);e.HasIndex(x=>new{x.OrderId,x.CreatedAt});e.HasQueryFilter(x=>BypassRestaurantBranchFilter||x.Order.BranchId==RestaurantBranchId);});
         modelBuilder.Entity<CashShift>(e=>{e.HasKey(x=>x.Id);e.Property(x=>x.Status).IsRequired().HasMaxLength(20);e.Property(x=>x.OpeningFloat).HasPrecision(12,3);e.Property(x=>x.ExpectedCash).HasPrecision(12,3);e.Property(x=>x.CountedCash).HasPrecision(12,3);e.Property(x=>x.VarianceCash).HasPrecision(12,3);e.ToTable(x=>x.HasCheckConstraint("CK_CashShifts_Status","\"Status\" IN ('Open','Closed')"));e.HasOne(x=>x.Branch).WithMany().HasForeignKey(x=>x.BranchId).OnDelete(DeleteBehavior.Restrict);e.HasIndex(x=>x.BranchId).IsUnique().HasFilter("\"Status\" = 'Open'");e.HasIndex(x=>new{x.BranchId,x.OpenedAt});e.HasQueryFilter(x=>BypassRestaurantBranchFilter||x.BranchId==RestaurantBranchId);});
         modelBuilder.Entity<CashCount>(e=>{e.HasKey(x=>x.Id);e.Property(x=>x.DenominationValue).HasPrecision(12,3);e.Property(x=>x.DenominationType).IsRequired().HasMaxLength(10);e.ToTable(x=>x.HasCheckConstraint("CK_CashCounts_Values","\"DenominationValue\" > 0 AND \"CountedQty\" >= 0 AND \"DenominationType\" IN ('Note','Coin')"));e.HasOne(x=>x.CashShift).WithMany(x=>x.Counts).HasForeignKey(x=>x.CashShiftId).OnDelete(DeleteBehavior.Cascade);e.HasIndex(x=>x.CashShiftId);e.HasQueryFilter(x=>BypassRestaurantBranchFilter||x.CashShift.BranchId==RestaurantBranchId);});
@@ -285,16 +319,16 @@ public class AppDbContext : DbContext, IAppDbContext
             new OrderType{Id=Guid.Parse("10000000-0000-0000-0000-000000000004"),Code="DELIVERY",NameAr="توصيل",NameEn="Delivery"}); });
         modelBuilder.Entity<RestaurantOrder>(entity =>
         {
-            entity.ToTable("Orders", x=>x.HasCheckConstraint("CK_Orders_Status", "\"Status\" IN ('Open','Sent','Paid','Closed','Cancelled')")); entity.HasKey(x=>x.Id);
-            entity.Property(x=>x.Subtotal).HasPrecision(12,3); entity.Property(x=>x.DiscountAmount).HasPrecision(12,3); entity.Property(x=>x.GrandTotal).HasPrecision(12,3); entity.Property(x=>x.Status).IsRequired().HasMaxLength(20); entity.Property(x=>x.PaymentRevision).IsConcurrencyToken(); entity.Property(x=>x.CarPlateNumber).HasMaxLength(30);
+            entity.ToTable("Orders", x=>x.HasCheckConstraint("CK_Orders_Status", "\"Status\" IN ('Open','PendingApproval','Sent','Paid','Closed','Cancelled')")); entity.HasKey(x=>x.Id);
+            entity.Property(x=>x.Subtotal).HasPrecision(12,3); entity.Property(x=>x.DiscountAmount).HasPrecision(12,3); entity.Property(x=>x.GrandTotal).HasPrecision(12,3); entity.Property(x=>x.InvoiceDefaultTaxRate).HasPrecision(7,3); entity.Property(x=>x.InvoiceSubtotalSnapshot).HasPrecision(12,3); entity.Property(x=>x.InvoiceDiscountSnapshot).HasPrecision(12,3); entity.Property(x=>x.InvoiceTaxSnapshot).HasPrecision(12,3); entity.Property(x=>x.InvoiceGrandTotalSnapshot).HasPrecision(12,3); entity.Property(x=>x.InvoiceCurrency).HasMaxLength(3); entity.Property(x=>x.InvoiceLegalNameAr).HasMaxLength(200); entity.Property(x=>x.InvoiceLegalNameEn).HasMaxLength(200); entity.Property(x=>x.InvoiceTaxRegistrationNumber).HasMaxLength(100); entity.Property(x=>x.InvoiceCommercialRegistrationNumber).HasMaxLength(100); entity.Property(x=>x.InvoiceAddressAr).HasMaxLength(500); entity.Property(x=>x.InvoiceAddressEn).HasMaxLength(500); entity.Property(x=>x.InvoicePhone).HasMaxLength(50); entity.Property(x=>x.InvoiceFooter).HasMaxLength(1000); entity.Property(x=>x.Status).IsRequired().HasMaxLength(20); entity.Property(x=>x.PaymentRevision).IsConcurrencyToken(); entity.Property(x=>x.CarPlateNumber).HasMaxLength(30); entity.Property(x=>x.RejectionReason).HasMaxLength(500);
             entity.HasOne(x=>x.Branch).WithMany().HasForeignKey(x=>x.BranchId).OnDelete(DeleteBehavior.Restrict); entity.HasOne(x=>x.OrderType).WithMany().HasForeignKey(x=>x.OrderTypeId).OnDelete(DeleteBehavior.Restrict); entity.HasOne(x=>x.Table).WithMany().HasForeignKey(x=>x.TableId).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne<SalesChannel>().WithMany().HasForeignKey(x=>x.SalesChannelId).OnDelete(DeleteBehavior.Restrict);entity.HasOne<OrderingSession>().WithMany().HasForeignKey(x=>x.OrderingSessionId).OnDelete(DeleteBehavior.Restrict);
-            entity.HasIndex(x=>new{x.BranchId,x.OrderNumber}).IsUnique(); entity.HasIndex(x=>new{x.BranchId,x.BusinessDate,x.Status}); entity.HasQueryFilter(x=>BypassRestaurantBranchFilter||x.BranchId==RestaurantBranchId);
+            entity.HasIndex(x=>new{x.BranchId,x.OrderNumber}).IsUnique(); entity.HasIndex(x=>new{x.BranchId,x.BusinessDate,x.Status}); entity.HasIndex(x=>new{x.BranchId,x.Status,x.CreatedAt}); entity.HasQueryFilter(x=>BypassRestaurantBranchFilter||x.BranchId==RestaurantBranchId);
             entity.HasIndex(x=>x.OrderingSessionId).IsUnique().HasFilter("\"OrderingSessionId\" IS NOT NULL");
         });
         modelBuilder.Entity<RestaurantOrderItem>(entity =>
         {
-            entity.ToTable("OrderItems"); entity.HasKey(x=>x.Id); entity.Property(x=>x.MenuItemNameSnapshot).IsRequired().HasMaxLength(200); entity.Property(x=>x.UnitPriceSnapshot).HasPrecision(12,3); entity.Property(x=>x.LineTotal).HasPrecision(12,3); entity.Property(x=>x.Notes).HasMaxLength(500);
+            entity.ToTable("OrderItems"); entity.HasKey(x=>x.Id); entity.Property(x=>x.MenuItemNameSnapshot).IsRequired().HasMaxLength(200); entity.Property(x=>x.UnitPriceSnapshot).HasPrecision(12,3); entity.Property(x=>x.LineTotal).HasPrecision(12,3); entity.Property(x=>x.InvoiceTaxRateSnapshot).HasPrecision(7,3); entity.Property(x=>x.InvoiceNetSnapshot).HasPrecision(12,3); entity.Property(x=>x.InvoiceTaxSnapshot).HasPrecision(12,3); entity.Property(x=>x.InvoiceGrossSnapshot).HasPrecision(12,3); entity.Property(x=>x.Notes).HasMaxLength(500);
             entity.HasOne(x=>x.Order).WithMany(x=>x.Items).HasForeignKey(x=>x.OrderId).OnDelete(DeleteBehavior.Cascade); entity.HasOne(x=>x.MenuItem).WithMany().HasForeignKey(x=>x.MenuItemId).OnDelete(DeleteBehavior.Restrict); entity.HasIndex(x=>x.OrderId);
             entity.HasQueryFilter(x=>BypassRestaurantBranchFilter||x.Order.BranchId==RestaurantBranchId);
         });
@@ -579,6 +613,16 @@ public class AppDbContext : DbContext, IAppDbContext
         {
             entity.HasKey(x => x.Id);
             entity.Property(x => x.HeaderText).HasMaxLength(500);
+        });
+        modelBuilder.Entity<InvoiceSettings>(entity =>
+        {
+            entity.HasKey(x => x.Id); entity.HasIndex(x => x.BranchId).IsUnique();
+            entity.Property(x => x.LegalNameAr).IsRequired().HasMaxLength(200); entity.Property(x => x.LegalNameEn).IsRequired().HasMaxLength(200);
+            entity.Property(x => x.TaxRegistrationNumber).HasMaxLength(100); entity.Property(x => x.CommercialRegistrationNumber).HasMaxLength(100);
+            entity.Property(x => x.AddressAr).HasMaxLength(500); entity.Property(x => x.AddressEn).HasMaxLength(500); entity.Property(x => x.Phone).HasMaxLength(50);
+            entity.Property(x => x.Currency).IsRequired().HasMaxLength(3); entity.Property(x => x.DefaultTaxRate).HasPrecision(7, 3); entity.Property(x => x.Footer).HasMaxLength(1000);
+            entity.HasOne(x => x.Branch).WithMany().HasForeignKey(x => x.BranchId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasQueryFilter(x => BypassRestaurantBranchFilter || x.BranchId == RestaurantBranchId);
         });
     }
     private static InventoryTransactionReason Reason(string code,string ar,string en)=>new(){Id=new Guid(System.Security.Cryptography.MD5.HashData(System.Text.Encoding.UTF8.GetBytes(code))),Code=code,NameAr=ar,NameEn=en,IsActive=true};

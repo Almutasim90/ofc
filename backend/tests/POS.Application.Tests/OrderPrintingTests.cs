@@ -44,12 +44,33 @@ public class OrderPrintingTests
     }
 
     [Fact]
+    public void Notes_modifiers_and_combo_choices_are_printed_with_price_deltas()
+    {
+        var order = Order(("Burger Meal", null));
+        var line = Assert.Single(order.Items);
+        line.Notes = "No onions";
+        line.Modifiers.Add(new() { ModifierOption = new() { NameEn = "Extra cheese" }, PriceDeltaSnapshot = .500m });
+        line.ComboSelections.Add(new() { ComboComponent = new() { SlotLabel = "Drink" }, SelectedMenuItem = new() { NameEn = "Cola" }, PriceDeltaSnapshot = -.250m });
+
+        var jobs = OrderPrintingService.BuildJobs(order, Printer("127.0.0.1"));
+
+        Assert.All(jobs, job =>
+        {
+            var text = Encoding.UTF8.GetString(job.Payload);
+            Assert.Contains("Extra cheese (+0.500)", text);
+            Assert.Contains("Drink: Cola (-0.250)", text);
+            Assert.Contains("NOTE: No onions", text);
+        });
+    }
+
+    [Fact]
     public async Task Confirmation_consumes_recipe_stock_before_printing()
     {
         await using var db = new AppDbContext(new DbContextOptionsBuilder<AppDbContext>()
             .UseInMemoryDatabase(Guid.NewGuid().ToString()).Options);
         db.Database.EnsureCreated();
         var branchId = Guid.NewGuid();
+        var branch = new Branch { Id = branchId, Code = "MAIN", NameAr = "الفرع", NameEn = "Branch", IsActive = true };
         var category = new MenuCategory { Id = Guid.NewGuid(), NameAr = "وجبات", NameEn = "Meals" };
         var item = new MenuItem { Id = Guid.NewGuid(), Category = category, NameAr = "برجر", NameEn = "Burger", BasePrice = 3 };
         var unit = new UnitOfMeasure { Id = Guid.NewGuid(), Name = $"Unit-{Guid.NewGuid()}", Symbol = "kg", IsBase = true };
@@ -57,9 +78,9 @@ public class OrderPrintingTests
         var warehouse = new Warehouse { Id = Guid.NewGuid(), BranchId = branchId, NameAr = "رئيسي", NameEn = "Main", IsDefault = true };
         var stock = new WarehouseIngredientStock { Warehouse = warehouse, Ingredient = ingredient, CurrentQuantity = 10 };
         var type = await db.OrderTypes.SingleAsync(x => x.Code == "TAKEAWAY", TestContext.Current.CancellationToken);
-        var order = new RestaurantOrder { Id = Guid.NewGuid(), BranchId = branchId, OrderNumber = 42, OrderType = type, Status = RestaurantOrderStatuses.Open };
+        var order = new RestaurantOrder { Id = Guid.NewGuid(), BranchId = branchId, Branch = branch, OrderNumber = 42, OrderType = type, Status = RestaurantOrderStatuses.Open };
         order.Items.Add(new RestaurantOrderItem { Id = Guid.NewGuid(), MenuItem = item, MenuItemNameSnapshot = item.NameEn, Quantity = 2, UnitPriceSnapshot = 3, LineTotal = 6 });
-        db.AddRange(category, item, unit, ingredient, warehouse, stock, order,
+        db.AddRange(branch, category, item, unit, ingredient, warehouse, stock, order,
             new MenuItemRecipeLine { Id = Guid.NewGuid(), MenuItem = item, BranchId = branchId, Ingredient = ingredient, QuantityRequired = 1 },
             new PrinterConfig { Id = Guid.NewGuid(), BranchId = branchId, NameAr = "فاتورة", NameEn = "Receipt", IpAddress = "127.0.0.1", Port = 9100, IsDefault = true, IsActive = true });
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);

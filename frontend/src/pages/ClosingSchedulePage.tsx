@@ -2,7 +2,8 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { api, ApiError } from '../api/client'
 import type { BranchDto, ClosingScheduleConfigDto, ClosingScheduleExceptionDto } from '../api/types'
-import { DeleteIcon, EditIcon, IconAction, SearchBox } from '../components/TableTools'
+import DataTable from '../components/DataTable'
+import { DeleteIcon, EditIcon, IconAction } from '../components/TableTools'
 import { useToast } from '../components/ToastContext'
 
 const emptyForm = { date: '', overrideCloseTime: '01:00', branchId: '', reason: '' }
@@ -19,7 +20,6 @@ export default function ClosingSchedulePage() {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
-  const [search, setSearch] = useState('')
 
   const load = async () => {
     const [configData, exceptionData, branchData] = await Promise.all([
@@ -125,14 +125,15 @@ export default function ClosingSchedulePage() {
         </div>
       </form>
 
-      <div className="table-toolbar"><SearchBox value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('common.search')} /></div><div className="table-shell">
-        <table><thead><tr><th>{t('closing.date')}</th><th>{t('closing.overrideTime')}</th><th>{t('closing.branch')}</th><th>{t('closing.reason')}</th><th>{t('closing.actions')}</th></tr></thead>
-          <tbody>{exceptions.filter((item) => `${item.date} ${item.reason} ${branchName(item.branchId)}`.toLowerCase().includes(search.trim().toLowerCase())).map((item) => <tr key={item.id}>
-            <td>{item.date}</td><td>{item.overrideCloseTime.slice(0, 5)}</td><td>{branchName(item.branchId)}</td><td>{item.reason}</td>
-            <td><div className="row-actions"><IconAction label={t('closing.edit')} onClick={() => editException(item)}><EditIcon /></IconAction><IconAction label={t('closing.delete')} onClick={() => deleteException(item.id)}><DeleteIcon /></IconAction></div></td>
-          </tr>)}</tbody>
-        </table>
-      </div>
+      <DataTable rows={exceptions} getRowKey={(item) => item.id} queryPrefix="exceptions"
+        getSearchText={(item) => `${item.date} ${item.reason} ${branchName(item.branchId)}`}
+        columns={[
+          { id: 'date', header: t('closing.date'), cell: (item) => item.date, sortValue: (item) => item.date },
+          { id: 'time', header: t('closing.overrideTime'), cell: (item) => item.overrideCloseTime.slice(0, 5), sortValue: (item) => item.overrideCloseTime },
+          { id: 'branch', header: t('closing.branch'), cell: (item) => branchName(item.branchId), sortValue: (item) => branchName(item.branchId) },
+          { id: 'reason', header: t('closing.reason'), cell: (item) => item.reason, sortValue: (item) => item.reason },
+          { id: 'actions', header: t('closing.actions'), cell: (item) => <div className="row-actions"><IconAction label={t('closing.edit')} onClick={() => editException(item)}><EditIcon /></IconAction><IconAction label={t('closing.delete')} onClick={() => deleteException(item.id)}><DeleteIcon /></IconAction></div> },
+        ]} />
     </section>
   )
 }

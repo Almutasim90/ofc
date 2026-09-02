@@ -4,7 +4,8 @@ import { Link } from 'react-router-dom'
 import { api, ApiError } from '../api/client'
 import { useAuth } from '../auth/AuthContext'
 import type { BranchDto, CreateUserRequest, RoleDto, UpdateUserRequest, UserDto } from '../api/types'
-import { DetailsIcon, EditIcon, IconAction, SearchBox } from '../components/TableTools'
+import DataTable from '../components/DataTable'
+import { DetailsIcon, EditIcon, IconAction } from '../components/TableTools'
 import PasswordField from '../components/PasswordField'
 import { useToast } from '../components/ToastContext'
 
@@ -18,7 +19,6 @@ export default function UsersPage() {
   const [branches, setBranches] = useState<BranchDto[]>([])
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState<EditingState>(null)
-  const [search, setSearch] = useState('')
 
   const load = async () => {
     setLoading(true)
@@ -37,45 +37,22 @@ export default function UsersPage() {
     load()
   }, [])
 
-  if (loading) return <p>{t('common.loading')}</p>
-
   const branchName = (branchId: string | null) => branches.find((b) => b.id === branchId)?.nameEn ?? '-'
 
   return (
     <section>
       <h1>{t('users.title')}</h1>
-      <div className="table-toolbar"><SearchBox value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('common.search')} /><button type="button" onClick={() => setEditing({ mode: 'create' })}>
-        {t('users.create')}
-      </button></div>
-
-      <div className="table-shell"><table>
-        <thead>
-          <tr>
-            <th>{t('users.fullName')}</th>
-            <th>{t('users.username')}</th>
-            <th>{t('users.role')}</th>
-            <th>{t('users.branchId')}</th>
-            <th>{t('users.active')}</th>
-            <th>{t('users.actions')}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {users.filter((user) => `${user.fullName} ${user.username} ${user.roleName} ${branchName(user.branchId)}`.toLowerCase().includes(search.trim().toLowerCase())).map((user) => (
-            <tr key={user.id}>
-              <td>{user.fullName}</td>
-              <td>{user.username}</td>
-              <td>{t(`roles.${user.roleName}`, { defaultValue: user.roleName })}</td>
-              <td>{branchName(user.branchId)}</td>
-              <td>{user.isActive ? t('users.active') : t('users.inactive')}</td>
-              <td><div className="row-actions">
-                <IconAction label={t('users.edit')} onClick={() => setEditing({ mode: 'edit', user })}><EditIcon /></IconAction>
-                <Link className="icon-action" aria-label={t('users.permissions')} title={t('users.permissions')} to={`/users/${user.id}/permissions`}><DetailsIcon /></Link>
-              </div>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table></div>
+      <DataTable rows={users} loading={loading} getRowKey={(user) => user.id}
+        getSearchText={(user) => `${user.fullName} ${user.username} ${user.roleName} ${branchName(user.branchId)}`}
+        toolbar={<button type="button" onClick={() => setEditing({ mode: 'create' })}>{t('users.create')}</button>}
+        columns={[
+          { id: 'name', header: t('users.fullName'), cell: (user) => user.fullName, sortValue: (user) => user.fullName },
+          { id: 'username', header: t('users.username'), cell: (user) => user.username, sortValue: (user) => user.username },
+          { id: 'role', header: t('users.role'), cell: (user) => t(`roles.${user.roleName}`, { defaultValue: user.roleName }), sortValue: (user) => user.roleName },
+          { id: 'branch', header: t('users.branchId'), cell: (user) => branchName(user.branchId), sortValue: (user) => branchName(user.branchId) },
+          { id: 'active', header: t('users.active'), cell: (user) => user.isActive ? t('users.active') : t('users.inactive'), sortValue: (user) => user.isActive },
+          { id: 'actions', header: t('users.actions'), cell: (user) => <div className="row-actions"><IconAction label={t('users.edit')} onClick={() => setEditing({ mode: 'edit', user })}><EditIcon /></IconAction><Link className="icon-action" aria-label={t('users.permissions')} title={t('users.permissions')} to={`/users/${user.id}/permissions`}><DetailsIcon /></Link></div> },
+        ]} />
 
       {editing && (
         <UserForm

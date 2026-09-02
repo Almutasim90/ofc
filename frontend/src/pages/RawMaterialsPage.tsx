@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { api, ApiError } from '../api/client'
 import type { CreateRawMaterialRequest, RawMaterialDto, UpdateRawMaterialRequest } from '../api/types'
-import { EditIcon, IconAction, SearchBox } from '../components/TableTools'
+import DataTable from '../components/DataTable'
+import { EditIcon, IconAction } from '../components/TableTools'
 import { useToast } from '../components/ToastContext'
 
 type EditingState = { mode: 'create' } | { mode: 'edit'; material: RawMaterialDto } | null
@@ -12,7 +13,6 @@ export default function RawMaterialsPage() {
   const [materials, setMaterials] = useState<RawMaterialDto[]>([])
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState<EditingState>(null)
-  const [search, setSearch] = useState('')
 
   const load = async () => {
     setLoading(true)
@@ -24,37 +24,18 @@ export default function RawMaterialsPage() {
     load()
   }, [])
 
-  if (loading) return <p>{t('common.loading')}</p>
-
   return (
     <section>
       <h1>{t('rawMaterials.title')}</h1>
-      <div className="table-toolbar"><SearchBox value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('common.search')} /><button type="button" onClick={() => setEditing({ mode: 'create' })}>
-        {t('rawMaterials.create')}
-      </button></div>
-
-      <div className="table-shell"><table>
-        <thead>
-          <tr>
-            <th>{t('rawMaterials.nameAr')}</th>
-            <th>{t('rawMaterials.nameEn')}</th>
-            <th>{t('rawMaterials.unit')}</th>
-            <th>{t('rawMaterials.actions')}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {materials.filter((material) => `${material.nameAr} ${material.nameEn} ${material.unit}`.toLowerCase().includes(search.trim().toLowerCase())).map((material) => (
-            <tr key={material.id}>
-              <td>{material.nameAr}</td>
-              <td>{material.nameEn}</td>
-              <td>{material.unit}</td>
-              <td>
-                <IconAction label={t('rawMaterials.edit')} onClick={() => setEditing({ mode: 'edit', material })}><EditIcon /></IconAction>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table></div>
+      <DataTable rows={materials} loading={loading} getRowKey={(material) => material.id}
+        getSearchText={(material) => `${material.nameAr} ${material.nameEn} ${material.unit}`}
+        toolbar={<button type="button" onClick={() => setEditing({ mode: 'create' })}>{t('rawMaterials.create')}</button>}
+        columns={[
+          { id: 'nameAr', header: t('rawMaterials.nameAr'), cell: (material) => material.nameAr, sortValue: (material) => material.nameAr },
+          { id: 'nameEn', header: t('rawMaterials.nameEn'), cell: (material) => material.nameEn, sortValue: (material) => material.nameEn },
+          { id: 'unit', header: t('rawMaterials.unit'), cell: (material) => material.unit, sortValue: (material) => material.unit },
+          { id: 'actions', header: t('rawMaterials.actions'), cell: (material) => <IconAction label={t('rawMaterials.edit')} onClick={() => setEditing({ mode: 'edit', material })}><EditIcon /></IconAction> },
+        ]} />
 
       {editing && (
         <MaterialForm

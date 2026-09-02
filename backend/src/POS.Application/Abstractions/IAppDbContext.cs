@@ -12,8 +12,10 @@ public interface IAppDbContext
     DbSet<UserPermissionOverride> UserPermissionOverrides { get; }
 
     DbSet<Branch> Branches { get; }
+    DbSet<RestaurantFloor> RestaurantFloors { get; }
     DbSet<RestaurantTable> RestaurantTables { get; }
     DbSet<BranchFeatureFlag> BranchFeatureFlags { get; }
+    DbSet<BranchQrOrderingSchedule> BranchQrOrderingSchedules { get; }
     DbSet<MenuCategory> MenuCategories { get; }
     DbSet<CategoryBranchAvailability> CategoryBranchAvailabilities { get; }
     DbSet<MenuItem> MenuItems { get; }
@@ -41,6 +43,8 @@ public interface IAppDbContext
     DbSet<PrinterSection> PrinterSections { get; }
     DbSet<PaymentMethod> PaymentMethods { get; }
     DbSet<OrderPayment> OrderPayments { get; }
+    DbSet<BillSplit> BillSplits { get; }
+    DbSet<BillSplitLine> BillSplitLines { get; }
     DbSet<OrderEditLog> OrderEditLogs { get; }
     DbSet<CashShift> CashShifts { get; }
     DbSet<CashCount> CashCounts { get; }
@@ -72,6 +76,7 @@ public interface IAppDbContext
     DbSet<AiInsightRequest> AiInsightRequests { get; }
     DbSet<EmailSettings> EmailSettings { get; }
     DbSet<ReceiptSettings> ReceiptSettings { get; }
+    DbSet<InvoiceSettings> InvoiceSettings { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     Task<int> ClaimNextSaleNumberAsync(Guid branchId, CancellationToken cancellationToken = default);

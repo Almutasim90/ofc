@@ -4,8 +4,8 @@ import { Area, Bar, BarChart, CartesianGrid, Cell, ComposedChart, LabelList, Leg
 import { api } from '../api/client'
 import type { BranchDto, ChannelSalesDto, ManagerDashboardDto } from '../api/types'
 import { useAuth } from '../auth/AuthContext'
+import DataTable from '../components/DataTable'
 import Money from '../components/Money'
-import { SearchBox } from '../components/TableTools'
 
 const formatLocalDate = (date: Date) => {
   const year = date.getFullYear()
@@ -26,8 +26,6 @@ const MUTED = 'rgb(var(--color-muted))'
 const BORDER = 'rgb(var(--color-border))'
 const PRIMARY = 'rgb(var(--color-primary))'
 const DANGER = 'rgb(var(--color-danger))'
-type ProductSortKey = 'product' | 'quantitySold' | 'totalSales' | 'invoiceCount' | 'share'
-type SortDirection = 'asc' | 'desc'
 type PaymentFilter = 'all' | 'cash' | 'card'
 
 function downloadCsv(filename: string, rows: (string | number)[][]) {
@@ -62,11 +60,9 @@ export default function ReportsPage() {
   const [data, setData] = useState<ManagerDashboardDto | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [productSearch, setProductSearch] = useState('')
   const [channelSales, setChannelSales] = useState<ChannelSalesDto[]>([])
   const [lowStockCount, setLowStockCount] = useState(0)
   const [showTable, setShowTable] = useState(false)
-  const [productSort, setProductSort] = useState<{ key: ProductSortKey; direction: SortDirection }>({ key: 'totalSales', direction: 'desc' })
   const [paymentFilter, setPaymentFilter] = useState<PaymentFilter>('all')
 
   useEffect(() => { api.get<BranchDto[]>('/api/branches').then((rows) => setBranches(rows.filter((b) => b.isActive))).catch(() => {}) }, [])
@@ -89,18 +85,7 @@ export default function ReportsPage() {
     return rows
   }, [data, paymentFilter])
   const shareBase = paymentFilter === 'cash' ? cashSales : paymentFilter === 'card' ? cardSales : (data?.totalSales ?? 0)
-  const filteredProducts = products.filter((x) => `${x.nameAr} ${x.nameEn}`.toLocaleLowerCase().includes(productSearch.trim().toLocaleLowerCase()))
-  const sortedProducts = useMemo(() => [...filteredProducts].sort((a, b) => {
-    const multiplier = productSort.direction === 'asc' ? 1 : -1
-    if (productSort.key === 'product') return multiplier * name(a.nameAr, a.nameEn).localeCompare(name(b.nameAr, b.nameEn), i18n.language)
-    const aValue = productSort.key === 'share' ? a.totalSales : a[productSort.key]
-    const bValue = productSort.key === 'share' ? b.totalSales : b[productSort.key]
-    return multiplier * (aValue - bValue)
-  }), [filteredProducts, productSort, i18n.language])
-  const toggleProductSort = (key: ProductSortKey) => setProductSort((current) => ({
-    key,
-    direction: current.key === key && current.direction === 'desc' ? 'asc' : 'desc',
-  }))
+  const sortedProducts = useMemo(() => [...products].sort((a, b) => b.totalSales - a.totalSales), [products])
   const exportCsv = () => {
     if (!data) return
     const rows: (string | number)[][] = [
@@ -175,9 +160,23 @@ export default function ReportsPage() {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2 report-content-enter" style={{ animationDelay: '80ms' }}>
-      <ChartCard title={t('reports.orderTypeDistribution')}><div className="overflow-auto"><table><thead><tr><th>{t('common.type')}</th><th>{t('reports.invoices')}</th><th>{t('reports.totalSales')}</th></tr></thead><tbody>{data.orderTypes.map(x=><tr key={x.code}><td>{name(x.nameAr,x.nameEn)}</td><td>{x.invoiceCount}</td><td><Money value={x.totalSales}/></td></tr>)}</tbody></table></div></ChartCard>
-      <ChartCard title={t('reports.cashShiftVarianceReport')}><div className="overflow-auto"><table><thead><tr><th>{t('reports.date')}</th><th>{t('cashShifts.expected')}</th><th>{t('cashShifts.counted')}</th><th>{t('cashShifts.variance')}</th></tr></thead><tbody>{data.cashShiftVariances.map(x=><tr key={x.cashShiftId}><td>{new Date(x.openedAt).toLocaleString(i18n.language)}</td><td><Money value={x.expectedCash}/></td><td><Money value={x.countedCash}/></td><td><Money value={x.varianceCash}/></td></tr>)}</tbody></table></div></ChartCard>
-      <ChartCard title={t('reports.orderEditReport')}><div className="overflow-auto"><table><thead><tr><th>{t('reports.invoice')}</th><th>{t('reports.date')}</th><th>{t('common.type')}</th><th>{t('cashShifts.variance')}</th></tr></thead><tbody>{data.orderEdits.map(x=><tr key={x.id}><td>#{x.orderNumber}</td><td>{new Date(x.createdAt).toLocaleString(i18n.language)}</td><td>{x.editType}</td><td><Money value={x.amountDelta}/></td></tr>)}</tbody></table></div></ChartCard>
+       <ChartCard title={t('reports.orderTypeDistribution')}><DataTable rows={data.orderTypes} pageSize={0} queryPrefix="order-types" getRowKey={x=>x.code} columns={[
+         {id:'type',header:t('common.type'),cell:x=>name(x.nameAr,x.nameEn),sortValue:x=>name(x.nameAr,x.nameEn)},
+         {id:'invoices',header:t('reports.invoices'),cell:x=>x.invoiceCount,sortValue:x=>x.invoiceCount},
+         {id:'sales',header:t('reports.totalSales'),cell:x=><Money value={x.totalSales}/>,sortValue:x=>x.totalSales},
+       ]}/></ChartCard>
+       <ChartCard title={t('reports.cashShiftVarianceReport')}><DataTable rows={data.cashShiftVariances} pageSize={0} queryPrefix="cash-variance" defaultSort={{id:'date',direction:'desc'}} getRowKey={x=>x.cashShiftId} columns={[
+         {id:'date',header:t('reports.date'),cell:x=>new Date(x.openedAt).toLocaleString(i18n.language),sortValue:x=>new Date(x.openedAt)},
+         {id:'expected',header:t('cashShifts.expected'),cell:x=><Money value={x.expectedCash}/>,sortValue:x=>x.expectedCash},
+         {id:'counted',header:t('cashShifts.counted'),cell:x=><Money value={x.countedCash}/>,sortValue:x=>x.countedCash},
+         {id:'variance',header:t('cashShifts.variance'),cell:x=><Money value={x.varianceCash}/>,sortValue:x=>x.varianceCash},
+       ]}/></ChartCard>
+       <ChartCard title={t('reports.orderEditReport')}><DataTable rows={data.orderEdits} pageSize={0} queryPrefix="order-edits" defaultSort={{id:'date',direction:'desc'}} getRowKey={x=>x.id} columns={[
+         {id:'invoice',header:t('reports.invoice'),cell:x=>`#${x.orderNumber}`,sortValue:x=>x.orderNumber},
+         {id:'date',header:t('reports.date'),cell:x=>new Date(x.createdAt).toLocaleString(i18n.language),sortValue:x=>new Date(x.createdAt)},
+         {id:'type',header:t('common.type'),cell:x=>x.editType,sortValue:x=>x.editType},
+         {id:'variance',header:t('cashShifts.variance'),cell:x=><Money value={x.amountDelta}/>,sortValue:x=>x.amountDelta},
+       ]}/></ChartCard>
       <ChartCard title={t('reports.channelDistribution')}>
           <div className="relative h-full min-h-0">
             <ChartCanvas>
@@ -308,49 +307,25 @@ export default function ReportsPage() {
 
       <button type="button" onClick={()=>setShowTable(value=>!value)}>{showTable?t('reports.hideTable'):t('reports.showTable')}</button>
       {showTable && <div className="rounded-xl border border-border bg-surface p-4 report-content-enter">
-        <div className="table-toolbar">
-          <h2>{t('reports.productDetails')}</h2>
-          <div className="flex flex-wrap gap-2">
+        <h2>{t('reports.productDetails')}</h2>
+        <DataTable rows={products} queryPrefix="products" defaultSort={{id:'totalSales',direction:'desc'}} getRowKey={x=>x.productId} getSearchText={x=>`${x.nameAr} ${x.nameEn}`} searchPlaceholder={t('reports.searchProducts')}
+          toolbar={<div className="flex flex-wrap gap-2">
             <label className="report-filter">{t('reports.paymentMethod')}<select value={paymentFilter} onChange={(e) => setPaymentFilter(e.target.value as PaymentFilter)}>
               <option value="all">{t('reports.allPaymentMethods')}</option>
               <option value="cash">{t('reports.payment.cash')}</option>
               <option value="card">{t('reports.payment.card')}</option>
             </select></label>
-            <SearchBox value={productSearch} onChange={(e) => setProductSearch(e.target.value)} placeholder={t('reports.searchProducts')} />
-          </div>
-        </div>
-        <div className="table-shell hidden md:block"><table><thead><tr>
-          <SortableHeader label={t('reports.product')} sortKey="product" sort={productSort} onSort={toggleProductSort} />
-          <SortableHeader label={t('reports.quantitySold')} sortKey="quantitySold" sort={productSort} onSort={toggleProductSort} />
-          <SortableHeader label={t('reports.totalSales')} sortKey="totalSales" sort={productSort} onSort={toggleProductSort} />
-          <SortableHeader label={t('reports.invoices')} sortKey="invoiceCount" sort={productSort} onSort={toggleProductSort} />
-          <SortableHeader label={t('reports.share')} sortKey="share" sort={productSort} onSort={toggleProductSort} />
-        </tr></thead><tbody>{sortedProducts.map((x) => <tr key={x.productId}><td className="font-bold">{name(x.nameAr, x.nameEn)}</td><td>{x.quantitySold.toLocaleString()}</td><td><Money value={x.totalSales} /></td><td>{x.invoiceCount}</td><td>{shareBase ? `${((x.totalSales / shareBase) * 100).toFixed(1)}%` : '0%'}</td></tr>)}</tbody></table></div>
-        <div className="report-product-cards grid gap-3 md:hidden">
-          {sortedProducts.map((x) => <details key={x.productId} className="report-product-card">
-            <summary>
-              <span className="font-bold">{name(x.nameAr, x.nameEn)}</span>
-              <Money value={x.totalSales} />
-            </summary>
-            <dl>
-              <div><dt>{t('reports.quantitySold')}</dt><dd>{x.quantitySold.toLocaleString()}</dd></div>
-              <div><dt>{t('reports.invoices')}</dt><dd>{x.invoiceCount}</dd></div>
-              <div><dt>{t('reports.share')}</dt><dd>{shareBase ? `${((x.totalSales / shareBase) * 100).toFixed(1)}%` : '0%'}</dd></div>
-            </dl>
-          </details>)}
-        </div>
+          </div>}
+          columns={[
+            {id:'product',header:t('reports.product'),cell:x=><span className="font-bold">{name(x.nameAr,x.nameEn)}</span>,sortValue:x=>name(x.nameAr,x.nameEn)},
+            {id:'quantitySold',header:t('reports.quantitySold'),cell:x=>x.quantitySold.toLocaleString(),sortValue:x=>x.quantitySold},
+            {id:'totalSales',header:t('reports.totalSales'),cell:x=><Money value={x.totalSales}/>,sortValue:x=>x.totalSales},
+            {id:'invoiceCount',header:t('reports.invoices'),cell:x=>x.invoiceCount,sortValue:x=>x.invoiceCount},
+            {id:'share',header:t('reports.share'),cell:x=>shareBase?`${((x.totalSales/shareBase)*100).toFixed(1)}%`:'0%',sortValue:x=>x.totalSales},
+          ]}/>
       </div>}
     </>}
   </section>
-}
-
-function SortableHeader({ label, sortKey, sort, onSort }: { label: string; sortKey: ProductSortKey; sort: { key: ProductSortKey; direction: SortDirection }; onSort: (key: ProductSortKey) => void }) {
-  const active = sort.key === sortKey
-  return <th aria-sort={active ? (sort.direction === 'asc' ? 'ascending' : 'descending') : 'none'}>
-    <button type="button" className="report-sort-button" onClick={() => onSort(sortKey)}>
-      <span>{label}</span><span aria-hidden="true" className={active ? 'is-active' : ''}>{active && sort.direction === 'asc' ? '↑' : '↓'}</span>
-    </button>
-  </th>
 }
 
 function StatCard({ label, value, icon, tone }: { label: string; value: ReactNode; icon: ReactNode; tone: 'primary' | 'accent' | 'danger' | 'cash' | 'card' }) {

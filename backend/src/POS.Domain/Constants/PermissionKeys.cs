@@ -25,6 +25,7 @@ public static class PermissionKeys
     public const string ClosedOrdersEdit = "closedOrders.edit";
     public const string DebtPaymentsApprove = "debtPayments.approve";
     public const string OrdersTransfer = "orders.transfer";
+    public const string InvoiceManage = "invoice.manage";
 
     public static readonly IReadOnlyList<string> All =
     [
@@ -51,5 +52,6 @@ public static class PermissionKeys
         ClosedOrdersEdit,
         DebtPaymentsApprove,
         OrdersTransfer,
+        InvoiceManage,
     ];
 }

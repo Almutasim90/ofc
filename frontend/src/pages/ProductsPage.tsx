@@ -4,7 +4,8 @@ import { Link } from 'react-router-dom'
 import { api, ApiError, resolveApiAssetUrl } from '../api/client'
 import type { CreateProductRequest, ProductDto, UpdateProductRequest } from '../api/types'
 import Money from '../components/Money'
-import { DetailsIcon, EditIcon, IconAction, SearchBox } from '../components/TableTools'
+import DataTable from '../components/DataTable'
+import { DetailsIcon, EditIcon, IconAction } from '../components/TableTools'
 import { useToast } from '../components/ToastContext'
 
 type EditingState = { mode: 'create' } | { mode: 'edit'; product: ProductDto } | null
@@ -14,9 +15,6 @@ export default function ProductsPage() {
   const [products, setProducts] = useState<ProductDto[]>([])
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState<EditingState>(null)
-  const [search, setSearch] = useState('')
-  const [page, setPage] = useState(1)
-  const pageSize = 8
 
   const load = async () => {
     setLoading(true)
@@ -28,73 +26,21 @@ export default function ProductsPage() {
     load()
   }, [])
 
-  const filteredProducts = products.filter((product) =>
-    `${product.nameAr} ${product.nameEn} ${product.category}`.toLowerCase().includes(search.trim().toLowerCase()),
-  )
-  const pageCount = Math.max(1, Math.ceil(filteredProducts.length / pageSize))
-  const currentPage = Math.min(page, pageCount)
-  const visibleProducts = filteredProducts.slice((currentPage - 1) * pageSize, currentPage * pageSize)
-
-  useEffect(() => {
-    setPage(1)
-  }, [search])
-
-  if (loading) return <p>{t('common.loading')}</p>
-
   return (
     <section>
       <h1>{t('products.title')}</h1>
-      <div className="table-toolbar"><SearchBox value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('common.search')} /><button type="button" onClick={() => setEditing({ mode: 'create' })}>
-        {t('products.create')}
-      </button></div>
-
-      <div className="table-shell"><table>
-        <thead>
-          <tr>
-            <th>{t('products.image')}</th>
-            <th>{t('products.nameAr')}</th>
-            <th>{t('products.nameEn')}</th>
-            <th>{t('products.category')}</th>
-            <th>{t('products.price')}</th>
-            <th>{t('products.active')}</th>
-            <th>{t('products.actions')}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {visibleProducts.map((product) => (
-            <tr key={product.id}>
-              <td><ProductThumbnail product={product} /></td>
-              <td>{product.nameAr}</td>
-              <td>{product.nameEn}</td>
-              <td>{product.category}</td>
-              <td><Money value={product.price} /></td>
-              <td>{product.isActive ? t('products.active') : t('products.inactive')}</td>
-              <td><div className="row-actions">
-                <IconAction label={t('products.edit')} onClick={() => setEditing({ mode: 'edit', product })}><EditIcon /></IconAction>
-                <Link className="icon-action" aria-label={t('products.recipe')} title={t('products.recipe')} to={`/products/${product.id}/recipe`}><DetailsIcon /></Link>
-              </div>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table></div>
-
-      {filteredProducts.length > 0 && (
-        <nav className="pagination" aria-label={t('products.pagination')}>
-          <span className="pagination-summary">
-            {t('products.showing', {
-              from: (currentPage - 1) * pageSize + 1,
-              to: Math.min(currentPage * pageSize, filteredProducts.length),
-              total: filteredProducts.length,
-            })}
-          </span>
-          <div className="pagination-controls">
-            <button type="button" onClick={() => setPage((value) => Math.max(1, value - 1))} disabled={currentPage === 1}>{t('products.previous')}</button>
-            <span>{t('products.pageOf', { page: currentPage, total: pageCount })}</span>
-            <button type="button" onClick={() => setPage((value) => Math.min(pageCount, value + 1))} disabled={currentPage === pageCount}>{t('products.next')}</button>
-          </div>
-        </nav>
-      )}
+      <DataTable rows={products} loading={loading} pageSize={8} getRowKey={(product) => product.id}
+        getSearchText={(product) => `${product.nameAr} ${product.nameEn} ${product.category}`}
+        toolbar={<button type="button" onClick={() => setEditing({ mode: 'create' })}>{t('products.create')}</button>}
+        columns={[
+          { id: 'image', header: t('products.image'), cell: (product) => <ProductThumbnail product={product} /> },
+          { id: 'nameAr', header: t('products.nameAr'), cell: (product) => product.nameAr, sortValue: (product) => product.nameAr },
+          { id: 'nameEn', header: t('products.nameEn'), cell: (product) => product.nameEn, sortValue: (product) => product.nameEn },
+          { id: 'category', header: t('products.category'), cell: (product) => product.category, sortValue: (product) => product.category },
+          { id: 'price', header: t('products.price'), cell: (product) => <Money value={product.price} />, sortValue: (product) => product.price },
+          { id: 'active', header: t('products.active'), cell: (product) => product.isActive ? t('products.active') : t('products.inactive'), sortValue: (product) => product.isActive },
+          { id: 'actions', header: t('products.actions'), cell: (product) => <div className="row-actions"><IconAction label={t('products.edit')} onClick={() => setEditing({ mode: 'edit', product })}><EditIcon /></IconAction><Link className="icon-action" aria-label={t('products.recipe')} title={t('products.recipe')} to={`/products/${product.id}/recipe`}><DetailsIcon /></Link></div> },
+        ]} />
 
       {editing && (
         <ProductForm

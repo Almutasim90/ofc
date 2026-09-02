@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router-dom'
 import { api, ApiError } from '../api/client'
 import type { PermissionOverrideDto } from '../api/types'
-import { SearchBox } from '../components/TableTools'
+import DataTable from '../components/DataTable'
 import { useToast } from '../components/ToastContext'
 
 export default function UserPermissionsPage() {
@@ -12,7 +12,6 @@ export default function UserPermissionsPage() {
   const { id } = useParams<{ id: string }>()
   const [overrides, setOverrides] = useState<PermissionOverrideDto[]>([])
   const [loading, setLoading] = useState(true)
-  const [search, setSearch] = useState('')
 
   const load = async () => {
     if (!id) return
@@ -36,56 +35,36 @@ export default function UserPermissionsPage() {
     }
   }
 
-  if (loading) return <p>{t('common.loading')}</p>
-
   return (
     <section>
       <Link to="/users">{t('permissions.back')}</Link>
       <h1>{t('permissions.title')}</h1>
-      <div className="table-toolbar"><SearchBox value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('common.search')} /></div><div className="table-shell"><table>
-        <thead>
-          <tr>
-            <th>{t('permissions.permission')}</th>
-            <th>{t('permissions.inherit')}</th>
-            <th>{t('permissions.grant')}</th>
-            <th>{t('permissions.deny')}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {overrides.filter((o) => o.permissionKey.toLowerCase().includes(search.trim().toLowerCase())).map((o) => (
-            <tr key={o.permissionId}>
-              <td>{t(`permissionKeys.${o.permissionKey}`, { defaultValue: o.permissionKey })}</td>
-              <td>
-                <label className="permission-radio-target"><input
+      <DataTable rows={overrides} loading={loading} getRowKey={(override) => override.permissionId}
+        getSearchText={(override) => `${override.permissionKey} ${t(`permissionKeys.${override.permissionKey}`, { defaultValue: override.permissionKey })}`}
+        columns={[
+          { id: 'permission', header: t('permissions.permission'), cell: (o) => t(`permissionKeys.${o.permissionKey}`, { defaultValue: o.permissionKey }), sortValue: (o) => o.permissionKey },
+          { id: 'inherit', header: t('permissions.inherit'), cell: (o) => <label className="permission-radio-target"><input
                   type="radio"
                   name={o.permissionId}
                   checked={o.isGranted === null}
                   onChange={() => setOverride(o.permissionId, null)}
                   aria-label={t('permissions.inherit')}
-                /></label>
-              </td>
-              <td>
-                <label className="permission-radio-target"><input
+                /></label> },
+          { id: 'grant', header: t('permissions.grant'), cell: (o) => <label className="permission-radio-target"><input
                   type="radio"
                   name={o.permissionId}
                   checked={o.isGranted === true}
                   onChange={() => setOverride(o.permissionId, true)}
                   aria-label={t('permissions.grant')}
-                /></label>
-              </td>
-              <td>
-                <label className="permission-radio-target"><input
+                /></label> },
+          { id: 'deny', header: t('permissions.deny'), cell: (o) => <label className="permission-radio-target"><input
                   type="radio"
                   name={o.permissionId}
                   checked={o.isGranted === false}
                   onChange={() => setOverride(o.permissionId, false)}
                   aria-label={t('permissions.deny')}
-                /></label>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table></div>
+                /></label> },
+        ]} />
     </section>
   )
 }

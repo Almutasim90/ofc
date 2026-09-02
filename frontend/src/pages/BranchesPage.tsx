@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { api, ApiError } from '../api/client'
 import type { BranchDto, CreateBranchRequest, UpdateBranchRequest } from '../api/types'
-import { EditIcon, IconAction, SearchBox } from '../components/TableTools'
+import DataTable from '../components/DataTable'
+import { EditIcon, IconAction } from '../components/TableTools'
 import Money from '../components/Money'
 import { useToast } from '../components/ToastContext'
 
@@ -13,7 +14,6 @@ export default function BranchesPage() {
   const [branches, setBranches] = useState<BranchDto[]>([])
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState<EditingState>(null)
-  const [search, setSearch] = useState('')
 
   const load = async () => {
     setLoading(true)
@@ -25,41 +25,20 @@ export default function BranchesPage() {
     load()
   }, [])
 
-  if (loading) return <p>{t('common.loading')}</p>
-
   return (
     <section>
       <h1>{t('branches.title')}</h1>
-      <div className="table-toolbar"><SearchBox value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('common.search')} /><button type="button" onClick={() => setEditing({ mode: 'create' })}>
-        {t('branches.create')}
-      </button></div>
-
-      <div className="table-shell"><table>
-        <thead>
-          <tr>
-            <th>{t('branches.nameAr')}</th>
-            <th>{t('branches.nameEn')}</th>
-          <th>{t('branches.code')}</th>
-            <th>{t('branches.defaultOpeningFloat')}</th>
-            <th>{t('branches.active')}</th>
-            <th>{t('branches.actions')}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {branches.filter((branch) => `${branch.nameAr} ${branch.nameEn} ${branch.code}`.toLowerCase().includes(search.trim().toLowerCase())).map((branch) => (
-            <tr key={branch.id}>
-              <td>{branch.nameAr}</td>
-              <td>{branch.nameEn}</td>
-              <td>{branch.code}</td>
-              <td><Money value={branch.defaultOpeningFloat} /></td>
-              <td>{branch.isActive ? t('branches.active') : t('branches.inactive')}</td>
-              <td>
-                <IconAction label={t('branches.edit')} onClick={() => setEditing({ mode: 'edit', branch })}><EditIcon /></IconAction>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table></div>
+      <DataTable rows={branches} loading={loading} getRowKey={(branch) => branch.id}
+        getSearchText={(branch) => `${branch.nameAr} ${branch.nameEn} ${branch.code}`}
+        toolbar={<button type="button" onClick={() => setEditing({ mode: 'create' })}>{t('branches.create')}</button>}
+        columns={[
+          { id: 'nameAr', header: t('branches.nameAr'), cell: (branch) => branch.nameAr, sortValue: (branch) => branch.nameAr },
+          { id: 'nameEn', header: t('branches.nameEn'), cell: (branch) => branch.nameEn, sortValue: (branch) => branch.nameEn },
+          { id: 'code', header: t('branches.code'), cell: (branch) => branch.code, sortValue: (branch) => branch.code },
+          { id: 'float', header: t('branches.defaultOpeningFloat'), cell: (branch) => <Money value={branch.defaultOpeningFloat} />, sortValue: (branch) => branch.defaultOpeningFloat },
+          { id: 'active', header: t('branches.active'), cell: (branch) => branch.isActive ? t('branches.active') : t('branches.inactive'), sortValue: (branch) => branch.isActive },
+          { id: 'actions', header: t('branches.actions'), cell: (branch) => <IconAction label={t('branches.edit')} onClick={() => setEditing({ mode: 'edit', branch })}><EditIcon /></IconAction> },
+        ]} />
 
       {editing && (
         <BranchForm

@@ -4,6 +4,7 @@ using POS.Application.Common;
 using POS.Application.Printing;
 using POS.Application.QrOrdering;
 using POS.Application.RestaurantInventory;
+using POS.Domain.Constants;
 using POS.Domain.Entities;
 using POS.Infrastructure.Persistence;
 using Xunit;
@@ -23,11 +24,49 @@ public class OrderTransferTests
 
         var session = Assert.Single(db.OrderingSessions);
         Assert.Equal(session.Id, order.OrderingSessionId);
+        Assert.Equal(point.LinkedTableId, order.TableId);
+        Assert.Null(order.CarPlateNumber);
+        Assert.Equal("DINE_IN", (await db.OrderTypes.SingleAsync(x => x.Id == order.OrderTypeId, TestContext.Current.CancellationToken)).Code);
         var log = Assert.Single(db.OrderEditLogs);
         Assert.Equal("Transferred", log.EditType);
         Assert.Equal(userId, log.UserId);
         Assert.Equal(0, log.AmountDelta);
         Assert.Contains(point.Id.ToString(), log.Notes);
+    }
+
+    [Fact]
+    public async Task Transfer_to_car_bay_clears_table_and_uses_target_location_and_order_type()
+    {
+        await using var db = Db();
+        var (order, _) = Seed(db, RestaurantOrderStatuses.Open);
+        var sourceTable = new RestaurantTable { Id = Guid.NewGuid(), BranchId = order.BranchId, Label = "T1" };
+        var bay = new CarPickupBay { Id = Guid.NewGuid(), BranchId = order.BranchId, BayLabel = "Bay 7" };
+        var point = new OrderingPoint { Id = Guid.NewGuid(), BranchId = order.BranchId, PointType = OrderingPointTypes.CarBay, LinkedCarBay = bay, QrCodeToken = Guid.NewGuid().ToString("N"), IsActive = true };
+        order.Table = sourceTable;
+        order.TableId = sourceTable.Id;
+        db.AddRange(sourceTable, bay, point);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        await Service(db).TransferOrderAsync(order.Id, point.Id, Guid.NewGuid(), null, TestContext.Current.CancellationToken);
+
+        Assert.Null(order.TableId);
+        Assert.Equal("Bay 7", order.CarPlateNumber);
+        Assert.Equal("CAR_PICKUP", (await db.OrderTypes.SingleAsync(x => x.Id == order.OrderTypeId, TestContext.Current.CancellationToken)).Code);
+    }
+
+    [Fact]
+    public async Task Transfer_to_table_clears_car_location_and_uses_target_table_and_order_type()
+    {
+        await using var db = Db();
+        var (order, point) = Seed(db, RestaurantOrderStatuses.Open);
+        order.CarPlateNumber = "Old bay";
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        await Service(db).TransferOrderAsync(order.Id, point.Id, Guid.NewGuid(), null, TestContext.Current.CancellationToken);
+
+        Assert.Equal(point.LinkedTableId, order.TableId);
+        Assert.Null(order.CarPlateNumber);
+        Assert.Equal("DINE_IN", (await db.OrderTypes.SingleAsync(x => x.Id == order.OrderTypeId, TestContext.Current.CancellationToken)).Code);
     }
 
     [Theory]

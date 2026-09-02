@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using POS.Application.Abstractions;
 using POS.Application.Common;
+using POS.Application.Orders;
 using POS.Application.Printing;
 using POS.Application.QrOrdering;
 using POS.Application.RestaurantInventory;
@@ -108,6 +109,29 @@ public class QrOrderingTests
     }
 
     [Fact]
+    public async Task Combo_rejects_duplicate_selections_explicitly()
+    {
+        await using var db = Db();
+        var point = Point(db, OrderingPointTypes.Table, "T1");
+        var service = Service(db);
+        var session = await service.ResolveAsync(point.QrCodeToken, TestContext.Current.CancellationToken);
+        var option = MenuItem(db);
+        var combo = new MenuItem { Id = Guid.NewGuid(), Category = option.Category, NameAr = "وجبة", NameEn = "Combo", Kind = MenuItemKinds.Combo, BasePrice = 3 };
+        var component = new ComboComponent { Id = Guid.NewGuid(), ComboMenuItem = combo, SlotLabel = "Main", IsRequired = true, MinSelect = 1, MaxSelect = 2 };
+        component.Options.Add(new() { Id = Guid.NewGuid(), ComboComponent = component, MenuItem = option, IsDefault = true });
+        combo.ComboComponents.Add(component);
+        db.MenuItems.Add(combo);
+        var channel = Channel(db, point.BranchId, "QR_TABLE");
+        await SeedOpenOrder(db, point, session.SessionId, channel.Id);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        var selection = new CreateOrderComboSelectionRequest(component.Id, option.Id);
+        var request = new AddQrOrderRequest(session.AccessToken, [new(combo.Id, 1, null, [], [selection, selection])]);
+
+        var error = await Assert.ThrowsAsync<ValidationException>(() => service.AddAsync(session.SessionId, request, TestContext.Current.CancellationToken));
+        Assert.Equal("Duplicate combo selection.", error.Message);
+    }
+
+    [Fact]
     public async Task Prepayment_rule_rejects_unpaid_confirmation()
     {
         await using var db = Db();
@@ -149,7 +173,7 @@ public class QrOrderingTests
     }
 
     [Fact]
-    public async Task Fully_paid_qr_order_can_be_sent_and_cannot_spawn_another_invoice()
+    public async Task Qr_order_requires_staff_approval_before_printing_and_cannot_spawn_another_invoice()
     {
         await using var db = Db();
         var point = Point(db, OrderingPointTypes.Table, "T1");
@@ -166,7 +190,6 @@ public class QrOrderingTests
         var request = new AddQrOrderRequest(session.AccessToken, [new(item.Id, 1, null, [], [])]);
         var created = await service.AddAsync(session.SessionId, request, TestContext.Current.CancellationToken);
         var order = await db.RestaurantOrders.Include(x => x.Payments).SingleAsync(x => x.Id == created.Id, TestContext.Current.CancellationToken);
-        order.Status = RestaurantOrderStatuses.Paid;
         var payment = new OrderPayment { Id = Guid.NewGuid(), OrderId = order.Id, PaymentMethodId = paymentMethod.Id, Amount = order.GrandTotal, CreatedAt = DateTime.UtcNow };
         order.Payments.Add(payment);
         db.OrderPayments.Add(payment);
@@ -174,10 +197,14 @@ public class QrOrderingTests
 
         await service.ConfirmAsync(order.Id, new(session.SessionId, session.AccessToken), TestContext.Current.CancellationToken);
 
-        Assert.Equal(RestaurantOrderStatuses.Sent, order.Status);
+        Assert.Equal(RestaurantOrderStatuses.PendingApproval, order.Status);
+        Assert.Equal(0, printer.SendCount);
+        await service.ConfirmAsync(order.Id, new(session.SessionId, session.AccessToken), TestContext.Current.CancellationToken);
+        await service.ApproveAsync(order.Id, TestContext.Current.CancellationToken);
+        Assert.Equal(RestaurantOrderStatuses.Paid, order.Status);
         Assert.True(printer.SendCount >= 2);
         var printCount = printer.SendCount;
-        await service.ConfirmAsync(order.Id, new(session.SessionId, session.AccessToken), TestContext.Current.CancellationToken);
+        await service.ApproveAsync(order.Id, TestContext.Current.CancellationToken);
         Assert.Equal(printCount, printer.SendCount);
         await Assert.ThrowsAsync<ValidationException>(() => service.AddAsync(session.SessionId, request, TestContext.Current.CancellationToken));
         Assert.Single(db.RestaurantOrders);
@@ -198,6 +225,36 @@ public class QrOrderingTests
 
         Assert.True(new QrTokenService(SigningSecret).Verify(point.Id, point.QrTokenVersion, physicalToken));
         Assert.Equal(OrderingSessionStatuses.Closed, db.OrderingSessions.Single().Status);
+    }
+
+    [Fact]
+    public async Task Rejecting_an_unpaid_order_closes_its_session()
+    {
+        await using var db = Db();
+        var point = Point(db, OrderingPointTypes.Table, "T1");
+        var service = Service(db);
+        var session = await service.ResolveAsync(point.QrCodeToken, TestContext.Current.CancellationToken);
+        var order = new RestaurantOrder { Id = Guid.NewGuid(), BranchId = point.BranchId, OrderingSessionId = session.SessionId, Status = RestaurantOrderStatuses.PendingApproval };
+        db.RestaurantOrders.Add(order);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        await service.RejectAsync(order.Id, "Unavailable", TestContext.Current.CancellationToken);
+
+        Assert.Equal(RestaurantOrderStatuses.Cancelled, order.Status);
+        Assert.Equal(OrderingSessionStatuses.Closed, db.OrderingSessions.Single().Status);
+    }
+
+    [Fact]
+    public async Task Existing_session_status_remains_accessible_outside_ordering_hours()
+    {
+        await using var db = Db();
+        var point = Point(db, OrderingPointTypes.Table, "T1");
+        var service = Service(db);
+        var session = await service.ResolveAsync(point.QrCodeToken, TestContext.Current.CancellationToken);
+        db.BranchQrOrderingSchedules.Add(new() { Id = Guid.NewGuid(), BranchId = point.BranchId, DayOfWeek = (int)DateTime.UtcNow.AddHours(4).DayOfWeek, OpensAt = new(0, 0), ClosesAt = new(0, 1), IsEnabled = false });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        await service.ValidateSessionAsync(session.SessionId, session.AccessToken, TestContext.Current.CancellationToken);
     }
 
     private static AppDbContext Db(ICurrentUserService? user = null)

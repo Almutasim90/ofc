@@ -1,6 +1,5 @@
-import { createContext, useContext, useState, type ReactNode } from 'react'
-import { useTranslation } from 'react-i18next'
-import { api, AUTH_STORAGE_KEY } from '../api/client'
+import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
+import { useAuth } from '../auth/AuthContext'
 import { applyTheme, getCurrentTheme, type Theme } from './theme'
 
 interface ThemeContextValue {
@@ -12,18 +11,19 @@ const ThemeContext = createContext<ThemeContextValue | undefined>(undefined)
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<Theme>(() => getCurrentTheme())
-  const { i18n } = useTranslation()
+  const { user, updatePreferences } = useAuth()
+
+  useEffect(() => {
+    if (user?.preferredTheme !== 'light' && user?.preferredTheme !== 'dark') return
+    applyTheme(user.preferredTheme)
+    setThemeState(user.preferredTheme)
+  }, [user?.preferredTheme])
 
   const toggleTheme = () => {
     const next: Theme = theme === 'dark' ? 'light' : 'dark'
     applyTheme(next)
     setThemeState(next)
-
-    if (localStorage.getItem(AUTH_STORAGE_KEY)) {
-      api
-        .put('/api/me/preferences', { preferredLanguage: i18n.language, preferredTheme: next })
-        .catch(() => {})
-    }
+    if (user) void updatePreferences({ preferredTheme: next }).catch(() => {})
   }
 
   return <ThemeContext.Provider value={{ theme, toggleTheme }}>{children}</ThemeContext.Provider>

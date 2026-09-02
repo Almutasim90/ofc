@@ -1,6 +1,5 @@
 services:
   api:
-    container_name: ofc-api
     build:
       context: ./backend
       dockerfile: Dockerfile
@@ -33,7 +32,6 @@ services:
       - supabase-db
 
   web:
-    container_name: ofc-web
     build:
       context: ./frontend
       dockerfile: Dockerfile
@@ -45,6 +43,12 @@ services:
       - api
     expose:
       - "80"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1/healthz"]
+      interval: 10s
+      timeout: 3s
+      retries: 6
+      start_period: 10s
     networks:
       - default
       - dokploy-network
@@ -61,7 +65,7 @@ networks:
   # project network - update it if that stack is ever redeployed under a
   # different Dokploy project suffix.
   supabase-db:
-    name: ofc-supabase-tvmlhw_default
+    name: ${SUPABASE_NETWORK_NAME:-ofc-supabase-tvmlhw_default}
     external: true
   # Dokploy's shared network - lets Traefik reach `web` for the public domain.
   dokploy-network:

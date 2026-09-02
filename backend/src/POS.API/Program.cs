@@ -90,6 +90,7 @@ var storageOptions = new SupabaseStorageOptions(supabaseUrl, supabaseSecretKey);
 
 builder.Services.AddInfrastructure(connectionString, jwtOptions, storageOptions);
 builder.Services.AddApplication();
+builder.Services.AddSignalR();
 builder.Services.AddSingleton(new POS.Application.QrOrdering.QrTokenService(CleanEnvironmentValue("QR_SIGNING_SECRET") ?? jwtSecret));
 
 builder.Services
@@ -108,6 +109,7 @@ builder.Services
             ValidateLifetime = true,
             ClockSkew = TimeSpan.FromMinutes(1),
         };
+        options.Events = new JwtBearerEvents { OnMessageReceived = context => { var token = context.Request.Query["access_token"]; if (!string.IsNullOrEmpty(token) && context.HttpContext.Request.Path.StartsWithSegments("/hubs/restaurant-orders")) context.Token = token; return Task.CompletedTask; } };
     });
 
 builder.Services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
@@ -170,15 +172,8 @@ if (app.Environment.IsDevelopment() || bool.TryParse(Environment.GetEnvironmentV
     using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     var passwordHasher = scope.ServiceProvider.GetRequiredService<POS.Application.Abstractions.IPasswordHasher>();
-    try
-    {
-        db.Database.Migrate();
-        await SeedData.SeedAsync(db, passwordHasher);
-    }
-    catch (Exception ex)
-    {
-        app.Logger.LogWarning(ex, "Database migrate/seed skipped - database is not reachable yet.");
-    }
+    db.Database.Migrate();
+    await SeedData.SeedAsync(db, passwordHasher);
 }
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
@@ -205,5 +200,11 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapGet("/healthz", async (AppDbContext db, CancellationToken ct) =>
+    await db.Database.CanConnectAsync(ct)
+        ? Results.Ok(new { status = "ok" })
+        : Results.StatusCode(StatusCodes.Status503ServiceUnavailable)).AllowAnonymous();
+app.MapHub<POS.API.Hubs.RestaurantOrdersHub>("/hubs/restaurant-orders");
+app.MapHub<POS.API.Hubs.QrOrdersHub>("/hubs/qr-orders");
 
 app.Run();

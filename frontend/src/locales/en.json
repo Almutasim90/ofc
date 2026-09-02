@@ -45,6 +45,7 @@
     "cashShifts": "Cash shifts",
     "printers": "Printers",
     "orderingPoints":"QR ordering points",
+    "tables": "Floor & tables",
     "orderCancellations": "Order cancellations",
     "orderTransfers": "Order transfers",
     "rawMaterials": "Raw Materials",
@@ -59,6 +60,7 @@
     "aiSettings": "AI settings",
     "emailSettings": "Email",
     "receiptSettings": "Receipt",
+    "invoiceSettings": "Tax invoices",
     "notifications": "Notifications",
     "more": "More",
     "expandMenu": "Expand navigation",
@@ -459,11 +461,14 @@
     "saved": "Order updated and changes recorded."
   },
   "cancellations":{"title":"Order cancellations","openOrders":"Open orders","cancelOrder":"Cancel order","cancelItem":"Cancel item","reason":"Cancellation reason","saved":"Cancellation recorded.","log":"Cancellation log","item":"Item","date":"Date","wholeOrder":"Whole order"},
-  "restaurantOrders": {"title":"Restaurant orders","selectTable":"Select table","tableRequired":"Select a table for dine-in.","carPlate":"Car plate number","create":"Create order","created":"Order created.","recent":"Recent orders","confirmPrint":"Confirm & print","printed":"Order confirmed and printed."},
+  "restaurantOrders": {"title":"Restaurant orders","selectTable":"Select table","tableRequired":"Select a table for dine-in.","carPlate":"Car plate number","create":"Create order","created":"Order created.","recent":"Recent orders","confirmPrint":"Confirm & print","printed":"Order confirmed and printed.","approve":"Approve & print","reject":"Reject","approved":"QR order approved and printed.","rejected":"QR order rejected.","rejectionReason":"Reason for rejecting this order","quantityFor":"Quantity for","invalidQuantity":"Enter a whole quantity between 1 and 50.","edited":"Pending QR order updated."},
+  "invoiceSettings":{"title":"Tax invoice settings","description":"Legal identity and tax calculation applied to new restaurant orders. Completed invoices keep their original snapshot.","legalNameAr":"Legal name (Arabic)","legalNameEn":"Legal name (English)","taxNumber":"Tax registration number","crNumber":"Commercial registration","addressAr":"Address (Arabic)","addressEn":"Address (English)","phone":"Phone","currency":"Currency","taxRate":"Default tax rate %","inclusive":"Menu prices include tax","footer":"Invoice footer","saved":"Invoice settings saved.","loadError":"Could not load invoice settings."},
   "printers":{"title":"Printer routing","addPrinter":"Add printer","addSection":"Add printer section","address":"IP address or host","default":"Default printer","test":"Test","testSent":"Test ticket sent.","routing":"Product routing","saved":"Printer settings saved."},
-  "orderPayments":{"title":"Payments & invoice edits","split":"Split payment","paid":"Paid","pay":"Record payment","saved":"Payment recorded.","edit":"Edit closed invoice","edited":"Invoice edit recorded.","notes":"Reason / notes"},
+  "orderPayments":{"title":"Payments & invoice edits","split":"Split payment","paid":"Paid","pay":"Record payment","saved":"Payment recorded.","edit":"Edit closed invoice","edited":"Invoice edit recorded.","notes":"Reason / notes","createSplits":"Split the bill","equalShares":"Number of equal shares","createEqual":"Create equal shares","itemSplit":"Allocate items","splitName":"Split name (optional)","quantityRemaining":"{{count}} remaining","createItemSplit":"Create item split","splitCreated":"Bill split created.","payment":"Record payment","payAgainst":"Pay against","orderBalance":"Order balance (not assigned to a split)","remaining":"Remaining"},
   "cashShifts":{"title":"Cash shifts","open":"Open shift","opened":"Cash shift opened.","count":"Cash count","close":"Close shift","closed":"Cash shift closed.","history":"Shift history","expected":"Expected","counted":"Counted","variance":"Variance"},
-  "orderingPoints":{"title":"QR ordering points","carBays":"Car pickup bays","bayLabel":"Bay label","addPoint":"Add ordering point","table":"Table","carBay":"Car bay","codes":"QR codes","regenerate":"Regenerate securely","closeSession":"Close settled session","closed":"Session closed and QR token rotated.","created":"Ordering point created.","regenerated":"QR token regenerated.","sessionReady":"Your ordering session is ready.","invalid":"This QR code is invalid or disabled."},
+  "orderingPoints":{"title":"QR ordering points","carBays":"Car pickup bays","bayLabel":"Bay label","addPoint":"Add ordering point","table":"Table","carBay":"Car bay","codes":"QR codes","regenerate":"Regenerate securely","closeSession":"Close settled session","closed":"Session closed.","created":"Ordering point created.","regenerated":"QR token regenerated.","sessionReady":"Your ordering session is ready.","invalid":"This QR code is invalid or disabled.","availability":"QR availability","enabled":"Accept QR orders","scheduleSaved":"Weekly QR schedule saved.","days":{"0":"Sunday","1":"Monday","2":"Tuesday","3":"Wednesday","4":"Thursday","5":"Friday","6":"Saturday"}},
+  "tables":{"eyebrow":"Live dining room","title":"Floor & table management","description":"Arrange tables and see active service at a glance. Occupancy comes from live orders and QR sessions.","branch":"Branch","floorName":"Floor name","addFloor":"Add floor","deleteFloorConfirm":"Delete this empty floor?","noFloors":"No floors yet","noFloorsHint":"Create a floor to start arranging tables.","available":"Available","occupied":"Occupied","refresh":"Refresh","seats":"{{count}} seats","qrSession":"Open QR session","moveUp":"Move up","moveDown":"Move down","moveLeft":"Move left","moveRight":"Move right","editTable":"Edit table","newTable":"New table","tableDetails":"Table details","label":"Table label","capacity":"Capacity","shape":"Shape","rectangle":"Rectangle","round":"Round"},
+  "qrOrdering":{"choose":"Choose your items and confirm your order","quantity":"Quantity","notes":"Special notes","submit":"Submit order","retryConfirmation":"Retry order confirmation","submitError":"The order could not be submitted.","statusHint":"This page updates automatically when the restaurant reviews your order.","status":{"PendingApproval":"Your order is awaiting approval","Sent":"Your order is being prepared","Paid":"Your order is confirmed and paid","Cancelled":"Your order was declined","Closed":"This order is complete"}},
   "orderTransfers":{"title":"Transfer orders","selectTarget":"Select destination","targetRequired":"Select a destination ordering point.","notes":"Transfer notes","transfer":"Transfer","transferred":"Order transferred and audit log recorded.","empty":"There are no transferable orders."},
   "stockCounts":{"title":"Inventory count","warehouseRequired":"Select a warehouse.","start":"Start count","system":"System","counted":"Counted","variance":"Variance","save":"Save count","saved":"Count saved.","finalize":"Finalize count","confirmFinalize":"Finalize this count and adjust warehouse stock?","finalizedMessage":"Count finalized and stock adjusted.","draft":"Draft","finalized":"Finalized"},
   "modifiers": {
@@ -477,7 +482,7 @@
     "nameAr": "Arabic name", "nameEn": "English name", "order": "Order", "active": "Active", "branchAvailable": "Available at branch", "addCategory": "Add category",
     "category": "Category", "kind": "Type", "single": "Single product", "combo": "Combo", "price": "Base price", "addItem": "Add menu item",
     "selectCombo": "Select combo", "slotLabel": "Slot label", "required": "Required", "removeSlot": "Remove slot", "option": "Option",
-    "priceDelta": "Price difference", "default": "Default", "addSlot": "Add slot", "saveCombo": "Save combo",
+    "priceDelta": "Price difference", "default": "Default", "minimum": "Minimum", "maximum": "Maximum", "moveUp": "Move up", "moveDown": "Move down", "addSlot": "Add slot", "saveCombo": "Save combo",
     "tables": "Tables", "tableLabel": "Table label", "capacity": "Capacity", "addTable": "Add table", "features": "Branch features", "addFeature": "Add and enable feature"
   }
 }

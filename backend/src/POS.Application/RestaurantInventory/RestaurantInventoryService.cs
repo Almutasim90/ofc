@@ -62,7 +62,8 @@ public class RestaurantInventoryService(IAppDbContext db, ICurrentUserService us
         var orders = capabilityBranchId.HasValue ? db.RestaurantOrders.IgnoreQueryFilters() : db.RestaurantOrders;
         var order = await orders.Include(x => x.Items.Where(i => !i.IsCancelled)).ThenInclude(x => x.ComboSelections)
             .FirstOrDefaultAsync(x => x.Id == orderId && (!capabilityBranchId.HasValue || x.BranchId == capabilityBranchId), ct) ?? throw new NotFoundException("Order not found.");
-        if (order.Status != RestaurantOrderStatuses.Open && (!qrConfirmation || order.Status != RestaurantOrderStatuses.Paid)) throw new ValidationException("Only open or fully paid QR orders can be sent.");
+        if (order.Status != RestaurantOrderStatuses.Open && (!qrConfirmation || order.Status is not (RestaurantOrderStatuses.PendingApproval or RestaurantOrderStatuses.Sent or RestaurantOrderStatuses.Paid))) throw new ValidationException("Only open or approved QR orders can be sent.");
+        if (qrConfirmation && order.Status == RestaurantOrderStatuses.Sent && await db.RestaurantInventoryTransactions.IgnoreQueryFilters().AnyAsync(x => x.ReferenceOrderId == order.Id && x.QuantityChange < 0, ct)) return;
         var warehouses = capabilityBranchId.HasValue ? db.Warehouses.IgnoreQueryFilters() : db.Warehouses;
         var warehouse = await warehouses.FirstOrDefaultAsync(x => x.BranchId == order.BranchId && x.IsDefault && x.IsActive, ct) ?? throw new ValidationException("Default warehouse is required.");
         var itemIds = order.Items.Select(x => x.MenuItemId).Concat(order.Items.SelectMany(x => x.ComboSelections).Select(x => x.SelectedMenuItemId)).Distinct().ToList();

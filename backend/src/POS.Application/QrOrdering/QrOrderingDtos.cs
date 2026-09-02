@@ -9,5 +9,13 @@ public record SaveOrderingPointRequest(Guid BranchId, string PointType, Guid? Li
 public record QrSessionDto(Guid SessionId, Guid PointId, Guid BranchId, string PointType, string Label, DateTime OpenedAt, string AccessToken);
 public record AddQrOrderRequest(string? AccessToken, List<CreateOrderLineRequest> Lines, string? QrCodeToken = null);
 public record ConfirmQrOrderRequest(Guid SessionId, string? AccessToken, string? QrCodeToken = null);
-public record QrMenuItemDto(Guid Id,Guid CategoryId,string NameAr,string NameEn,string Kind,decimal Price,string? ImageUrl);
+public record QrModifierOptionDto(Guid Id,string NameAr,string NameEn,decimal PriceDelta);
+public record QrModifierGroupDto(Guid Id,string NameAr,string NameEn,int MinSelect,int MaxSelect,bool IsRequired,List<QrModifierOptionDto> Options);
+public record QrComboOptionDto(Guid MenuItemId,string NameAr,string NameEn,decimal PriceDelta,bool IsDefault);
+public record QrComboComponentDto(Guid Id,string SlotLabel,int MinSelect,int MaxSelect,bool IsRequired,List<QrComboOptionDto> Options);
+public record QrMenuItemDto(Guid Id,Guid CategoryId,string NameAr,string NameEn,string Kind,decimal Price,string? ImageUrl,List<QrModifierGroupDto> ModifierGroups,List<QrComboComponentDto> ComboComponents);
 public record QrMenuCategoryDto(Guid Id,string NameAr,string NameEn,List<QrMenuItemDto> Items);
+public record EditPendingQrOrderRequest(List<CreateOrderLineRequest> Lines);
+public record RejectQrOrderRequest(string Reason);
+public record BranchQrScheduleDto(Guid Id,Guid BranchId,int DayOfWeek,TimeOnly OpensAt,TimeOnly ClosesAt,bool IsEnabled);
+public record SaveBranchQrScheduleRequest(int DayOfWeek,TimeOnly OpensAt,TimeOnly ClosesAt,bool IsEnabled);

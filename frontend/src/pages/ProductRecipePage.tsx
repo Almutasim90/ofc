@@ -4,7 +4,8 @@ import { Link, useParams } from 'react-router-dom'
 import { api, ApiError, resolveApiAssetUrl } from '../api/client'
 import { useAuth } from '../auth/AuthContext'
 import type { BranchDto, ProductDto, RawMaterialDto, RecipeLineDto } from '../api/types'
-import { DeleteIcon, IconAction, SearchBox } from '../components/TableTools'
+import DataTable from '../components/DataTable'
+import { DeleteIcon, IconAction } from '../components/TableTools'
 import { useToast } from '../components/ToastContext'
 
 interface EditableLine {
@@ -25,7 +26,6 @@ export default function ProductRecipePage() {
   const [lines, setLines] = useState<EditableLine[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [search, setSearch] = useState('')
 
   useEffect(() => {
     const init = async () => {
@@ -119,19 +119,11 @@ export default function ProductRecipePage() {
             <button type="button" onClick={addLine}>+ {t('recipe.addLine')}</button>
           </div>
           {lines.length === 0 && <div className="recipe-empty"><span>✦</span><p>{t('recipe.empty')}</p><button type="button" onClick={addLine}>{t('recipe.addLine')}</button></div>}
-          {lines.length > 0 && <><div className="table-toolbar"><SearchBox value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('common.search')} /></div><div className="table-shell recipe-table-shell"><table>
-            <thead>
-              <tr>
-                <th>{t('recipe.rawMaterial')}</th>
-                <th>{t('recipe.quantityRequired')}</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {lines.map((line, index) => ({ line, index })).filter(({ line }) => { const material = materials.find((m) => m.id === line.rawMaterialId); return `${material?.nameAr ?? ''} ${material?.nameEn ?? ''} ${material?.unit ?? ''}`.toLowerCase().includes(search.trim().toLowerCase()) }).map(({ line, index }) => (
-                <tr key={index}>
-                  <td>
-                    <select
+          {lines.length > 0 && <DataTable rows={lines.map((line, index) => ({ line, index }))} pageSize={0} shellClassName="recipe-table-shell"
+            getRowKey={({ index }) => index}
+            getSearchText={({ line }) => { const material = materials.find((m) => m.id === line.rawMaterialId); return `${material?.nameAr ?? ''} ${material?.nameEn ?? ''} ${material?.unit ?? ''}` }}
+            columns={[
+              { id: 'material', header: t('recipe.rawMaterial'), cell: ({ line, index }) => <select
                       value={line.rawMaterialId}
                       onChange={(e) => updateLine(index, { rawMaterialId: e.target.value })}
                     >
@@ -140,24 +132,16 @@ export default function ProductRecipePage() {
                           {m.nameEn} ({m.unit})
                         </option>
                       ))}
-                    </select>
-                  </td>
-                  <td>
-                    <input
+                    </select>, sortValue: ({ line }) => materials.find((m) => m.id === line.rawMaterialId)?.nameEn },
+              { id: 'quantity', header: t('recipe.quantityRequired'), cell: ({ line, index }) => <input
                       type="number"
                       step="0.001"
                       min="0"
                       value={line.quantityRequired}
                       onChange={(e) => updateLine(index, { quantityRequired: e.target.value })}
-                    />
-                  </td>
-                  <td>
-                    <IconAction label={t('recipe.remove')} onClick={() => removeLine(index)}><DeleteIcon /></IconAction>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table></div></>}
+                    />, sortValue: ({ line }) => Number(line.quantityRequired) },
+              { id: 'actions', header: '', cell: ({ index }) => <IconAction label={t('recipe.remove')} onClick={() => removeLine(index)}><DeleteIcon /></IconAction> },
+            ]} />}
           <div className="recipe-actions">
             <Link to="/products">{t('recipe.cancel')}</Link>
             <button type="button" onClick={save} disabled={saving}>

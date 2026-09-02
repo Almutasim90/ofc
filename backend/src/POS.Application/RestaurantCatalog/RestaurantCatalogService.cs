@@ -9,13 +9,18 @@ public class RestaurantCatalogService(IAppDbContext db)
 {
     public Task<List<RestaurantTableDto>> GetTablesAsync(Guid branchId, CancellationToken ct = default) =>
         db.RestaurantTables.Where(x => x.BranchId == branchId).OrderBy(x => x.Label)
-            .Select(x => new RestaurantTableDto(x.Id, x.BranchId, x.Label, x.Capacity, x.IsActive)).ToListAsync(ct);
+            .Select(x => new RestaurantTableDto(x.Id, x.BranchId, x.Label, x.Capacity, x.IsActive, x.FloorId, x.PositionX, x.PositionY, x.Shape)).ToListAsync(ct);
 
     public async Task<RestaurantTableDto> SaveTableAsync(Guid? id, SaveRestaurantTableRequest request, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(request.Label)) throw new ValidationException("Table label is required.");
         if (request.Capacity is <= 0) throw new ValidationException("Capacity must be greater than zero.");
+        if (request.PositionX is < 0 or > 100 || request.PositionY is < 0 or > 100) throw new ValidationException("Table positions must be between 0 and 100.");
+        if (!RestaurantTableShapes.All.Contains(request.Shape)) throw new ValidationException("Table shape is invalid.");
         if (!await db.Branches.AnyAsync(x => x.Id == request.BranchId, ct)) throw new NotFoundException("Branch not found.");
+        if (request.FloorId is not null && !await db.RestaurantFloors.AnyAsync(x => x.Id == request.FloorId && x.BranchId == request.BranchId, ct)) throw new ValidationException("Floor is invalid for this branch.");
+        var floorId = request.FloorId ?? await db.RestaurantFloors.Where(x => x.BranchId == request.BranchId && x.IsActive).OrderBy(x => x.SortOrder).Select(x => (Guid?)x.Id).FirstOrDefaultAsync(ct);
+        if (floorId is null) { var floor = new RestaurantFloor { Id = Guid.NewGuid(), BranchId = request.BranchId, Name = "Main", SortOrder = 0, IsActive = true }; db.RestaurantFloors.Add(floor); floorId = floor.Id; }
         var label = request.Label.Trim();
         if (await db.RestaurantTables.AnyAsync(x => x.BranchId == request.BranchId && x.Label == label && x.Id != id, ct))
             throw new ValidationException("Table label already exists in this branch.");
@@ -23,8 +28,9 @@ public class RestaurantCatalogService(IAppDbContext db)
             await db.RestaurantTables.FirstOrDefaultAsync(x => x.Id == id, ct) ?? throw new NotFoundException("Table not found.");
         if (id is null) db.RestaurantTables.Add(row);
         row.BranchId = request.BranchId; row.Label = label; row.Capacity = request.Capacity; row.IsActive = request.IsActive;
+        row.FloorId = floorId; row.PositionX = request.PositionX; row.PositionY = request.PositionY; row.Shape = request.Shape;
         await db.SaveChangesAsync(ct);
-        return new(row.Id, row.BranchId, row.Label, row.Capacity, row.IsActive);
+        return new(row.Id, row.BranchId, row.Label, row.Capacity, row.IsActive, row.FloorId, row.PositionX, row.PositionY, row.Shape);
     }
 
     public Task<List<BranchFeatureFlagDto>> GetFlagsAsync(Guid branchId, CancellationToken ct = default) =>
@@ -118,9 +124,10 @@ public class RestaurantCatalogService(IAppDbContext db)
         if (validOptionCount != optionIds.Count) throw new ValidationException("All combo options must be active single products.");
         foreach (var component in request.Components)
         {
-            if (string.IsNullOrWhiteSpace(component.SlotLabel) || component.MinSelect < 0 || component.MaxSelect < component.MinSelect || component.Options.Count == 0)
+            if (string.IsNullOrWhiteSpace(component.SlotLabel) || component.MinSelect < 0 || component.MaxSelect < component.MinSelect || component.MaxSelect > component.Options.Count || component.Options.Count == 0)
                 throw new ValidationException("Each combo slot needs a label, valid selection limits, and at least one option.");
             if (component.Options.Count(x => x.IsDefault) > 1) throw new ValidationException("Each combo slot can have only one default option.");
+            if (Math.Max(component.IsRequired ? 1 : 0, component.MinSelect) > 0 && component.Options.All(x => !x.IsDefault)) throw new ValidationException("A combo slot with required selections needs a default option.");
             if (component.Options.Select(x => x.MenuItemId).Distinct().Count() != component.Options.Count) throw new ValidationException("A combo slot cannot contain duplicate options.");
         }
         var existing = await db.ComboComponents.Where(x => x.ComboMenuItemId == comboId).ToListAsync(ct);

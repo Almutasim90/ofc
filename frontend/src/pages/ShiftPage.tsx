@@ -8,7 +8,8 @@ import type { BranchDto, SaleDto, ShiftDto } from '../api/types'
 import Money from '../components/Money'
 import AppIcon from '../components/AppIcon'
 import Receipt from '../components/Receipt'
-import { IconAction, SearchBox } from '../components/TableTools'
+import DataTable from '../components/DataTable'
+import { IconAction } from '../components/TableTools'
 import { useToast } from '../components/ToastContext'
 
 export default function ShiftPage() {
@@ -27,7 +28,6 @@ export default function ShiftPage() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [sales, setSales] = useState<SaleDto[]>([])
-  const [salesSearch, setSalesSearch] = useState('')
   const [receiptHeader, setReceiptHeader] = useState<string | null>(null)
   const [printSale, setPrintSale] = useState<SaleDto | null>(null)
 
@@ -126,10 +126,6 @@ export default function ShiftPage() {
   const printSaleBranch = branches.find((branch) => branch.id === printSale?.branchId)
   const printBranchName = printSaleBranch ? branchName(printSaleBranch) : ''
   const paymentLabel = (method: string) => t(`cashier.${method.toLowerCase()}`)
-  const filteredSales = sales
-    .filter((sale) => `${sale.saleNumber} ${paymentLabel(sale.paymentMethod)} ${sale.items.map((item) => item.productNameSnapshot).join(' ')}`.toLowerCase().includes(salesSearch.trim().toLowerCase()))
-    .slice()
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
   const countedTotal = denominations.reduce((sum, denomination) => sum + denomination * (cashCounts[denomination.toString()] ?? 0), 0)
   const changeCount = (denomination: number, delta: number) => setCashCounts((current) => ({
     ...current,
@@ -223,34 +219,17 @@ export default function ShiftPage() {
 
       {shift && (
         <div className="ui-card ui-stack">
-          <div className="table-toolbar">
-            <h2>{t('shifts.salesTitle')}</h2>
-            {sales.length > 0 && <SearchBox value={salesSearch} onChange={(event) => setSalesSearch(event.target.value)} placeholder={t('common.search')} />}
-          </div>
-          {sales.length === 0 ? (
-            <p className="text-sm text-muted">{t('shifts.salesEmpty')}</p>
-          ) : (
-            <div className="table-shell"><table>
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>{t('shifts.time')}</th>
-                  <th>{t('cashier.paymentMethod')}</th>
-                  <th>{t('cashier.total')}</th>
-                  <th>{t('branches.actions')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredSales.map((sale) => <tr key={sale.id}>
-                  <td>#{sale.saleNumber}</td>
-                  <td>{new Date(sale.createdAt).toLocaleTimeString(i18n.language, { hour: '2-digit', minute: '2-digit' })}</td>
-                  <td>{paymentLabel(sale.paymentMethod)}</td>
-                  <td><Money value={sale.totalAmount} /></td>
-                  <td><IconAction label={t('receipt.print')} onClick={() => setPrintSale(sale)}><AppIcon className="h-4 w-4" name="printer" /></IconAction></td>
-                </tr>)}
-              </tbody>
-            </table></div>
-          )}
+          <h2>{t('shifts.salesTitle')}</h2>
+          <DataTable rows={sales} getRowKey={(sale) => sale.id} queryPrefix="sales" emptyMessage={t('shifts.salesEmpty')}
+            defaultSort={{ id: 'time', direction: 'desc' }}
+            getSearchText={(sale) => `${sale.saleNumber} ${paymentLabel(sale.paymentMethod)} ${sale.items.map((item) => item.productNameSnapshot).join(' ')}`}
+            columns={[
+              { id: 'number', header: '#', cell: (sale) => `#${sale.saleNumber}`, sortValue: (sale) => sale.saleNumber },
+              { id: 'time', header: t('shifts.time'), cell: (sale) => new Date(sale.createdAt).toLocaleTimeString(i18n.language, { hour: '2-digit', minute: '2-digit' }), sortValue: (sale) => new Date(sale.createdAt) },
+              { id: 'payment', header: t('cashier.paymentMethod'), cell: (sale) => paymentLabel(sale.paymentMethod), sortValue: (sale) => paymentLabel(sale.paymentMethod) },
+              { id: 'total', header: t('cashier.total'), cell: (sale) => <Money value={sale.totalAmount} />, sortValue: (sale) => sale.totalAmount },
+              { id: 'actions', header: t('branches.actions'), cell: (sale) => <IconAction label={t('receipt.print')} onClick={() => setPrintSale(sale)}><AppIcon className="h-4 w-4" name="printer" /></IconAction> },
+            ]} />
         </div>
       )}
 

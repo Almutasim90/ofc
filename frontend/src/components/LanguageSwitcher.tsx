@@ -1,5 +1,4 @@
 import { useTranslation } from 'react-i18next'
-import { api } from '../api/client'
 import { useAuth } from '../auth/AuthContext'
 
 function FlagIcon({ language }: { language: 'ar' | 'en' }) {
@@ -17,8 +16,7 @@ export default function LanguageSwitcher() {
     const next = i18n.language === 'ar' ? 'en' : 'ar'
     await i18n.changeLanguage(next)
     if (user) {
-      updatePreferences(next, user.preferredTheme)
-      api.put('/api/me/preferences', { preferredLanguage: next, preferredTheme: user.preferredTheme }).catch(() => {})
+      void updatePreferences({ preferredLanguage: next }).catch(() => {})
     }
   }
 

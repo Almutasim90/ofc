@@ -86,6 +86,65 @@ namespace POS.Infrastructure.Persistence.Migrations
                     b.ToTable("AiProviderSettings");
                 });
 
+            modelBuilder.Entity("POS.Domain.Entities.BillSplit", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(12, 3)
+                        .HasColumnType("numeric(12,3)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<Guid>("OrderId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrderId", "CreatedAt");
+
+                    b.ToTable("BillSplits", t =>
+                        {
+                            t.HasCheckConstraint("CK_BillSplits_Amount", "\"Amount\" > 0");
+                        });
+                });
+
+            modelBuilder.Entity("POS.Domain.Entities.BillSplitLine", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("BillSplitId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("OrderItemId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrderItemId");
+
+                    b.HasIndex("BillSplitId", "OrderItemId")
+                        .IsUnique();
+
+                    b.ToTable("BillSplitLines", t =>
+                        {
+                            t.HasCheckConstraint("CK_BillSplitLines_Quantity", "\"Quantity\" > 0");
+                        });
+                });
+
             modelBuilder.Entity("POS.Domain.Entities.Branch", b =>
                 {
                     b.Property<Guid>("Id")
@@ -151,6 +210,38 @@ namespace POS.Infrastructure.Persistence.Migrations
                         .IsUnique();
 
                     b.ToTable("BranchFeatureFlags");
+                });
+
+            modelBuilder.Entity("POS.Domain.Entities.BranchQrOrderingSchedule", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("BranchId")
+                        .HasColumnType("uuid");
+
+                    b.Property<TimeOnly>("ClosesAt")
+                        .HasColumnType("time without time zone");
+
+                    b.Property<int>("DayOfWeek")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<TimeOnly>("OpensAt")
+                        .HasColumnType("time without time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BranchId", "DayOfWeek")
+                        .IsUnique();
+
+                    b.ToTable("BranchQrOrderingSchedules", t =>
+                        {
+                            t.HasCheckConstraint("CK_BranchQrOrderingSchedules_Day", "\"DayOfWeek\" BETWEEN 0 AND 6");
+                        });
                 });
 
             modelBuilder.Entity("POS.Domain.Entities.BranchRawMaterialStock", b =>
@@ -652,6 +743,69 @@ namespace POS.Infrastructure.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("POS.Domain.Entities.InvoiceSettings", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AddressAr")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("AddressEn")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<Guid>("BranchId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CommercialRegistrationNumber")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)");
+
+                    b.Property<decimal>("DefaultTaxRate")
+                        .HasPrecision(7, 3)
+                        .HasColumnType("numeric(7,3)");
+
+                    b.Property<string>("Footer")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<string>("LegalNameAr")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("LegalNameEn")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Phone")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<bool>("PricesIncludeTax")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("TaxRegistrationNumber")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BranchId")
+                        .IsUnique();
+
+                    b.ToTable("InvoiceSettings");
+                });
+
             modelBuilder.Entity("POS.Domain.Entities.LowStockNotification", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1013,6 +1167,9 @@ namespace POS.Infrastructure.Persistence.Migrations
                     b.Property<Guid?>("ApprovedByUserId")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("BillSplitId")
+                        .HasColumnType("uuid");
+
                     b.Property<Guid?>("CashShiftId")
                         .HasColumnType("uuid");
 
@@ -1026,6 +1183,8 @@ namespace POS.Infrastructure.Persistence.Migrations
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("BillSplitId");
 
                     b.HasIndex("CashShiftId");
 
@@ -1481,6 +1640,36 @@ namespace POS.Infrastructure.Persistence.Migrations
                     b.ToTable("ReceiptSettings");
                 });
 
+            modelBuilder.Entity("POS.Domain.Entities.RestaurantFloor", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("BranchId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BranchId", "Name")
+                        .IsUnique();
+
+                    b.HasIndex("BranchId", "SortOrder");
+
+                    b.ToTable("RestaurantFloors", (string)null);
+                });
+
             modelBuilder.Entity("POS.Domain.Entities.RestaurantInventoryTransaction", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1528,6 +1717,12 @@ namespace POS.Infrastructure.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<DateTime?>("ApprovedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ApprovedByUserId")
+                        .HasColumnType("uuid");
+
                     b.Property<Guid>("BranchId")
                         .HasColumnType("uuid");
 
@@ -1555,6 +1750,68 @@ namespace POS.Infrastructure.Persistence.Migrations
                         .HasPrecision(12, 3)
                         .HasColumnType("numeric(12,3)");
 
+                    b.Property<string>("InvoiceAddressAr")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("InvoiceAddressEn")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("InvoiceCommercialRegistrationNumber")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("InvoiceCurrency")
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)");
+
+                    b.Property<decimal?>("InvoiceDefaultTaxRate")
+                        .HasPrecision(7, 3)
+                        .HasColumnType("numeric(7,3)");
+
+                    b.Property<decimal?>("InvoiceDiscountSnapshot")
+                        .HasPrecision(12, 3)
+                        .HasColumnType("numeric(12,3)");
+
+                    b.Property<string>("InvoiceFooter")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<decimal?>("InvoiceGrandTotalSnapshot")
+                        .HasPrecision(12, 3)
+                        .HasColumnType("numeric(12,3)");
+
+                    b.Property<string>("InvoiceLegalNameAr")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("InvoiceLegalNameEn")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("InvoicePhone")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<bool?>("InvoicePricesIncludeTax")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("InvoiceSnapshotCapturedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal?>("InvoiceSubtotalSnapshot")
+                        .HasPrecision(12, 3)
+                        .HasColumnType("numeric(12,3)");
+
+                    b.Property<string>("InvoiceTaxRegistrationNumber")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<decimal?>("InvoiceTaxSnapshot")
+                        .HasPrecision(12, 3)
+                        .HasColumnType("numeric(12,3)");
+
                     b.Property<int>("OrderNumber")
                         .HasColumnType("integer");
 
@@ -1568,6 +1825,13 @@ namespace POS.Infrastructure.Persistence.Migrations
                         .IsConcurrencyToken()
                         .HasColumnType("integer");
 
+                    b.Property<DateTime?>("RejectedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("RejectionReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
                     b.Property<Guid?>("SalesChannelId")
                         .HasColumnType("uuid");
 
@@ -1575,6 +1839,9 @@ namespace POS.Infrastructure.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
+
+                    b.Property<DateTime?>("SubmittedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<decimal>("Subtotal")
                         .HasPrecision(12, 3)
@@ -1600,9 +1867,11 @@ namespace POS.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("BranchId", "BusinessDate", "Status");
 
+                    b.HasIndex("BranchId", "Status", "CreatedAt");
+
                     b.ToTable("Orders", null, t =>
                         {
-                            t.HasCheckConstraint("CK_Orders_Status", "\"Status\" IN ('Open','Sent','Paid','Closed','Cancelled')");
+                            t.HasCheckConstraint("CK_Orders_Status", "\"Status\" IN ('Open','PendingApproval','Sent','Paid','Closed','Cancelled')");
                         });
                 });
 
@@ -1611,6 +1880,22 @@ namespace POS.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
+
+                    b.Property<decimal?>("InvoiceGrossSnapshot")
+                        .HasPrecision(12, 3)
+                        .HasColumnType("numeric(12,3)");
+
+                    b.Property<decimal?>("InvoiceNetSnapshot")
+                        .HasPrecision(12, 3)
+                        .HasColumnType("numeric(12,3)");
+
+                    b.Property<decimal?>("InvoiceTaxRateSnapshot")
+                        .HasPrecision(7, 3)
+                        .HasColumnType("numeric(7,3)");
+
+                    b.Property<decimal?>("InvoiceTaxSnapshot")
+                        .HasPrecision(12, 3)
+                        .HasColumnType("numeric(12,3)");
 
                     b.Property<bool>("IsCancelled")
                         .HasColumnType("boolean");
@@ -1662,6 +1947,9 @@ namespace POS.Infrastructure.Persistence.Migrations
                     b.Property<int?>("Capacity")
                         .HasColumnType("integer");
 
+                    b.Property<Guid?>("FloorId")
+                        .HasColumnType("uuid");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
@@ -1670,12 +1958,36 @@ namespace POS.Infrastructure.Persistence.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
+                    b.Property<int>("PositionX")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
+
+                    b.Property<int>("PositionY")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
+
+                    b.Property<string>("Shape")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasDefaultValue("Rectangle");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("FloorId");
 
                     b.HasIndex("BranchId", "Label")
                         .IsUnique();
 
-                    b.ToTable("Tables", (string)null);
+                    b.ToTable("Tables", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_Tables_Position", "\"PositionX\" BETWEEN 0 AND 100 AND \"PositionY\" BETWEEN 0 AND 100");
+
+                            t.HasCheckConstraint("CK_Tables_Shape", "\"Shape\" IN ('Rectangle','Round')");
+                        });
                 });
 
             modelBuilder.Entity("POS.Domain.Entities.Role", b =>
@@ -2420,7 +2732,48 @@ namespace POS.Infrastructure.Persistence.Migrations
                     b.ToTable("WarehouseIngredientStocks");
                 });
 
+            modelBuilder.Entity("POS.Domain.Entities.BillSplit", b =>
+                {
+                    b.HasOne("POS.Domain.Entities.RestaurantOrder", "Order")
+                        .WithMany("BillSplits")
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Order");
+                });
+
+            modelBuilder.Entity("POS.Domain.Entities.BillSplitLine", b =>
+                {
+                    b.HasOne("POS.Domain.Entities.BillSplit", "BillSplit")
+                        .WithMany("Lines")
+                        .HasForeignKey("BillSplitId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("POS.Domain.Entities.RestaurantOrderItem", "OrderItem")
+                        .WithMany()
+                        .HasForeignKey("OrderItemId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("BillSplit");
+
+                    b.Navigation("OrderItem");
+                });
+
             modelBuilder.Entity("POS.Domain.Entities.BranchFeatureFlag", b =>
+                {
+                    b.HasOne("POS.Domain.Entities.Branch", "Branch")
+                        .WithMany()
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Branch");
+                });
+
+            modelBuilder.Entity("POS.Domain.Entities.BranchQrOrderingSchedule", b =>
                 {
                     b.HasOne("POS.Domain.Entities.Branch", "Branch")
                         .WithMany()
@@ -2552,6 +2905,17 @@ namespace POS.Infrastructure.Persistence.Migrations
                         .IsRequired();
 
                     b.Navigation("UnitOfMeasure");
+                });
+
+            modelBuilder.Entity("POS.Domain.Entities.InvoiceSettings", b =>
+                {
+                    b.HasOne("POS.Domain.Entities.Branch", "Branch")
+                        .WithMany()
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Branch");
                 });
 
             modelBuilder.Entity("POS.Domain.Entities.LowStockNotification", b =>
@@ -2725,6 +3089,11 @@ namespace POS.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("POS.Domain.Entities.OrderPayment", b =>
                 {
+                    b.HasOne("POS.Domain.Entities.BillSplit", "BillSplit")
+                        .WithMany("Payments")
+                        .HasForeignKey("BillSplitId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("POS.Domain.Entities.CashShift", "CashShift")
                         .WithMany("Payments")
                         .HasForeignKey("CashShiftId")
@@ -2741,6 +3110,8 @@ namespace POS.Infrastructure.Persistence.Migrations
                         .HasForeignKey("PaymentMethodId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("BillSplit");
 
                     b.Navigation("CashShift");
 
@@ -2852,6 +3223,17 @@ namespace POS.Infrastructure.Persistence.Migrations
                     b.Navigation("RawMaterial");
                 });
 
+            modelBuilder.Entity("POS.Domain.Entities.RestaurantFloor", b =>
+                {
+                    b.HasOne("POS.Domain.Entities.Branch", "Branch")
+                        .WithMany()
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Branch");
+                });
+
             modelBuilder.Entity("POS.Domain.Entities.RestaurantInventoryTransaction", b =>
                 {
                     b.HasOne("POS.Domain.Entities.Ingredient", "Ingredient")
@@ -2949,7 +3331,14 @@ namespace POS.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("POS.Domain.Entities.RestaurantFloor", "Floor")
+                        .WithMany("Tables")
+                        .HasForeignKey("FloorId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.Navigation("Branch");
+
+                    b.Navigation("Floor");
                 });
 
             modelBuilder.Entity("POS.Domain.Entities.RolePermission", b =>
@@ -3207,6 +3596,13 @@ namespace POS.Infrastructure.Persistence.Migrations
                     b.Navigation("Warehouse");
                 });
 
+            modelBuilder.Entity("POS.Domain.Entities.BillSplit", b =>
+                {
+                    b.Navigation("Lines");
+
+                    b.Navigation("Payments");
+                });
+
             modelBuilder.Entity("POS.Domain.Entities.CashShift", b =>
                 {
                     b.Navigation("Counts");
@@ -3243,8 +3639,15 @@ namespace POS.Infrastructure.Persistence.Migrations
                     b.Navigation("Sessions");
                 });
 
+            modelBuilder.Entity("POS.Domain.Entities.RestaurantFloor", b =>
+                {
+                    b.Navigation("Tables");
+                });
+
             modelBuilder.Entity("POS.Domain.Entities.RestaurantOrder", b =>
                 {
+                    b.Navigation("BillSplits");
+
                     b.Navigation("Cancellations");
 
                     b.Navigation("EditLogs");

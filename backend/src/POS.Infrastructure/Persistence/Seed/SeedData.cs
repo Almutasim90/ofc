@@ -29,6 +29,18 @@ public static class SeedData
             db.SalesChannels.Add(new SalesChannel { Id = SalesChannelIds.InStore, Code="IN_STORE",NameAr = "المحل", NameEn = "In-store", IsActive = true, IsInStore = true });
             await db.SaveChangesAsync(cancellationToken);
         }
+        if (!await db.SalesChannels.AnyAsync(c => c.Code == "QR_TABLE", cancellationToken)) db.SalesChannels.Add(new SalesChannel { Id = SalesChannelIds.QrTable, Code = "QR_TABLE", NameAr = "طلب الطاولة QR", NameEn = "QR table", IsActive = true });
+        if (!await db.SalesChannels.AnyAsync(c => c.Code == "QR_CAR", cancellationToken)) db.SalesChannels.Add(new SalesChannel { Id = SalesChannelIds.QrCar, Code = "QR_CAR", NameAr = "طلب السيارة QR", NameEn = "QR car", IsActive = true });
+        await db.SaveChangesAsync(cancellationToken);
+
+        var branches = await db.Branches.IgnoreQueryFilters().Select(x => x.Id).ToListAsync(cancellationToken);
+        var qrChannelIds = await db.SalesChannels.Where(x => x.Code == "QR_TABLE" || x.Code == "QR_CAR").Select(x => x.Id).ToListAsync(cancellationToken);
+        foreach (var branchId in branches)
+        {
+            if (!await db.BranchFeatureFlags.IgnoreQueryFilters().AnyAsync(x => x.BranchId == branchId && x.FeatureKey == BranchFeatureKeys.QrOrdering, cancellationToken)) db.BranchFeatureFlags.Add(new() { Id = Guid.NewGuid(), BranchId = branchId, FeatureKey = BranchFeatureKeys.QrOrdering, IsEnabled = true });
+            foreach (var channelId in qrChannelIds) if (!await db.BranchSalesChannelAvailabilities.IgnoreQueryFilters().AnyAsync(x => x.BranchId == branchId && x.SalesChannelId == channelId, cancellationToken)) db.BranchSalesChannelAvailabilities.Add(new() { Id = Guid.NewGuid(), BranchId = branchId, SalesChannelId = channelId, IsEnabled = true });
+        }
+        await db.SaveChangesAsync(cancellationToken);
 
         if (!await db.Roles.AnyAsync(cancellationToken))
         {

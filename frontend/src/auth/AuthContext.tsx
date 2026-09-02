@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useMemo, useRef, useState, type ReactNode } from 'react'
 import { api, AUTH_STORAGE_KEY } from '../api/client'
 import i18n from '../i18n'
 import { applyTheme } from '../theme/theme'
@@ -15,8 +15,10 @@ interface AuthContextValue {
   login: (username: string, password: string) => Promise<void>
   logout: () => void
   hasPermission: (permission: string) => boolean
-  updatePreferences: (preferredLanguage: string, preferredTheme: string | null) => void
+  updatePreferences: (preferences: Partial<UserPreferences>) => Promise<void>
 }
+
+type UserPreferences = Pick<AuthUser, 'preferredLanguage' | 'preferredTheme'>
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
 
@@ -30,10 +32,31 @@ function loadStored(): StoredAuth | null {
   }
 }
 
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const [stored, setStored] = useState<StoredAuth | null>(() => loadStored())
+function restorePreferences(stored: StoredAuth | null) {
+  if (!stored) return
+  void i18n.changeLanguage(stored.user.preferredLanguage)
+  if (stored.user.preferredTheme === 'light' || stored.user.preferredTheme === 'dark') {
+    applyTheme(stored.user.preferredTheme)
+  }
+}
 
-  const login = async (username: string, password: string) => {
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [stored, setStored] = useState<StoredAuth | null>(() => {
+    const initial = loadStored()
+    restorePreferences(initial)
+    return initial
+  })
+  const storedRef = useRef(stored)
+  const preferenceSave = useRef(Promise.resolve())
+
+  const replaceStored = useCallback((next: StoredAuth | null) => {
+    storedRef.current = next
+    setStored(next)
+    if (next) localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(next))
+    else localStorage.removeItem(AUTH_STORAGE_KEY)
+  }, [])
+
+  const login = useCallback(async (username: string, password: string) => {
     const response = await api.post<LoginResponse>('/api/auth/login', { username, password })
     const user: AuthUser = {
       userId: response.userId,
@@ -45,8 +68,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       permissions: response.permissions,
     }
     const next: StoredAuth = { token: response.token, user }
-    localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(next))
-    setStored(next)
+    replaceStored(next)
 
     // Loaded automatically at login, same as PreferredLanguage: a saved
     // theme choice overrides whatever OS-preference/local toggle was active.
@@ -54,12 +76,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (response.preferredTheme === 'light' || response.preferredTheme === 'dark') {
       applyTheme(response.preferredTheme)
     }
-  }
+  }, [replaceStored])
 
-  const logout = () => {
-    localStorage.removeItem(AUTH_STORAGE_KEY)
-    setStored(null)
-  }
+  const logout = useCallback(() => {
+    replaceStored(null)
+  }, [replaceStored])
+
+  const updatePreferences = useCallback((preferences: Partial<UserPreferences>) => {
+    const current = storedRef.current
+    if (!current) return Promise.resolve()
+
+    const next: StoredAuth = { ...current, user: { ...current.user, ...preferences } }
+    replaceStored(next)
+
+    const save = preferenceSave.current.catch(() => {}).then(() => {
+      const latest = storedRef.current?.user
+      if (!latest) return
+      return api.put('/api/me/preferences', {
+        preferredLanguage: latest.preferredLanguage,
+        preferredTheme: latest.preferredTheme,
+      }).then(() => {})
+    })
+    preferenceSave.current = save
+    return save
+  }, [replaceStored])
 
   const value = useMemo<AuthContextValue>(
     () => ({
@@ -68,16 +108,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       login,
       logout,
       hasPermission: (permission: string) => stored?.user.permissions.includes(permission) ?? false,
-      updatePreferences: (preferredLanguage: string, preferredTheme: string | null) => {
-        setStored((current) => {
-          if (!current) return current
-          const next = { ...current, user: { ...current.user, preferredLanguage, preferredTheme } }
-          localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(next))
-          return next
-        })
-      },
+      updatePreferences,
     }),
-    [stored],
+    [login, logout, stored, updatePreferences],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

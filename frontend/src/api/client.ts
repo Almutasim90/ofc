@@ -21,6 +21,7 @@ function getApiUrl() {
 }
 
 const API_URL = getApiUrl()
+export const apiEndpoint = (path: string) => `${API_URL}${path}`
 
 export function resolveApiAssetUrl(url: string | null | undefined) {
   if (!url) return ''
@@ -100,10 +101,10 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 
 export const api = {
   get: <T>(path: string, headers?: HeadersInit) => request<T>(path, { headers }),
-  post: <T>(path: string, body?: unknown) =>
-    request<T>(path, { method: 'POST', body: body ? JSON.stringify(body) : undefined }),
-  put: <T>(path: string, body?: unknown) =>
-    request<T>(path, { method: 'PUT', body: body ? JSON.stringify(body) : undefined }),
+  post: <T>(path: string, body?: unknown, headers?: HeadersInit) =>
+    request<T>(path, { method: 'POST', body: body ? JSON.stringify(body) : undefined, headers }),
+  put: <T>(path: string, body?: unknown, headers?: HeadersInit) =>
+    request<T>(path, { method: 'PUT', body: body ? JSON.stringify(body) : undefined, headers }),
   upload: <T>(path: string, body: FormData) => request<T>(path, { method: 'POST', body }),
   delete: <T>(path: string) => request<T>(path, { method: 'DELETE' }),
 }

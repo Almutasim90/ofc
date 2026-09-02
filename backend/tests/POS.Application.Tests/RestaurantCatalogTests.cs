@@ -51,6 +51,31 @@ public class RestaurantCatalogTests
         await Assert.ThrowsAsync<ValidationException>(() => service.SaveComboAsync(combo.Id, new([Slot("خيار", combo.Id, 0)]), TestContext.Current.CancellationToken));
     }
 
+    [Fact]
+    public async Task Combo_rejects_selection_limits_above_available_options()
+    {
+        await using var db = CreateDb(); var service = new RestaurantCatalogService(db);
+        var category = await service.SaveCategoryAsync(null, new("الوجبات", "Meals", 0), TestContext.Current.CancellationToken);
+        var option = await service.SaveItemAsync(null, new(category.Id, "خيار", "Option", MenuItemKinds.SingleProduct, 1, null, 0), TestContext.Current.CancellationToken);
+        var combo = await service.SaveItemAsync(null, new(category.Id, "وجبة", "Meal", MenuItemKinds.Combo, 3, null, 1), TestContext.Current.CancellationToken);
+        var slot = new SaveComboComponentRequest("Main", true, 1, 2, 0, [new(option.Id, 0, true)]);
+
+        await Assert.ThrowsAsync<ValidationException>(() => service.SaveComboAsync(combo.Id, new([slot]), TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
+    public async Task Combo_slot_with_a_minimum_requires_a_default_option()
+    {
+        await using var db = CreateDb(); var service = new RestaurantCatalogService(db);
+        var category = await service.SaveCategoryAsync(null, new("الوجبات", "Meals", 0), TestContext.Current.CancellationToken);
+        var option = await service.SaveItemAsync(null, new(category.Id, "خيار", "Option", MenuItemKinds.SingleProduct, 1, null, 0), TestContext.Current.CancellationToken);
+        var combo = await service.SaveItemAsync(null, new(category.Id, "وجبة", "Meal", MenuItemKinds.Combo, 3, null, 1), TestContext.Current.CancellationToken);
+        var slot = new SaveComboComponentRequest("Main", true, 1, 1, 0, [new(option.Id, 0, false)]);
+
+        var error = await Assert.ThrowsAsync<ValidationException>(() => service.SaveComboAsync(combo.Id, new([slot]), TestContext.Current.CancellationToken));
+        Assert.Contains("default", error.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
     private static SaveComboComponentRequest Slot(string label, Guid itemId, decimal delta) => new(label, true, 1, 1, 0, [new(itemId, delta, true)]);
     private static Branch Branch() => new() { Id = Guid.NewGuid(), NameAr = "فرع", NameEn = "Branch", Code = Guid.NewGuid().ToString("N") };
     private static AppDbContext CreateDb() => new(new DbContextOptionsBuilder<AppDbContext>().UseInMemoryDatabase(Guid.NewGuid().ToString()).Options);

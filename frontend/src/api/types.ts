@@ -75,14 +75,19 @@ export interface UpdateBranchRequest {
   isActive: boolean
 }
 
-export interface RestaurantTableDto { id:string; branchId:string; label:string; capacity:number|null; isActive:boolean }
+export interface RestaurantTableDto { id:string; branchId:string; label:string; capacity:number|null; isActive:boolean; floorId:string|null; positionX:number; positionY:number; shape:'Rectangle'|'Round' }
+export interface RestaurantFloorDto { id:string; branchId:string; name:string; sortOrder:number; isActive:boolean }
+export interface TableOrderStatusDto { id:string; orderNumber:number; status:string; orderTypeCode:string; grandTotal:number; createdAt:string }
+export interface TableStatusDto extends RestaurantTableDto { floorName:string|null; isOccupied:boolean; openQrSessionId:string|null; qrSessionOpenedAt:string|null; orders:TableOrderStatusDto[] }
 export interface BranchFeatureFlagDto { id:string; branchId:string; featureKey:string; isEnabled:boolean }
 export interface MenuCategoryDto { id:string; nameAr:string; nameEn:string; sortOrder:number; isActive:boolean; isAvailable:boolean }
 export interface MenuItemDto { id:string; categoryId:string; nameAr:string; nameEn:string; kind:'SingleProduct'|'Combo'; basePrice:number; imageUrl:string|null; sortOrder:number; isActive:boolean; printerSectionId:string|null }
 export interface PrinterConfigDto { id:string; branchId:string; nameAr:string; nameEn:string; ipAddress:string; port:number; isDefault:boolean; isActive:boolean }
 export interface PrinterSectionDto { id:string; branchId:string; nameAr:string; nameEn:string; printerConfigId:string|null }
 export interface PaymentMethodDto { id:string; code:string; nameAr:string; nameEn:string; requiresApproval:boolean; isActive:boolean }
-export interface OrderPaymentDto { id:string; orderId:string; methodCode:string; amount:number; approvedByUserId:string|null; createdAt:string; orderStatus:string; grandTotal:number }
+export interface OrderPaymentDto { id:string; orderId:string; methodCode:string; amount:number; approvedByUserId:string|null; createdAt:string; orderStatus:string; grandTotal:number; billSplitId:string|null }
+export interface BillSplitLineDto { orderItemId:string; itemName:string; quantity:number }
+export interface BillSplitDto { id:string; orderId:string; name:string; amount:number; paidAmount:number; remainingAmount:number; createdAt:string; lines:BillSplitLineDto[] }
 export interface OrderEditLogDto { id:string; orderId:string; userId:string; editType:string; notes:string|null; amountDelta:number; createdAt:string; orderGrandTotal:number }
 export interface CashShiftDto { id:string; branchId:string; openedByUserId:string; closedByUserId:string|null; openingFloat:number; openedAt:string; closedAt:string|null; status:string; expectedCash:number|null; countedCash:number|null; varianceCash:number|null }
 export interface CashShiftVarianceDto { cashShiftId:string; branchId:string; openedAt:string; expectedCash:number; countedCash:number; varianceCash:number }
@@ -90,12 +95,17 @@ export interface OrderEditReportDto { id:string; orderId:string; orderNumber:num
 export interface CarPickupBayDto { id:string; branchId:string; bayLabel:string; isActive:boolean }
 export interface OrderingPointDto { id:string; branchId:string; pointType:'TABLE'|'CAR_BAY'; linkedTableId:string|null; linkedCarBayId:string|null; qrToken:string; isActive:boolean; label:string; activeSessionId:string|null }
 export interface QrSessionDto { sessionId:string; pointId:string; branchId:string; pointType:string; label:string; openedAt:string; accessToken:string }
-export interface QrMenuItemDto { id:string; categoryId:string; nameAr:string; nameEn:string; kind:'SingleProduct'|'Combo'; price:number; imageUrl:string|null }
+export interface QrModifierOptionDto { id:string; nameAr:string; nameEn:string; priceDelta:number }
+export interface QrModifierGroupDto { id:string; nameAr:string; nameEn:string; minSelect:number; maxSelect:number; isRequired:boolean; options:QrModifierOptionDto[] }
+export interface QrComboOptionDto { menuItemId:string; nameAr:string; nameEn:string; priceDelta:number; isDefault:boolean }
+export interface QrComboComponentDto { id:string; slotLabel:string; minSelect:number; maxSelect:number; isRequired:boolean; options:QrComboOptionDto[] }
+export interface QrMenuItemDto { id:string; categoryId:string; nameAr:string; nameEn:string; kind:'SingleProduct'|'Combo'; price:number; imageUrl:string|null; modifierGroups:QrModifierGroupDto[]; comboComponents:QrComboComponentDto[] }
 export interface QrMenuCategoryDto { id:string; nameAr:string; nameEn:string; items:QrMenuItemDto[] }
+export interface BranchQrScheduleDto { id:string; branchId:string; dayOfWeek:number; opensAt:string; closesAt:string; isEnabled:boolean }
 export interface ModifierOptionDto { id:string; nameAr:string; nameEn:string; priceDelta:number; isActive:boolean }
 export interface ModifierGroupDto { id:string; nameAr:string; nameEn:string; minSelect:number; maxSelect:number; isRequired:boolean; options:ModifierOptionDto[]; menuItemIds:string[] }
 export interface OrderTypeDto { id:string; code:string; nameAr:string; nameEn:string }
-export interface RestaurantOrderDto { id:string; branchId:string; orderNumber:number; orderTypeCode:string; tableId:string|null; tableLabel:string|null; carPlateNumber:string|null; salesChannelId:string|null; salesChannelCode:string|null; status:string; subtotal:number; discountAmount:number; grandTotal:number; createdAt:string; items:{id:string;menuItemId:string;name:string;unitPrice:number;quantity:number;lineTotal:number;notes:string|null;isCancelled:boolean;modifierOptionIds:string[];comboOptionIds:string[]}[] }
+export interface RestaurantOrderDto { id:string; branchId:string; orderNumber:number; orderTypeCode:string; tableId:string|null; tableLabel:string|null; carPlateNumber:string|null; salesChannelId:string|null; salesChannelCode:string|null; status:string; subtotal:number; discountAmount:number; grandTotal:number; createdAt:string; items:{id:string;menuItemId:string;name:string;unitPrice:number;quantity:number;lineTotal:number;notes:string|null;isCancelled:boolean;modifierOptionIds:string[];comboOptionIds:string[];modifiers:{optionId:string;name:string;priceDelta:number}[];comboSelections:{comboComponentId:string;componentName:string;optionId:string;optionName:string;priceDelta:number}[]}[] }
 export interface OrderCancellationDto { id:string;orderId:string;orderNumber:number;orderItemId:string|null;itemName:string|null;reason:string;cancelledByUserId:string;createdAt:string }
 export interface InventoryUnitDto{id:string;name:string;symbol:string;isBase:boolean} export interface IngredientDto{id:string;nameAr:string;nameEn:string;unitOfMeasureId:string} export interface WarehouseDto{id:string;branchId:string;nameAr:string;nameEn:string;isDefault:boolean;isActive:boolean} export interface InventoryReasonDto{id:string;code:string;nameAr:string;nameEn:string;isActive:boolean} export interface RestaurantStockDto{warehouseId:string;ingredientId:string;ingredientName:string;currentQuantity:number;lowStockThreshold:number}
 export interface StockCountLineDto { ingredientId:string; nameAr:string; nameEn:string; systemQuantity:number; countedQuantity:number; varianceQuantity:number }

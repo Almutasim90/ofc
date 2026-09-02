@@ -1,7 +1,9 @@
 namespace POS.Application.RestaurantCatalog;
 
-public record RestaurantTableDto(Guid Id, Guid BranchId, string Label, int? Capacity, bool IsActive);
-public record SaveRestaurantTableRequest(Guid BranchId, string Label, int? Capacity, bool IsActive = true);
+public record RestaurantTableDto(Guid Id, Guid BranchId, string Label, int? Capacity, bool IsActive,
+    Guid? FloorId, int PositionX, int PositionY, string Shape);
+public record SaveRestaurantTableRequest(Guid BranchId, string Label, int? Capacity, bool IsActive = true,
+    Guid? FloorId = null, int PositionX = 0, int PositionY = 0, string Shape = "Rectangle");
 public record BranchFeatureFlagDto(Guid Id, Guid BranchId, string FeatureKey, bool IsEnabled);
 public record SetFeatureFlagRequest(bool IsEnabled);
 

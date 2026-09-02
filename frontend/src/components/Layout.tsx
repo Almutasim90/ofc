@@ -124,6 +124,7 @@ export default function Layout({ children }: { children: ReactNode }) {
     { to: '/products', label: t('nav.products'), icon: 'products', permission: 'products.manage' },
     { to: '/restaurant-catalog', label: t('nav.restaurantCatalog'), icon: 'products', permission: 'products.manage' },
     { to: '/printers', label: t('nav.printers'), icon: 'printer', permission: 'printing.manage' },
+    { to: '/tables', label: t('nav.tables'), icon: 'products', permission: 'tables.manage' },
     { to: '/ordering-points', label: t('nav.orderingPoints'), icon: 'products', permission: 'tables.manage' },
     { to: '/modifiers', label: t('nav.modifiers'), icon: 'products', permission: 'modifiers.manage' },
     { to: '/raw-materials', label: t('nav.rawMaterials'), icon: 'materials', permission: 'products.manage' },
@@ -134,6 +135,7 @@ export default function Layout({ children }: { children: ReactNode }) {
     { to: '/ai-settings', label: t('nav.aiSettings'), icon: 'ai', permission: 'ai.manage' },
     { to: '/email-settings', label: t('nav.emailSettings'), icon: 'email', permission: 'email.manage' },
     { to: '/receipt-settings', label: t('nav.receiptSettings'), icon: 'printer', permission: 'receipt.manage' },
+    { to: '/invoice-settings', label: t('nav.invoiceSettings'), icon: 'reports', permission: 'invoice.manage' },
     { to: '/notifications', label: t('nav.notifications'), icon: 'notifications', permission: 'inventory.adjust' },
     { to: '/settings', label: t('nav.settings'), icon: 'settings' },
   ] satisfies NavItem[]).filter((item) => !item.permission || hasPermission(item.permission))
@@ -147,7 +149,7 @@ export default function Layout({ children }: { children: ReactNode }) {
   const moreNavItems = navItems.slice(BOTTOM_NAV_PRIMARY_COUNT)
 
   return <div className="admin-shell min-h-screen bg-bg text-text">
-    <aside id="app-sidebar" className={`app-sidebar fixed inset-y-0 start-0 z-40 hidden flex-none flex-col transition-all duration-300 lg:flex ${sidebarCollapsed ? 'lg:w-20' : 'w-64'}`}>
+    <aside id="app-sidebar" className={`app-sidebar fixed inset-y-0 start-0 z-40 hidden flex-none flex-col transition-[width] duration-300 lg:flex ${sidebarCollapsed ? 'lg:w-20' : 'w-64'}`}>
       <div className="sidebar-brand flex h-16 items-center justify-between gap-2 border-b px-4"><div className={`min-w-0 items-center gap-2 ${sidebarCollapsed ? 'flex lg:hidden' : 'flex'}`}><span className="brand-mark">O</span><div className="truncate font-cairo text-xl font-extrabold">{t('app.title')}</div></div><button className="sidebar-collapse hidden h-11 w-11 flex-none items-center justify-center p-0 lg:flex" onClick={() => setSidebarCollapsed((value) => { localStorage.setItem('sidebar-collapsed', String(!value)); return !value })} aria-label={sidebarCollapsed ? t('nav.expandMenu') : t('nav.collapseMenu')} title={sidebarCollapsed ? t('nav.expandMenu') : t('nav.collapseMenu')}><AppIcon className={`h-5 w-5 transition-transform ${sidebarCollapsed ? 'rotate-180' : ''}`} name="chevron" /></button></div>
       <nav className="flex flex-1 flex-col gap-1 overflow-y-auto p-3">{navItems.map((item) => <NavLink key={item.to} to={item.to} title={sidebarCollapsed ? item.label : undefined} className={({ isActive }) => `sidebar-nav-link flex min-h-11 items-center gap-3 rounded-xl px-3 py-3 text-sm ${sidebarCollapsed ? 'lg:justify-center' : ''} ${isActive ? 'is-active' : ''}`}><AppIcon className="h-5 w-5 flex-none" name={item.icon} /><span className={sidebarCollapsed ? 'lg:hidden' : ''}>{item.label}</span></NavLink>)}</nav>
       <div className="sidebar-footer grid gap-3 border-t p-4"><div className={`flex min-w-0 items-center gap-3 ${sidebarCollapsed ? 'lg:justify-center' : ''}`}><span className="sidebar-avatar flex h-10 w-10 flex-none items-center justify-center rounded-full font-bold">{user.fullName.trim().charAt(0).toUpperCase()}</span><div className={`min-w-0 ${sidebarCollapsed ? 'lg:hidden' : ''}`}><div className="truncate text-sm font-bold">{user.fullName}</div><div className="sidebar-role truncate text-xs">{translatedRole}</div></div></div><button className="sidebar-logout flex w-full items-center justify-center rounded-xl" onClick={handleLogout} aria-label={t('nav.logout')} title={t('nav.logout')}><LogoutIcon /></button></div>

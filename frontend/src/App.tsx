@@ -24,6 +24,7 @@ import AiInsightsPage from './pages/AiInsightsPage'
 import NotificationsPage from './pages/NotificationsPage'
 import EmailSettingsPage from './pages/EmailSettingsPage'
 import ReceiptSettingsPage from './pages/ReceiptSettingsPage'
+import InvoiceSettingsPage from './pages/InvoiceSettingsPage'
 import RestaurantCatalogPage from './pages/RestaurantCatalogPage'
 import ModifiersPage from './pages/ModifiersPage'
 import RestaurantOrdersPage from './pages/RestaurantOrdersPage'
@@ -36,14 +37,15 @@ import OrderingPointsPage from './pages/OrderingPointsPage'
 import OrderTransfersPage from './pages/OrderTransfersPage'
 import StockCountsPage from './pages/StockCountsPage'
 import QrLandingPage from './pages/QrLandingPage'
+import TablesPage from './pages/TablesPage'
 
 const ReportsPage = lazy(() => import('./pages/ReportsPage'))
 
 function App() {
   return (
     <ToastProvider>
-    <ThemeProvider>
-      <AuthProvider>
+    <AuthProvider>
+      <ThemeProvider>
         <BrowserRouter>
           <Layout>
             <Routes>
@@ -76,6 +78,7 @@ function App() {
               <Route path="/ai-settings" element={<ProtectedRoute permission="ai.manage"><AiSettingsPage /></ProtectedRoute>} />
               <Route path="/email-settings" element={<ProtectedRoute permission="email.manage"><EmailSettingsPage /></ProtectedRoute>} />
               <Route path="/receipt-settings" element={<ProtectedRoute permission="receipt.manage"><ReceiptSettingsPage /></ProtectedRoute>} />
+              <Route path="/invoice-settings" element={<ProtectedRoute permission="invoice.manage"><InvoiceSettingsPage /></ProtectedRoute>} />
               <Route path="/notifications" element={<ProtectedRoute permission="inventory.adjust"><NotificationsPage /></ProtectedRoute>} />
               <Route
                 path="/users"
@@ -118,6 +121,7 @@ function App() {
               <Route path="/order-payments" element={<ProtectedRoute permission="orders.create"><OrderPaymentsPage /></ProtectedRoute>} />
               <Route path="/cash-shifts" element={<ProtectedRoute permission="sales.edit"><CashShiftsPage /></ProtectedRoute>} />
               <Route path="/ordering-points" element={<ProtectedRoute permission="tables.manage"><OrderingPointsPage /></ProtectedRoute>} />
+              <Route path="/tables" element={<ProtectedRoute permission="tables.manage"><TablesPage /></ProtectedRoute>} />
               <Route path="/order-transfers" element={<ProtectedRoute permission="orders.transfer"><OrderTransfersPage /></ProtectedRoute>} />
               <Route path="/stock-counts" element={<ProtectedRoute permission="inventory.adjust"><StockCountsPage /></ProtectedRoute>} />
               <Route
@@ -148,8 +152,8 @@ function App() {
             </Routes>
           </Layout>
         </BrowserRouter>
-      </AuthProvider>
-    </ThemeProvider>
+      </ThemeProvider>
+    </AuthProvider>
     </ToastProvider>
   )
 }
