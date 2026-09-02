@@ -43,12 +43,6 @@ services:
       - api
     expose:
       - "80"
-    healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://127.0.0.1/healthz"]
-      interval: 10s
-      timeout: 3s
-      retries: 6
-      start_period: 10s
     networks:
       - default
       - dokploy-network
