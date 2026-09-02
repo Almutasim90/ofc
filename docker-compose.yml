@@ -1,5 +1,6 @@
 services:
   api:
+    container_name: ofc-api
     build:
       context: ./backend
       dockerfile: Dockerfile
@@ -32,6 +33,7 @@ services:
       - supabase-db
 
   web:
+    container_name: ofc-web
     build:
       context: ./frontend
       dockerfile: Dockerfile
