@@ -204,6 +204,10 @@ app.MapGet("/healthz", async (AppDbContext db, CancellationToken ct) =>
     await db.Database.CanConnectAsync(ct)
         ? Results.Ok(new { status = "ok" })
         : Results.StatusCode(StatusCodes.Status503ServiceUnavailable)).AllowAnonymous();
+app.MapGet("/api/healthz", async (AppDbContext db, CancellationToken ct) =>
+    await db.Database.CanConnectAsync(ct)
+        ? Results.Ok(new { status = "ok" })
+        : Results.StatusCode(StatusCodes.Status503ServiceUnavailable)).AllowAnonymous();
 app.MapHub<POS.API.Hubs.RestaurantOrdersHub>("/hubs/restaurant-orders");
 app.MapHub<POS.API.Hubs.QrOrdersHub>("/hubs/qr-orders");
 
