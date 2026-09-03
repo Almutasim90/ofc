@@ -90,14 +90,13 @@ public static class SeedData
 
     /// <summary>
     /// Seeds demo restaurant data (menu catalog, addons, combos, inventory units,
-    /// ingredients, warehouse stock and recipes) so the restaurant-catalog and
-    /// inventory screens can be exercised. Runs only when the menu catalog is empty,
-    /// so it is safe and idempotent on repeat startups.
+    /// ingredients, warehouse stock, recipes and tables) so the restaurant-catalog,
+    /// inventory and stock-count screens are populated. Each record is resolved by
+    /// name before being created, so it is idempotent and safe on repeat startups
+    /// even when some data (e.g. a category) already exists.
     /// </summary>
     private static async Task SeedDemoRestaurantDataAsync(AppDbContext db, CancellationToken cancellationToken)
     {
-        if (await db.MenuCategories.AnyAsync(cancellationToken)) return;
-
         var branch = await db.Branches.IgnoreQueryFilters().OrderBy(x => x.NameEn).FirstOrDefaultAsync(cancellationToken);
         if (branch is null)
         {
@@ -105,143 +104,203 @@ public static class SeedData
             db.Branches.Add(branch);
         }
 
-        // --- Units of measure ---
-        var unitKg = new UnitOfMeasure { Id = Guid.NewGuid(), Name = "Kilogram", Symbol = "kg", IsBase = true };
-        var unitL = new UnitOfMeasure { Id = Guid.NewGuid(), Name = "Liter", Symbol = "L", IsBase = true };
-        var unitPc = new UnitOfMeasure { Id = Guid.NewGuid(), Name = "Piece", Symbol = "pc", IsBase = true };
-        db.UnitsOfMeasure.AddRange(unitKg, unitL, unitPc);
+        // --- Units of measure (name is unique) ---
+        var unitKg = await GetOrAddUnit(db, "Kilogram", "kg", true, cancellationToken);
+        var unitL = await GetOrAddUnit(db, "Liter", "L", true, cancellationToken);
+        var unitPc = await GetOrAddUnit(db, "Piece", "pc", true, cancellationToken);
 
-        // --- Ingredients (raw materials for recipes) ---
-        var ingBeef = Ingredient("Beef", "لحم", unitKg);
-        var ingBun = Ingredient("Burger bun", "خبز برجر", unitPc);
-        var ingPotato = Ingredient("Potato", "بطاطس", unitKg);
-        var ingChicken = Ingredient("Chicken", "دجاج", unitKg);
-        var ingRice = Ingredient("Rice", "أرز", unitKg);
-        var ingTomato = Ingredient("Tomato", "طماطم", unitKg);
-        var ingCheese = Ingredient("Cheese", "جبن", unitKg);
-        var ingCola = Ingredient("Cola syrup", "شراب كولا", unitL);
-        var ingIce = Ingredient("Ice", "ثلج", unitKg);
-        db.Ingredients.AddRange(ingBeef, ingBun, ingPotato, ingChicken, ingRice, ingTomato, ingCheese, ingCola, ingIce);
+        // --- Ingredients (resolved by English name) ---
+        var ingBeef = await GetOrAddIngredient(db, "Beef", "لحم", unitKg, cancellationToken);
+        var ingBun = await GetOrAddIngredient(db, "Burger bun", "خبز برجر", unitPc, cancellationToken);
+        var ingPotato = await GetOrAddIngredient(db, "Potato", "بطاطس", unitKg, cancellationToken);
+        var ingChicken = await GetOrAddIngredient(db, "Chicken", "دجاج", unitKg, cancellationToken);
+        var ingRice = await GetOrAddIngredient(db, "Rice", "أرز", unitKg, cancellationToken);
+        var ingTomato = await GetOrAddIngredient(db, "Tomato", "طماطم", unitKg, cancellationToken);
+        var ingCheese = await GetOrAddIngredient(db, "Cheese", "جبن", unitKg, cancellationToken);
+        var ingCola = await GetOrAddIngredient(db, "Cola syrup", "شراب كولا", unitL, cancellationToken);
+        var ingIce = await GetOrAddIngredient(db, "Ice", "ثلج", unitKg, cancellationToken);
 
-        // --- Menu categories ---
-        var catStarters = Category("Starters", "مقبلات", 0);
-        var catMains = Category("Mains", "أطباق رئيسية", 1);
-        var catDrinks = Category("Drinks", "مشروبات", 2);
-        var catDesserts = Category("Desserts", "حلويات", 3);
-        db.MenuCategories.AddRange(catStarters, catMains, catDrinks, catDesserts);
+        // --- Menu categories (resolved by English name) ---
+        var catStarters = await GetOrAddCategory(db, "Starters", "مقبلات", 0, cancellationToken);
+        var catMains = await GetOrAddCategory(db, "Mains", "أطباق رئيسية", 1, cancellationToken);
+        var catDrinks = await GetOrAddCategory(db, "Drinks", "مشروبات", 2, cancellationToken);
+        var catDesserts = await GetOrAddCategory(db, "Desserts", "حلويات", 3, cancellationToken);
 
-        // --- Menu items (single products) ---
-        var itemBurger = Item(catMains, "Beef burger", "برجر لحم", 3.500m, 0);
-        var itemFries = Item(catStarters, "French fries", "بطاطس مقلية", 1.200m, 1);
-        var itemShawarma = Item(catMains, "Chicken shawarma", "شاورما دجاج", 2.000m, 1);
-        var itemChickenRice = Item(catMains, "Chicken with rice", "دجاج مع أرز", 3.000m, 2);
-        var itemCola = Item(catDrinks, "Cola", "كولات", 0.500m, 0);
-        var itemWater = Item(catDrinks, "Water", "ماء", 0.300m, 1);
-        var itemIceCream = Item(catDesserts, "Ice cream", "آيس كريم", 1.500m, 0);
-        db.MenuItems.AddRange(itemBurger, itemFries, itemShawarma, itemChickenRice, itemCola, itemWater, itemIceCream);
+        // --- Menu items (resolved by English name within its category) ---
+        var itemBurger = await GetOrAddMenuItem(db, catMains, "Beef burger", "برجر لحم", MenuItemKinds.SingleProduct, 3.500m, 0, cancellationToken);
+        var itemFries = await GetOrAddMenuItem(db, catStarters, "French fries", "بطاطس مقلية", MenuItemKinds.SingleProduct, 1.200m, 1, cancellationToken);
+        var itemShawarma = await GetOrAddMenuItem(db, catMains, "Chicken shawarma", "شاورما دجاج", MenuItemKinds.SingleProduct, 2.000m, 1, cancellationToken);
+        var itemChickenRice = await GetOrAddMenuItem(db, catMains, "Chicken with rice", "دجاج مع أرز", MenuItemKinds.SingleProduct, 3.000m, 2, cancellationToken);
+        var itemCola = await GetOrAddMenuItem(db, catDrinks, "Cola", "كولات", MenuItemKinds.SingleProduct, 0.500m, 0, cancellationToken);
+        var itemWater = await GetOrAddMenuItem(db, catDrinks, "Water", "ماء", MenuItemKinds.SingleProduct, 0.300m, 1, cancellationToken);
+        var itemIceCream = await GetOrAddMenuItem(db, catDesserts, "Ice cream", "آيس كريم", MenuItemKinds.SingleProduct, 1.500m, 0, cancellationToken);
 
         // --- Addons: modifier groups + options ---
-        var grpSize = Group("Size", "الحجم", 1, 1, true);
-        grpSize.Options.Add(Option("Small", "صغير", -0.500m));
-        grpSize.Options.Add(Option("Regular", "عادي", 0m));
-        grpSize.Options.Add(Option("Large", "كبير", 0.750m));
+        var grpSize = await GetOrAddModifierGroup(db, "Size", "الحجم", 1, 1, true, cancellationToken);
+        EnsureOption(grpSize, "Small", "صغير", -0.500m);
+        EnsureOption(grpSize, "Regular", "عادي", 0m);
+        EnsureOption(grpSize, "Large", "كبير", 0.750m);
 
-        var grpExtras = Group("Extras", "إضافات", 0, 3, false);
-        grpExtras.Options.Add(Option("Extra cheese", "جبن إضافي", 0.400m));
-        grpExtras.Options.Add(Option("Extra fries", "بطاطس إضافية", 0.600m));
-        grpExtras.Options.Add(Option("Add cola", "أضف كولا", 0.500m));
+        var grpExtras = await GetOrAddModifierGroup(db, "Extras", "إضافات", 0, 3, false, cancellationToken);
+        EnsureOption(grpExtras, "Extra cheese", "جبن إضافي", 0.400m);
+        EnsureOption(grpExtras, "Extra fries", "بطاطس إضافية", 0.600m);
+        EnsureOption(grpExtras, "Add cola", "أضف كولا", 0.500m);
 
-        var grpSauce = Group("Sauce", "الصلصة", 0, 2, false);
-        grpSauce.Options.Add(Option("Garlic sauce", "صلصة ثوم", 0.150m));
-        grpSauce.Options.Add(Option("Ketchup", "كاتشب", 0.100m));
-        grpSauce.Options.Add(Option("Tahini", "طحينة", 0.150m));
+        var grpSauce = await GetOrAddModifierGroup(db, "Sauce", "الصلصة", 0, 2, false, cancellationToken);
+        EnsureOption(grpSauce, "Garlic sauce", "صلصة ثوم", 0.150m);
+        EnsureOption(grpSauce, "Ketchup", "كاتشب", 0.100m);
+        EnsureOption(grpSauce, "Tahini", "طحينة", 0.150m);
 
-        var grpIce = Group("Ice level", "كمية الثلج", 1, 1, true);
-        grpIce.Options.Add(Option("Normal", "عادي", 0m));
-        grpIce.Options.Add(Option("No ice", "بدون ثلج", 0m));
-        db.ModifierGroups.AddRange(grpSize, grpExtras, grpSauce, grpIce);
+        var grpIce = await GetOrAddModifierGroup(db, "Ice level", "كمية الثلج", 1, 1, true, cancellationToken);
+        EnsureOption(grpIce, "Normal", "عادي", 0m);
+        EnsureOption(grpIce, "No ice", "بدون ثلج", 0m);
 
-        // Wire addons to items
-        AttachItemModifiers(itemBurger, grpSize, grpExtras);
-        AttachItemModifiers(itemShawarma, grpSize, grpSauce);
-        AttachItemModifiers(itemFries, grpSize, grpExtras);
-        AttachItemModifiers(itemCola, grpIce);
-        AttachItemModifiers(itemWater, grpIce);
+        // Wire addons to items (only when the link is missing)
+        EnsureItemModifiers(itemBurger, grpSize, grpExtras);
+        EnsureItemModifiers(itemShawarma, grpSize, grpSauce);
+        EnsureItemModifiers(itemFries, grpSize, grpExtras);
+        EnsureItemModifiers(itemCola, grpIce);
+        EnsureItemModifiers(itemWater, grpIce);
 
         // --- Combo: a family combo composed of mains + drinks ---
-        var combo = new MenuItem { Id = Guid.NewGuid(), CategoryId = catMains.Id, Category = catMains, NameAr = "وجبة عائلية", NameEn = "Family combo", Kind = MenuItemKinds.Combo, BasePrice = 8.000m, SortOrder = 3, IsActive = true };
-        var compMain = new ComboComponent { Id = Guid.NewGuid(), ComboMenuItem = combo, SlotLabel = "Main", IsRequired = true, MinSelect = 1, MaxSelect = 2, SortOrder = 0 };
-        compMain.Options.Add(ComboOption(compMain, itemBurger, 0m, true));
-        compMain.Options.Add(ComboOption(compMain, itemChickenRice, 0m, false));
-        compMain.Options.Add(ComboOption(compMain, itemShawarma, 0m, false));
-        var compDrink = new ComboComponent { Id = Guid.NewGuid(), ComboMenuItem = combo, SlotLabel = "Drink", IsRequired = true, MinSelect = 1, MaxSelect = 1, SortOrder = 1 };
-        compDrink.Options.Add(ComboOption(compDrink, itemCola, 0m, true));
-        compDrink.Options.Add(ComboOption(compDrink, itemWater, 0m, false));
-        combo.ComboComponents.Add(compMain);
-        combo.ComboComponents.Add(compDrink);
-        db.MenuItems.Add(combo);
+        var combo = await GetOrAddMenuItem(db, catMains, "Family combo", "وجبة عائلية", MenuItemKinds.Combo, 8.000m, 3, cancellationToken);
+        var compMain = EnsureComboComponent(combo, "Main", true, 1, 2, 0);
+        EnsureComboOption(compMain, itemBurger, 0m, true);
+        EnsureComboOption(compMain, itemChickenRice, 0m, false);
+        EnsureComboOption(compMain, itemShawarma, 0m, false);
+        var compDrink = EnsureComboComponent(combo, "Drink", true, 1, 1, 1);
+        EnsureComboOption(compDrink, itemCola, 0m, true);
+        EnsureComboOption(compDrink, itemWater, 0m, false);
 
         // --- Recipes: link items to ingredients (drives stock deduction) ---
-        db.MenuItemRecipeLines.AddRange(
-            Recipe(itemBurger, branch.Id, ingBeef, 0.150m),
-            Recipe(itemBurger, branch.Id, ingBun, 1m),
-            Recipe(itemBurger, branch.Id, ingCheese, 0.030m),
-            Recipe(itemFries, branch.Id, ingPotato, 0.250m),
-            Recipe(itemShawarma, branch.Id, ingChicken, 0.250m),
-            Recipe(itemShawarma, branch.Id, ingBun, 1m),
-            Recipe(itemChickenRice, branch.Id, ingChicken, 0.200m),
-            Recipe(itemChickenRice, branch.Id, ingRice, 0.250m),
-            Recipe(itemChickenRice, branch.Id, ingTomato, 0.080m),
-            Recipe(itemCola, branch.Id, ingCola, 0.040m),
-            Recipe(itemCola, branch.Id, ingIce, 0.120m),
-            Recipe(itemWater, branch.Id, ingIce, 0.100m));
+        await EnsureRecipe(db, itemBurger, branch.Id, ingBeef, 0.150m, cancellationToken);
+        await EnsureRecipe(db, itemBurger, branch.Id, ingBun, 1m, cancellationToken);
+        await EnsureRecipe(db, itemBurger, branch.Id, ingCheese, 0.030m, cancellationToken);
+        await EnsureRecipe(db, itemFries, branch.Id, ingPotato, 0.250m, cancellationToken);
+        await EnsureRecipe(db, itemShawarma, branch.Id, ingChicken, 0.250m, cancellationToken);
+        await EnsureRecipe(db, itemShawarma, branch.Id, ingBun, 1m, cancellationToken);
+        await EnsureRecipe(db, itemChickenRice, branch.Id, ingChicken, 0.200m, cancellationToken);
+        await EnsureRecipe(db, itemChickenRice, branch.Id, ingRice, 0.250m, cancellationToken);
+        await EnsureRecipe(db, itemChickenRice, branch.Id, ingTomato, 0.080m, cancellationToken);
+        await EnsureRecipe(db, itemCola, branch.Id, ingCola, 0.040m, cancellationToken);
+        await EnsureRecipe(db, itemCola, branch.Id, ingIce, 0.120m, cancellationToken);
+        await EnsureRecipe(db, itemWater, branch.Id, ingIce, 0.100m, cancellationToken);
 
-        // --- Warehouse + starting stock ---
-        var warehouse = new Warehouse { Id = Guid.NewGuid(), BranchId = branch.Id, NameAr = "المخزن الرئيسي", NameEn = "Main warehouse", IsDefault = true, IsActive = true };
-        db.Warehouses.Add(warehouse);
-        db.WarehouseIngredientStocks.AddRange(
-            Stock(warehouse.Id, ingBeef, 25m, 5m),
-            Stock(warehouse.Id, ingBun, 120m, 20m),
-            Stock(warehouse.Id, ingPotato, 60m, 10m),
-            Stock(warehouse.Id, ingChicken, 90m, 15m),
-            Stock(warehouse.Id, ingRice, 40m, 10m),
-            Stock(warehouse.Id, ingTomato, 18m, 4m),
-            Stock(warehouse.Id, ingCheese, 15m, 3m),
-            Stock(warehouse.Id, ingCola, 8m, 2m),
-            Stock(warehouse.Id, ingIce, 30m, 6m));
+        // --- Warehouse + starting stock (create warehouse if none exists on this branch) ---
+        var warehouse = await db.Warehouses.IgnoreQueryFilters().FirstOrDefaultAsync(x => x.BranchId == branch.Id, cancellationToken);
+        if (warehouse is null)
+        {
+            warehouse = new Warehouse { Id = Guid.NewGuid(), BranchId = branch.Id, NameAr = "المخزن الرئيسي", NameEn = "Main warehouse", IsDefault = true, IsActive = true };
+            db.Warehouses.Add(warehouse);
+            await db.SaveChangesAsync(cancellationToken);
+        }
+        await EnsureStock(db, warehouse.Id, ingBeef, 25m, 5m, cancellationToken);
+        await EnsureStock(db, warehouse.Id, ingBun, 120m, 20m, cancellationToken);
+        await EnsureStock(db, warehouse.Id, ingPotato, 60m, 10m, cancellationToken);
+        await EnsureStock(db, warehouse.Id, ingChicken, 90m, 15m, cancellationToken);
+        await EnsureStock(db, warehouse.Id, ingRice, 40m, 10m, cancellationToken);
+        await EnsureStock(db, warehouse.Id, ingTomato, 18m, 4m, cancellationToken);
+        await EnsureStock(db, warehouse.Id, ingCheese, 15m, 3m, cancellationToken);
+        await EnsureStock(db, warehouse.Id, ingCola, 8m, 2m, cancellationToken);
+        await EnsureStock(db, warehouse.Id, ingIce, 30m, 6m, cancellationToken);
 
-        // --- Demo tables / floor so the floor board is populated ---
+        // --- Demo floor + tables so the floor board is populated ---
         var floor = await db.RestaurantFloors.IgnoreQueryFilters().FirstOrDefaultAsync(x => x.BranchId == branch.Id, cancellationToken);
         if (floor is null)
         {
             floor = new RestaurantFloor { Id = Guid.NewGuid(), BranchId = branch.Id, Name = "Main floor", SortOrder = 0, IsActive = true };
             db.RestaurantFloors.Add(floor);
+            await db.SaveChangesAsync(cancellationToken);
         }
-        if (!await db.RestaurantTables.IgnoreQueryFilters().AnyAsync(x => x.BranchId == branch.Id, cancellationToken))
-        {
-            db.RestaurantTables.AddRange(
-                Table(branch.Id, floor.Id, "T01", 4, 20, 30, RestaurantTableShapes.Rectangle),
-                Table(branch.Id, floor.Id, "T02", 4, 45, 28, RestaurantTableShapes.Rectangle),
-                Table(branch.Id, floor.Id, "T03", 2, 70, 30, RestaurantTableShapes.Round),
-                Table(branch.Id, floor.Id, "T04", 6, 25, 65, RestaurantTableShapes.Round),
-                Table(branch.Id, floor.Id, "T05", 4, 55, 68, RestaurantTableShapes.Rectangle));
-        }
+        await EnsureTable(db, branch.Id, floor.Id, "T01", 4, 20, 30, RestaurantTableShapes.Rectangle, cancellationToken);
+        await EnsureTable(db, branch.Id, floor.Id, "T02", 4, 45, 28, RestaurantTableShapes.Rectangle, cancellationToken);
+        await EnsureTable(db, branch.Id, floor.Id, "T03", 2, 70, 30, RestaurantTableShapes.Round, cancellationToken);
+        await EnsureTable(db, branch.Id, floor.Id, "T04", 6, 25, 65, RestaurantTableShapes.Round, cancellationToken);
+        await EnsureTable(db, branch.Id, floor.Id, "T05", 4, 55, 68, RestaurantTableShapes.Rectangle, cancellationToken);
 
         await db.SaveChangesAsync(cancellationToken);
     }
 
-    private static MenuCategory Category(string nameEn, string nameAr, int sortOrder) => new() { Id = Guid.NewGuid(), NameEn = nameEn, NameAr = nameAr, SortOrder = sortOrder, IsActive = true };
-    private static MenuItem Item(MenuCategory category, string nameEn, string nameAr, decimal price, int sortOrder) => new() { Id = Guid.NewGuid(), CategoryId = category.Id, Category = category, NameEn = nameEn, NameAr = nameAr, Kind = MenuItemKinds.SingleProduct, BasePrice = price, SortOrder = sortOrder, IsActive = true };
-    private static ModifierGroup Group(string nameEn, string nameAr, int min, int max, bool required) => new() { Id = Guid.NewGuid(), NameEn = nameEn, NameAr = nameAr, MinSelect = min, MaxSelect = max, IsRequired = required };
-    private static ModifierOption Option(string nameEn, string nameAr, decimal delta) => new() { Id = Guid.NewGuid(), NameEn = nameEn, NameAr = nameAr, PriceDelta = delta, IsActive = true };
-    private static void AttachItemModifiers(MenuItem item, params ModifierGroup[] groups)
+    private static async Task<UnitOfMeasure> GetOrAddUnit(AppDbContext db, string name, string symbol, bool isBase, CancellationToken ct)
+    {
+        var unit = await db.UnitsOfMeasure.FirstOrDefaultAsync(x => x.Name == name, ct);
+        if (unit is null) { unit = new UnitOfMeasure { Id = Guid.NewGuid(), Name = name, Symbol = symbol, IsBase = isBase }; db.UnitsOfMeasure.Add(unit); }
+        return unit;
+    }
+
+    private static async Task<Ingredient> GetOrAddIngredient(AppDbContext db, string nameEn, string nameAr, UnitOfMeasure unit, CancellationToken ct)
+    {
+        var ingredient = await db.Ingredients.FirstOrDefaultAsync(x => x.NameEn == nameEn, ct);
+        if (ingredient is null) { ingredient = new Ingredient { Id = Guid.NewGuid(), NameEn = nameEn, NameAr = nameAr, UnitOfMeasureId = unit.Id, UnitOfMeasure = unit }; db.Ingredients.Add(ingredient); }
+        return ingredient;
+    }
+
+    private static async Task<MenuCategory> GetOrAddCategory(AppDbContext db, string nameEn, string nameAr, int sortOrder, CancellationToken ct)
+    {
+        var category = await db.MenuCategories.FirstOrDefaultAsync(x => x.NameEn == nameEn, ct);
+        if (category is null) { category = new MenuCategory { Id = Guid.NewGuid(), NameEn = nameEn, NameAr = nameAr, SortOrder = sortOrder, IsActive = true }; db.MenuCategories.Add(category); }
+        return category;
+    }
+
+    private static async Task<MenuItem> GetOrAddMenuItem(AppDbContext db, MenuCategory category, string nameEn, string nameAr, string kind, decimal price, int sortOrder, CancellationToken ct)
+    {
+        var item = await db.MenuItems.FirstOrDefaultAsync(x => x.NameEn == nameEn, ct);
+        if (item is null) { item = new MenuItem { Id = Guid.NewGuid(), CategoryId = category.Id, Category = category, NameEn = nameEn, NameAr = nameAr, Kind = kind, BasePrice = price, SortOrder = sortOrder, IsActive = true }; db.MenuItems.Add(item); }
+        return item;
+    }
+
+    private static async Task<ModifierGroup> GetOrAddModifierGroup(AppDbContext db, string nameEn, string nameAr, int min, int max, bool required, CancellationToken ct)
+    {
+        var group = await db.ModifierGroups.FirstOrDefaultAsync(x => x.NameEn == nameEn, ct);
+        if (group is null) { group = new ModifierGroup { Id = Guid.NewGuid(), NameEn = nameEn, NameAr = nameAr, MinSelect = min, MaxSelect = max, IsRequired = required }; db.ModifierGroups.Add(group); }
+        return group;
+    }
+
+    private static void EnsureOption(ModifierGroup group, string nameEn, string nameAr, decimal delta)
+    {
+        if (group.Options.Any(x => x.NameEn == nameEn)) return;
+        group.Options.Add(new ModifierOption { Id = Guid.NewGuid(), ModifierGroupId = group.Id, ModifierGroup = group, NameEn = nameEn, NameAr = nameAr, PriceDelta = delta, IsActive = true });
+    }
+
+    private static void EnsureItemModifiers(MenuItem item, params ModifierGroup[] groups)
     {
         foreach (var group in groups)
-            item.ModifierGroups.Add(new MenuItemModifierGroup { MenuItemId = item.Id, MenuItem = item, ModifierGroupId = group.Id, ModifierGroup = group });
+            if (!item.ModifierGroups.Any(x => x.ModifierGroupId == group.Id))
+                item.ModifierGroups.Add(new MenuItemModifierGroup { MenuItemId = item.Id, MenuItem = item, ModifierGroupId = group.Id, ModifierGroup = group });
     }
-    private static ComboComponentOption ComboOption(ComboComponent component, MenuItem item, decimal delta, bool isDefault) => new() { Id = Guid.NewGuid(), ComboComponentId = component.Id, ComboComponent = component, MenuItemId = item.Id, MenuItem = item, PriceDelta = delta, IsDefault = isDefault };
-    private static Ingredient Ingredient(string nameEn, string nameAr, UnitOfMeasure unit) => new() { Id = Guid.NewGuid(), NameEn = nameEn, NameAr = nameAr, UnitOfMeasureId = unit.Id, UnitOfMeasure = unit };
-    private static MenuItemRecipeLine Recipe(MenuItem item, Guid branchId, Ingredient ingredient, decimal quantity) => new() { Id = Guid.NewGuid(), MenuItemId = item.Id, MenuItem = item, BranchId = branchId, IngredientId = ingredient.Id, Ingredient = ingredient, QuantityRequired = quantity };
-    private static WarehouseIngredientStock Stock(Guid warehouseId, Ingredient ingredient, decimal quantity, decimal threshold) => new() { WarehouseId = warehouseId, IngredientId = ingredient.Id, Ingredient = ingredient, CurrentQuantity = quantity, LowStockThreshold = threshold };
-    private static RestaurantTable Table(Guid branchId, Guid floorId, string label, int capacity, int x, int y, string shape) => new() { Id = Guid.NewGuid(), BranchId = branchId, FloorId = floorId, Label = label, Capacity = capacity, PositionX = x, PositionY = y, Shape = shape, IsActive = true };
+
+    private static ComboComponent EnsureComboComponent(MenuItem combo, string slotLabel, bool isRequired, int min, int max, int sortOrder)
+    {
+        var component = combo.ComboComponents.FirstOrDefault(x => x.SlotLabel == slotLabel);
+        if (component is null)
+        {
+            component = new ComboComponent { Id = Guid.NewGuid(), ComboMenuItemId = combo.Id, ComboMenuItem = combo, SlotLabel = slotLabel, IsRequired = isRequired, MinSelect = min, MaxSelect = max, SortOrder = sortOrder };
+            combo.ComboComponents.Add(component);
+        }
+        return component;
+    }
+
+    private static void EnsureComboOption(ComboComponent component, MenuItem item, decimal delta, bool isDefault)
+    {
+        if (component.Options.Any(x => x.MenuItemId == item.Id)) return;
+        component.Options.Add(new ComboComponentOption { Id = Guid.NewGuid(), ComboComponentId = component.Id, ComboComponent = component, MenuItemId = item.Id, MenuItem = item, PriceDelta = delta, IsDefault = isDefault });
+    }
+
+    private static async Task EnsureRecipe(AppDbContext db, MenuItem item, Guid branchId, Ingredient ingredient, decimal quantity, CancellationToken ct)
+    {
+        var exists = await db.MenuItemRecipeLines.IgnoreQueryFilters().AnyAsync(x => x.MenuItemId == item.Id && x.BranchId == branchId && x.IngredientId == ingredient.Id, ct);
+        if (!exists) db.MenuItemRecipeLines.Add(new MenuItemRecipeLine { Id = Guid.NewGuid(), MenuItemId = item.Id, MenuItem = item, BranchId = branchId, IngredientId = ingredient.Id, Ingredient = ingredient, QuantityRequired = quantity });
+    }
+
+    private static async Task EnsureStock(AppDbContext db, Guid warehouseId, Ingredient ingredient, decimal quantity, decimal threshold, CancellationToken ct)
+    {
+        var exists = await db.WarehouseIngredientStocks.IgnoreQueryFilters().AnyAsync(x => x.WarehouseId == warehouseId && x.IngredientId == ingredient.Id, ct);
+        if (!exists) db.WarehouseIngredientStocks.Add(new WarehouseIngredientStock { WarehouseId = warehouseId, IngredientId = ingredient.Id, Ingredient = ingredient, CurrentQuantity = quantity, LowStockThreshold = threshold });
+    }
+
+    private static async Task EnsureTable(AppDbContext db, Guid branchId, Guid floorId, string label, int capacity, int x, int y, string shape, CancellationToken ct)
+    {
+        var exists = await db.RestaurantTables.IgnoreQueryFilters().AnyAsync(t => t.BranchId == branchId && t.Label == label, ct);
+        if (!exists) db.RestaurantTables.Add(new RestaurantTable { Id = Guid.NewGuid(), BranchId = branchId, FloorId = floorId, Label = label, Capacity = capacity, PositionX = x, PositionY = y, Shape = shape, IsActive = true });
+    }
 }
